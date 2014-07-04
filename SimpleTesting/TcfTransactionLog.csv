@@ -1,0 +1,20 @@
+Service , Message , Max , Min , Average , Count , frequency , TimedOut
+
+Stream,setLogBits,78.125,0,39.0625,2,0
+Tool,setupTool,859.375,0,148.4375,3,0
+Tool,getContext,15.625,0,0.00128664361017109,24,0
+Tool,connect,46.875,31.25,28.6458333333333,3,0
+Tool,setProperties,46.875,0,3.53443674067163,14,0
+Device,getContext,15.625,0,0.000521005566578483,10,0
+Device,startSession,93.75,78.125,36.4583333333333,4,0
+Tool,getTargetVoltage,31.25,0,0.000114144672521409,13,0
+Device,endSession,15.625,15.625,6.51041666666667,4,0
+Device,erase,15.625,0,2.60416666666667,3,0
+Modules,getChildren,15.625,0,0.520833333333333,6,0
+Modules,add,31.25,0,2.95138888888889,6,0
+Modules,getBinaryContentInfo,15.625,0,2.60416666666667,6,0
+Memory,getContext,15.625,0,8.9903503031982E-09,24,0
+Modules,writeToMemory,3437.5,0,129.036458333333,6,0
+Modules,remove,15.625,0,3.125,6,0
+Modules,verifyMemory,2500,0,93.8368055555555,6,0
+Tool,tearDownTool,0,0,0,3,0

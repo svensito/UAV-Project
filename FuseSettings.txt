@@ -1,0 +1,13 @@
+OCDEN = [ ]
+JTAGEN = [X]
+SPIEN = [X]
+CKOPT = [ ]
+EESAVE = [ ]
+BOOTSZ = 2048W_3800
+BOOTRST = [ ]
+BODLEVEL = 2V7
+BODEN = [ ]
+SUT_CKSEL = EXTHIFXTALRES_16KCK_64MS
+
+HIGH = 0x99 (valid)
+LOW = 0xFF (valid)
