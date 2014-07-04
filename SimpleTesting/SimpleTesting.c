@@ -241,6 +241,10 @@ int main(void)
 	// Estimation of Phi (Kalman)
 	float p_bias = 0;
 	float P_00_Phi, P_01_Phi, P_10_Phi, P_11_Phi = 0;
+	float P_Phi[2][2] = {
+						{P_00_Phi, P_01_Phi},
+						{P_10_Phi, P_11_Phi},
+						};
 	float Phi_temp, S_Phi, K_0_Phi, K_1_Phi = 0;
 	// Estimation of Psi (Kalman)
 	float r_bias = 0;
