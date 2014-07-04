@@ -228,8 +228,8 @@ int main(void)
 	// Kalman Filter Data
 	// weighing matrices ???
 	float Q_angle = 0.001;
-	float Q_gyro = 0.003;
-	float R_angle = 0.03;
+	float Q_gyro = 0.005;
+	float R_angle = 0.05;
 	// Estimation of Theta (Kalman)
 	float q_bias = 0;
 	float P_00_Theta, P_01_Theta, P_10_Theta, P_11_Theta = 0;
