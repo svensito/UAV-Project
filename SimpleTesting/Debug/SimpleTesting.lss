@@ -17,19 +17,19 @@ Idx Name          Size      VMA       LMA       File off  Algn
                   CONTENTS, READONLY
   6 .debug_aranges 00000280  00000000  00000000  00006995  2**0
                   CONTENTS, READONLY, DEBUGGING
-  7 .debug_info   00003d0c  00000000  00000000  00006c15  2**0
+  7 .debug_info   00003d19  00000000  00000000  00006c15  2**0
                   CONTENTS, READONLY, DEBUGGING
-  8 .debug_abbrev 00000d37  00000000  00000000  0000a921  2**0
+  8 .debug_abbrev 00000d46  00000000  00000000  0000a92e  2**0
                   CONTENTS, READONLY, DEBUGGING
-  9 .debug_line   0000103a  00000000  00000000  0000b658  2**0
+  9 .debug_line   0000103b  00000000  00000000  0000b674  2**0
                   CONTENTS, READONLY, DEBUGGING
- 10 .debug_frame  0000060c  00000000  00000000  0000c694  2**2
+ 10 .debug_frame  0000060c  00000000  00000000  0000c6b0  2**2
                   CONTENTS, READONLY, DEBUGGING
- 11 .debug_str    00000cd7  00000000  00000000  0000cca0  2**0
+ 11 .debug_str    00000cdd  00000000  00000000  0000ccbc  2**0
                   CONTENTS, READONLY, DEBUGGING
- 12 .debug_loc    00001e21  00000000  00000000  0000d977  2**0
+ 12 .debug_loc    00001e21  00000000  00000000  0000d999  2**0
                   CONTENTS, READONLY, DEBUGGING
- 13 .debug_ranges 000001f0  00000000  00000000  0000f798  2**0
+ 13 .debug_ranges 000001f0  00000000  00000000  0000f7ba  2**0
                   CONTENTS, READONLY, DEBUGGING
 
 Disassembly of section .text:
@@ -2862,7 +2862,7 @@ int main(void)
     12ba:	7a 8f       	std	Y+26, r23	; 0x1a
     12bc:	8b 8f       	std	Y+27, r24	; 0x1b
     12be:	9c 8f       	std	Y+28, r25	; 0x1c
-				P_00_Theta +=  - sample_time * (P_10_Theta + P_01_Theta) + Q_angle * sample_time;
+				P_00_Theta +=  - sample_time * ((P_10_Theta + P_01_Theta) - Q_angle);
     12c0:	7d a5       	ldd	r23, Y+45	; 0x2d
     12c2:	6e a5       	ldd	r22, Y+46	; 0x2e
     12c4:	9f a5       	ldd	r25, Y+47	; 0x2f
@@ -2880,16 +2880,16 @@ int main(void)
     12dc:	8f 2f       	mov	r24, r31
     12de:	9e 2f       	mov	r25, r30
     12e0:	0e 94 b9 10 	call	0x2172	; 0x2172 <__addsf3>
-    12e4:	2d ec       	ldi	r18, 0xCD	; 205
-    12e6:	3c ec       	ldi	r19, 0xCC	; 204
-    12e8:	4c e4       	ldi	r20, 0x4C	; 76
-    12ea:	5d eb       	ldi	r21, 0xBD	; 189
-    12ec:	0e 94 d2 12 	call	0x25a4	; 0x25a4 <__mulsf3>
-    12f0:	28 e1       	ldi	r18, 0x18	; 24
-    12f2:	37 eb       	ldi	r19, 0xB7	; 183
-    12f4:	41 e5       	ldi	r20, 0x51	; 81
-    12f6:	58 e3       	ldi	r21, 0x38	; 56
-    12f8:	0e 94 b9 10 	call	0x2172	; 0x2172 <__addsf3>
+    12e4:	2f e6       	ldi	r18, 0x6F	; 111
+    12e6:	32 e1       	ldi	r19, 0x12	; 18
+    12e8:	43 e8       	ldi	r20, 0x83	; 131
+    12ea:	5a e3       	ldi	r21, 0x3A	; 58
+    12ec:	0e 94 b8 10 	call	0x2170	; 0x2170 <__subsf3>
+    12f0:	2d ec       	ldi	r18, 0xCD	; 205
+    12f2:	3c ec       	ldi	r19, 0xCC	; 204
+    12f4:	4c e4       	ldi	r20, 0x4C	; 76
+    12f6:	5d eb       	ldi	r21, 0xBD	; 189
+    12f8:	0e 94 d2 12 	call	0x25a4	; 0x25a4 <__mulsf3>
     12fc:	26 96       	adiw	r28, 0x06	; 6
     12fe:	bf ad       	ldd	r27, Y+63	; 0x3f
     1300:	26 97       	sbiw	r28, 0x06	; 6

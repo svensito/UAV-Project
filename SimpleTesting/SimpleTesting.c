@@ -331,15 +331,15 @@ int main(void)
 				
 				// Calculating the attitude by using Kalman Filtering
 				Theta += sample_time * (q_filt-q_bias);
-				P_00_Theta +=  - sample_time * (P_10_Theta + P_01_Theta) + Q_angle * sample_time;
+				P_00_Theta +=  - sample_time * ((P_10_Theta + P_01_Theta) - Q_angle);
 				P_01_Theta +=  - sample_time * P_11_Theta;
-				P_10_Theta +=  - sample_time * P_11_Theta;
+				P_10_Theta = P_01_Theta;
 				P_11_Theta +=  + Q_gyro * sample_time;
 				
 				Phi += sample_time * (p_filt-p_bias);
-				P_00_Phi +=  - sample_time * (P_10_Phi + P_01_Phi) + Q_angle * sample_time;
+				P_00_Phi +=  - sample_time * ((P_10_Phi + P_01_Phi) - Q_angle);
 				P_01_Phi +=  - sample_time * P_11_Phi;
-				P_10_Phi +=  - sample_time * P_11_Phi;
+				P_10_Phi = P_01_Phi;
 				P_11_Phi +=  + Q_gyro * sample_time;
 				
 				/*

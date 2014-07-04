@@ -1144,7 +1144,7 @@ LOAD c:/program files/atmel/atmel toolchain/avr8 gcc/native/3.4.2.1002/avr8-gnu-
 .debug_pubnames
  *(.debug_pubnames)
 
-.debug_info     0x00000000     0x3d0c
+.debug_info     0x00000000     0x3d19
  *(.debug_info)
  .debug_info    0x00000000      0x594 Accelerometer.o
  .debug_info    0x00000594      0x703 Barometer.o
@@ -1153,11 +1153,11 @@ LOAD c:/program files/atmel/atmel toolchain/avr8 gcc/native/3.4.2.1002/avr8-gnu-
  .debug_info    0x000019f9      0x63f Magnetometer.o
  .debug_info    0x00002038      0x1d0 port.o
  .debug_info    0x00002208      0x253 ServoControl.o
- .debug_info    0x0000245b     0x1156 SimpleTesting.o
- .debug_info    0x000035b1      0x75b uart.o
+ .debug_info    0x0000245b     0x1163 SimpleTesting.o
+ .debug_info    0x000035be      0x75b uart.o
  *(.gnu.linkonce.wi.*)
 
-.debug_abbrev   0x00000000      0xd37
+.debug_abbrev   0x00000000      0xd46
  *(.debug_abbrev)
  .debug_abbrev  0x00000000      0x158 Accelerometer.o
  .debug_abbrev  0x00000158      0x14c Barometer.o
@@ -1166,10 +1166,10 @@ LOAD c:/program files/atmel/atmel toolchain/avr8 gcc/native/3.4.2.1002/avr8-gnu-
  .debug_abbrev  0x0000061f      0x147 Magnetometer.o
  .debug_abbrev  0x00000766       0xb0 port.o
  .debug_abbrev  0x00000816       0xe9 ServoControl.o
- .debug_abbrev  0x000008ff      0x2b6 SimpleTesting.o
- .debug_abbrev  0x00000bb5      0x182 uart.o
+ .debug_abbrev  0x000008ff      0x2c5 SimpleTesting.o
+ .debug_abbrev  0x00000bc4      0x182 uart.o
 
-.debug_line     0x00000000     0x103a
+.debug_line     0x00000000     0x103b
  *(.debug_line)
  .debug_line    0x00000000      0x132 Accelerometer.o
  .debug_line    0x00000132      0x153 Barometer.o
@@ -1178,8 +1178,8 @@ LOAD c:/program files/atmel/atmel toolchain/avr8 gcc/native/3.4.2.1002/avr8-gnu-
  .debug_line    0x0000065e      0x136 Magnetometer.o
  .debug_line    0x00000794      0x1b3 port.o
  .debug_line    0x00000947      0x154 ServoControl.o
- .debug_line    0x00000a9b      0x393 SimpleTesting.o
- .debug_line    0x00000e2e      0x20c uart.o
+ .debug_line    0x00000a9b      0x394 SimpleTesting.o
+ .debug_line    0x00000e2f      0x20c uart.o
 
 .debug_frame    0x00000000      0x60c
  *(.debug_frame)
@@ -1193,7 +1193,7 @@ LOAD c:/program files/atmel/atmel toolchain/avr8 gcc/native/3.4.2.1002/avr8-gnu-
  .debug_frame   0x000003e4       0x84 SimpleTesting.o
  .debug_frame   0x00000468      0x1a4 uart.o
 
-.debug_str      0x00000000      0xcd7
+.debug_str      0x00000000      0xcdd
  *(.debug_str)
  .debug_str     0x00000000      0x23d Accelerometer.o
                                 0x293 (size before relaxing)
@@ -1209,9 +1209,9 @@ LOAD c:/program files/atmel/atmel toolchain/avr8 gcc/native/3.4.2.1002/avr8-gnu-
                                 0x17f (size before relaxing)
  .debug_str     0x00000658       0xc8 ServoControl.o
                                 0x1bc (size before relaxing)
- .debug_str     0x00000720      0x505 SimpleTesting.o
-                                0x82c (size before relaxing)
- .debug_str     0x00000c25       0xb2 uart.o
+ .debug_str     0x00000720      0x50b SimpleTesting.o
+                                0x832 (size before relaxing)
+ .debug_str     0x00000c2b       0xb2 uart.o
                                 0x233 (size before relaxing)
 
 .debug_loc      0x00000000     0x1e21
