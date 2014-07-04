@@ -233,6 +233,10 @@ int main(void)
 	// Estimation of Theta (Kalman)
 	float q_bias = 0;
 	float P_00_Theta, P_01_Theta, P_10_Theta, P_11_Theta = 0;
+	float P_Theta[2][2] = {
+						{P_00_Theta, P_01_Theta},
+						{P_10_Theta, P_11_Theta},
+						};
 	float Theta_temp, S_Theta, K_0_Theta, K_1_Theta = 0;
 	// Estimation of Phi (Kalman)
 	float p_bias = 0;
