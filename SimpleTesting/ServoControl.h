@@ -50,7 +50,10 @@ volatile long POSITION5;
 
 volatile int ctrl_in[9];
 volatile int ctrl_in_offset[9];
+volatile int ctrl_in_prev[9];
+
 volatile long ctrl_out[5];
+volatile long ctrl_out_prev[5];
 
 typedef enum
 	{

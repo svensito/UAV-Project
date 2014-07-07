@@ -233,18 +233,10 @@ int main(void)
 	// Estimation of Theta (Kalman)
 	float q_bias = 0;
 	float P_00_Theta, P_01_Theta, P_10_Theta, P_11_Theta = 0;
-	float P_Theta[2][2] = {
-						{P_00_Theta, P_01_Theta},
-						{P_10_Theta, P_11_Theta},
-						};
 	float Theta_temp, S_Theta, K_0_Theta, K_1_Theta = 0;
 	// Estimation of Phi (Kalman)
 	float p_bias = 0;
 	float P_00_Phi, P_01_Phi, P_10_Phi, P_11_Phi = 0;
-	float P_Phi[2][2] = {
-						{P_00_Phi, P_01_Phi},
-						{P_10_Phi, P_11_Phi},
-						};
 	float Phi_temp, S_Phi, K_0_Phi, K_1_Phi = 0;
 	// Estimation of Psi (Kalman)
 	float r_bias = 0;
@@ -410,10 +402,15 @@ int main(void)
 						{
 							write_string_ln("DIRECT CTRL");
 						}
+							if (ctrl_in > ctrl_in_prev)
+							{
+								
+							}
+						 
 						 ctrl_out[motor] = NEUTRAL+((ctrl_in[stick_l_up_down]-SERVO_TRIM_MOTOR)*SERVO_GAIN_MOTOR);		
-						 ctrl_out[aileron] = NEUTRAL+((ctrl_in[stick_r_left_right]-SERVO_TRIM_MOTOR)*SERVO_GAIN_MOTOR);
-						 ctrl_out[elevator] = NEUTRAL+((ctrl_in[stick_r_up_down]-SERVO_TRIM_MOTOR)*SERVO_GAIN_MOTOR);
-						 ctrl_out[rudder] = NEUTRAL+((ctrl_in[stick_l_left_right]-SERVO_TRIM_MOTOR)*SERVO_GAIN_MOTOR);
+						 ctrl_out[aileron] = NEUTRAL+((ctrl_in[stick_r_left_right]-SERVO_TRIM_AILERON)*SERVO_GAIN_AILERON);
+						 ctrl_out[elevator] = NEUTRAL+((ctrl_in[stick_r_up_down]-SERVO_TRIM_ELEVATOR)*SERVO_GAIN_ELEVATOR);
+						 ctrl_out[rudder] = NEUTRAL+((ctrl_in[stick_l_left_right]-SERVO_TRIM_RUDDER)*SERVO_GAIN_RUDDER);
 						 
 						 // Flap Control
 						 if(ctrl_in[rotary_knob]<135 && ctrl_in[rotary_knob]>120) ctrl_out[flap] = FLAP_UP;
@@ -461,9 +458,9 @@ int main(void)
 						//POSITION3 = NEUTRAL+((ctrl_in[2]-SERVO_TRIM_ELEVATOR)*SERVO_GAIN_ELEVATOR);	// Elevator	up:			POSITION++	down: POSITION--
 						//POSITION4 = NEUTRAL+((ctrl_in[3]-SERVO_TRIM_RUDDER)*SERVO_GAIN_RUDDER);		// Rudder
 						ctrl_out[motor] = NEUTRAL+((ctrl_in[stick_l_up_down]-SERVO_TRIM_MOTOR)*SERVO_GAIN_MOTOR);
-						//ctrl_out[aileron] = NEUTRAL+((ctrl_in[stick_r_left_right]-SERVO_TRIM_MOTOR)*SERVO_GAIN_MOTOR);
-						//ctrl_out[elevator] = NEUTRAL+((ctrl_in[stick_r_up_down]-SERVO_TRIM_MOTOR)*SERVO_GAIN_MOTOR);
-						ctrl_out[rudder] = NEUTRAL+((ctrl_in[stick_l_left_right]-SERVO_TRIM_MOTOR)*SERVO_GAIN_MOTOR);
+						//ctrl_out[aileron] = NEUTRAL+((ctrl_in[stick_r_left_right]-SERVO_TRIM_AILERON)*SERVO_GAIN_AILERON);
+						//ctrl_out[elevator] = NEUTRAL+((ctrl_in[stick_r_up_down]-SERVO_TRIM_ELEVATOR)*SERVO_GAIN_ELEVATOR);
+						ctrl_out[rudder] = NEUTRAL+((ctrl_in[stick_l_left_right]-SERVO_TRIM_RUDDER)*SERVO_GAIN_RUDDER);
 						
 						// Flying without Flaps only!
 						// We use the knob to increase gain of the control
@@ -483,7 +480,7 @@ int main(void)
 						
 						Theta_error = Theta_hold - Theta; // 
 						Theta_error_sum += Theta_error;
-						ctrl_out[elevator] = (trimmed_elevator - control_gain * (Kp_Theta*-Theta_error + Ki_Theta*Theta_error_sum*0.05 + Kd_Theta*(Theta_error_prev - Theta_error)/0.05));
+						ctrl_out[elevator] = (trimmed_elevator - control_gain * (Kp_Theta*-Theta_error + Ki_Theta*Theta_error_sum*sample_time + Kd_Theta*(Theta_error_prev - Theta_error)/sample_time));
 						if(ctrl_out[elevator] > RIGHT) ctrl_out[elevator] = RIGHT;
 						else if (ctrl_out[elevator] < LEFT) ctrl_out[elevator] = LEFT;
 						Theta_error_prev = Theta_error;
@@ -500,7 +497,7 @@ int main(void)
 						
 						Phi_error = Phi - Phi_hold;		// Positive Error shall give negative control (Aileron roll left)
 						Phi_error_sum += Phi_error;
-						ctrl_out[aileron] = (trimmed_aileron - control_gain * (Kp_Phi*Phi_error + Ki_Phi*Phi_error_sum*0.05 + Kd_Phi*(Phi_error_prev - Phi_error)/0.05));
+						ctrl_out[aileron] = (trimmed_aileron - control_gain * (Kp_Phi*Phi_error + Ki_Phi*Phi_error_sum*sample_time + Kd_Phi*(Phi_error_prev - Phi_error)/sample_time));
 						Phi_error_prev = Phi_error;
 						if(ctrl_out[aileron] > RIGHT) ctrl_out[aileron] = RIGHT;
 						else if (ctrl_out[aileron] < LEFT) ctrl_out[aileron] = LEFT;	
@@ -523,7 +520,9 @@ int main(void)
 					write_var(control_gain);write_string_ln(";");
 					
 				
-				Ctrl_Mode_prev = Ctrl_Mode;	// Setting previous State
+				Ctrl_Mode_prev = Ctrl_Mode;		// Setting previous State
+				ctrl_out_prev[5] = ctrl_out;	// Setting previous controls
+				ctrl_in_prev[9] = ctrl_in;
 			}		
 			
 			// Toggling the Watchdog (Reset)
