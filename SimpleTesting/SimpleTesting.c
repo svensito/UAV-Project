@@ -407,23 +407,25 @@ int main(void)
 								
 							}
 						 
-						 ctrl_out[motor] = NEUTRAL+((ctrl_in[stick_l_up_down]-SERVO_TRIM_MOTOR)*SERVO_GAIN_MOTOR);		
-						 ctrl_out[aileron] = NEUTRAL+((ctrl_in[stick_r_left_right]-SERVO_TRIM_AILERON)*SERVO_GAIN_AILERON);
-						 ctrl_out[elevator] = NEUTRAL+((ctrl_in[stick_r_up_down]-SERVO_TRIM_ELEVATOR)*SERVO_GAIN_ELEVATOR);
-						 ctrl_out[rudder] = NEUTRAL+((ctrl_in[stick_l_left_right]-SERVO_TRIM_RUDDER)*SERVO_GAIN_RUDDER);
+						 ctrl_out[motor]	=	NEUTRAL+((ctrl_in[stick_l_up_down]-SERVO_TRIM_MOTOR)*SERVO_GAIN_MOTOR);		
+						 ctrl_out[aileron]	=	NEUTRAL+((ctrl_in[stick_r_left_right]-SERVO_TRIM_AILERON)*SERVO_GAIN_AILERON);
+						 ctrl_out[elevator] =	NEUTRAL+((ctrl_in[stick_r_up_down]-SERVO_TRIM_ELEVATOR)*SERVO_GAIN_ELEVATOR);
+						 ctrl_out[rudder]	=	NEUTRAL+((ctrl_in[stick_l_left_right]-SERVO_TRIM_RUDDER)*SERVO_GAIN_RUDDER);
 						 
 						 // Flap Delay
-						 uint16_t flap_target = 0;
+						 uint16_t flap_target = 0;	// defining the target flap position
+						 uint8_t flap_delta = 10;	// giving the speed of flap extension 
+													// 10 will give around 2 seconds for movement in between two positions
 						 
 						 // Flap Control
-						 if(ctrl_in[rotary_knob]<135 && ctrl_in[rotary_knob]>120) flap_target = FLAP_UP;
-						 else if(ctrl_in[rotary_knob]<150 && ctrl_in[rotary_knob]>135) flap_target = FLAP_1;
-						 else if(ctrl_in[rotary_knob]<160 && ctrl_in[rotary_knob]>150) flap_target = FLAP_FULL;
+						 if(ctrl_in[rotary_knob]<135 && ctrl_in[rotary_knob]>120)		flap_target = FLAP_UP;
+						 else if(ctrl_in[rotary_knob]<150 && ctrl_in[rotary_knob]>135)	flap_target = FLAP_1;
+						 else if(ctrl_in[rotary_knob]<160 && ctrl_in[rotary_knob]>150)	flap_target = FLAP_FULL;
 						 
 						 // drive flap with sample_time steps delay 
-						 if(ctrl_out[flap]<flap_target) ctrl_out[flap]++;
-						 else if(ctrl_out[flap]>flap_target) ctrl_out[flap]--;
-						 else ctrl_out[flap]=flap_target;
+						 if(ctrl_out[flap] < flap_target)		ctrl_out[flap]+= flap_delta;
+						 else if(ctrl_out[flap] > flap_target)	ctrl_out[flap]-= flap_delta;
+						 else ctrl_out[flap] = flap_target;
 						 
 					break;
 					
