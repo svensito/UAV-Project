@@ -412,10 +412,18 @@ int main(void)
 						 ctrl_out[elevator] = NEUTRAL+((ctrl_in[stick_r_up_down]-SERVO_TRIM_ELEVATOR)*SERVO_GAIN_ELEVATOR);
 						 ctrl_out[rudder] = NEUTRAL+((ctrl_in[stick_l_left_right]-SERVO_TRIM_RUDDER)*SERVO_GAIN_RUDDER);
 						 
+						 // Flap Delay
+						 uint16_t flap_target = 0;
+						 
 						 // Flap Control
-						 if(ctrl_in[rotary_knob]<135 && ctrl_in[rotary_knob]>120) ctrl_out[flap] = FLAP_UP;
-						 else if(ctrl_in[rotary_knob]<150 && ctrl_in[rotary_knob]>135) ctrl_out[flap] = FLAP_1;
-						 else if(ctrl_in[rotary_knob]<160 && ctrl_in[rotary_knob]>150) ctrl_out[flap] = FLAP_FULL;
+						 if(ctrl_in[rotary_knob]<135 && ctrl_in[rotary_knob]>120) flap_target = FLAP_UP;
+						 else if(ctrl_in[rotary_knob]<150 && ctrl_in[rotary_knob]>135) flap_target = FLAP_1;
+						 else if(ctrl_in[rotary_knob]<160 && ctrl_in[rotary_knob]>150) flap_target = FLAP_FULL;
+						 
+						 // drive flap with sample_time steps delay 
+						 if(ctrl_out[flap]<flap_target) ctrl_out[flap]++;
+						 else if(ctrl_out[flap]>flap_target) ctrl_out[flap]--;
+						 else ctrl_out[flap]=flap_target;
 						 
 					break;
 					
@@ -436,6 +444,7 @@ int main(void)
 							Phi_hold = Phi;
 							Theta_hold = Theta;
 							trimmed_elevator = ctrl_out[elevator]; // Setting current input as "trimmed input"
+							trimmed_aileron = ctrl_out[aileron];
 							//resetting the errors
 							alt_error = 0;
 							Theta_error = 0;
@@ -446,10 +455,8 @@ int main(void)
 							Theta_error_prev = 0;
 							Phi_error_sum = 0;
 							Phi_error_prev = 0;
-							write_string("Trimmed Elevator: ");write_var_ln(trimmed_elevator);
-							trimmed_aileron = ctrl_out[aileron];
-							write_string("Trimmed Aileron: ");write_var_ln(trimmed_aileron);
-							write_string("Target Alt: ");write_var_ln(alt_hold);
+							write_string("Trim El / Ail: ");write_var(trimmed_elevator);write_string(" - ");write_var_ln(trimmed_aileron);
+							write_string("Target Alt / Bank: ");write_var(alt_hold);write_string(" - ");write_var_ln(Phi_hold);
 						}
 						
 						// Other controls as usual
