@@ -14,6 +14,8 @@
 
 #define PI			3.1415926535897932384626433832795
 
+#define ATM32_SLAVE_ADDR1 0x20		// Slave Address of the Controller
+
 #define TRUE 1
 #define FALSE 0
 

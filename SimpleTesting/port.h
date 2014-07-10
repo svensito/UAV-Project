@@ -12,6 +12,7 @@
 void i2c_transmit(char address, char reg, char data);
 unsigned char i2cRead(char address, char reg);
 void i2c_initialize();
+void i2c_initialize_as_slave();
 void i2c_start();
 void i2c_repeated_start();
 void i2c_send_address_read(char);

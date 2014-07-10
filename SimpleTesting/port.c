@@ -16,6 +16,20 @@ void i2c_initialize()
 	// Arduino additionally enables internal Pull Ups? Is this needed? Arduino is the only source where I found this.
 }
 
+void i2c_initialize_as_slave()
+{
+	// Set the Baudrate Register
+	TWBR = ((F_CPU/SCL_CLOCK)-16)/2;  /* must be > 10 for stable operation */
+	
+	// Write the TWAR Register with TWI identifier -> Check that no other unit uses this identifier
+	TWAR = ATM32_SLAVE_ADDR1<<1;	// Shift by one as the LSB is not dedicated for the Address
+	
+	// Enable the TWI Module
+	TWCR |= (1<<TWEA)|(1<<TWIE)|(1<<TWEN);	// as per Arduino code!
+	
+	// Arduino additionally enables internal Pull Ups? Is this needed? Arduino is the only source where I found this.
+}
+
 void i2c_start()
 {
 	TWCR = 0xA4;                                                // send a start bit on i2c bus
