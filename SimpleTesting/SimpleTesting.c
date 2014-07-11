@@ -93,7 +93,7 @@ int main(void)
     {
 		// Program Code (infinite loop)
 			
-			write_string_ln("Running");
+			write_string_ln(GPS_string[GPS_STATUS]);
 			
 			// Toggling the Watchdog (Reset)
 			wdt_reset();

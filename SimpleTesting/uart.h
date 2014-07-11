@@ -3,8 +3,8 @@
 
 #define UART_WORD_LENGTH		40
 #define UART_COMPARE_SUCCESS	0
-#define GPS_Params				13
-#define GPS_chars				9
+#define GPS_Params				12
+#define GPS_chars				12
 
 //Init Uart Function
 void init_uart();

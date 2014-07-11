@@ -45,6 +45,11 @@ typedef enum {
 				GPS_CHECKSUM
 } GPS_params_e ;
 
+
+char GPS_GGA[12][12];
+char GPS_RMC[12][12];
+
+
 struct three_elements_obj
 {
 	long p,q,r;
@@ -52,7 +57,7 @@ struct three_elements_obj
 
 struct acc_readings_obj
 {
-	long a_x,a_y,a_z;	
+	long a_x,a_y,a_z;
 };
 
 #endif /* GENERALSETTINGS_H_ */
