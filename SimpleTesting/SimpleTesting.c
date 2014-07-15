@@ -34,12 +34,12 @@
 // Local declarations and variables
 
 // These are the task flags, set them to activate / deactivate task
-int task_gyro	= TRUE;
-int task_acc	= TRUE;
-int task_mag	= TRUE;
+int task_gyro	= FALSE;
+int task_acc	= FALSE;
+int task_mag	= FALSE;
 int task_temp	= FALSE;
-int task_baro	= TRUE;
-int task_speed	= TRUE;
+int task_baro	= FALSE;
+int task_speed	= FALSE;
 
 // Control Mode
 uint8_t Ctrl_Mode = DIRECT_CTRL;		// First Test with Direct Law Only: DIRECT_LAW or NORMAL_LAW possible
@@ -526,12 +526,21 @@ int main(void)
 					write_var(Theta);write_string(";");
 					write_var(altitude_filt);write_string(";");write_var(speed_filt);write_string(";");
 					write_var(alt_error);write_string(";");write_var(Phi_error);write_string(";");
-					write_var(control_gain);write_string_ln(";");
-					
-				
+					write_var(control_gain);
+					if(bla_cnt == 20) 
+					{
+						write_string(";");
+						write_string(GPS_string[GPS_LONGITUDE]);
+						write_string(";");
+						write_string(GPS_string[GPS_LATITUDE]);
+						bla_cnt	= 0;
+					}
+					bla_cnt++;
+					write_string_ln(";");
 				Ctrl_Mode_prev = Ctrl_Mode;		// Setting previous State
 				ctrl_out_prev[5] = ctrl_out;	// Setting previous controls
 				ctrl_in_prev[9] = ctrl_in;
+				//GPS_string_prev[GPS_LONGITUDE][] = GPS_string[GPS_LONGITUDE];
 			}		
 			
 			// Toggling the Watchdog (Reset)

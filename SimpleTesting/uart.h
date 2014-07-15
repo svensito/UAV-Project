@@ -32,6 +32,7 @@ volatile char uart_word_reset;
 int uart_counter;
 
 volatile char GPS_string[GPS_Params][GPS_chars];
+volatile char GPS_string_prev[GPS_Params][GPS_chars];
 
 
 #endif

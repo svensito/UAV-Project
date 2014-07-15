@@ -5,6 +5,7 @@
 #include <string.h>
 #include "GeneralSettings.h"
 #include "uart.h"
+#include <math.h>
 
 
 
@@ -28,9 +29,10 @@ void init_uart()
 	UCSRC = (1<<URSEL)|(1<<UCSZ1)|(1<<UCSZ0);
 	// Need to be in line with the baudrate!
 	// Baudrate: 2400 12 MHZ prozessor
-	uint16_t baudrate = 28800; // achtung: bei geringen baudraten müsste evtl das URRH auch noch beschrieben werden...
+	uint16_t baudrate = 38400; // achtung: bei geringen baudraten müsste evtl das URRH auch noch beschrieben werden...
+	int8_t baud_calc = (F_CPU/(baudrate*16))-1;
 	UBRRH = 0x00;
-	UBRRL = 0x19;
+	UBRRL = 0x12;
 	
 	sei();	//that is needed essentially (turn on interrupts globally)
 	// das UDR auslesen, falls daten drin sind und verwerfen
