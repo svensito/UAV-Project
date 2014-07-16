@@ -34,12 +34,12 @@
 // Local declarations and variables
 
 // These are the task flags, set them to activate / deactivate task
-int task_gyro	= FALSE;
-int task_acc	= FALSE;
-int task_mag	= FALSE;
+int task_gyro	= TRUE;
+int task_acc	= TRUE;
+int task_mag	= TRUE;
 int task_temp	= FALSE;
-int task_baro	= FALSE;
-int task_speed	= FALSE;
+int task_baro	= TRUE;
+int task_speed	= TRUE;
 
 // Control Mode
 uint8_t Ctrl_Mode = DIRECT_CTRL;		// First Test with Direct Law Only: DIRECT_LAW or NORMAL_LAW possible
@@ -227,9 +227,9 @@ int main(void)
 	float Phi_acc = 0;		// Phi based on the Accelerometer reading
 	// Kalman Filter Data
 	// weighing matrices ???
-	float Q_angle = 0.001;
+	float Q_angle = 0.005;
 	float Q_gyro = 0.005;
-	float R_angle = 0.05;
+	float R_angle = 0.02;
 	// Estimation of Theta (Kalman)
 	float q_bias = 0;
 	float P_00_Theta, P_01_Theta, P_10_Theta, P_11_Theta = 0;
