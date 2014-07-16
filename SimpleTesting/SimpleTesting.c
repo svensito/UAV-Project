@@ -254,8 +254,27 @@ int main(void)
 	
 	while(1)
     {
-		// Program Code (infinite loop)
+			// Program Code (infinite loop)
 			
+			if(UART_READY_FLAG == TRUE)
+			{
+				if(strcmp(GPS_string[0],"GPRMC")==0)
+				{
+					memcpy(GPS_RMC,GPS_string,sizeof(GPS_RMC));
+					memset(GPS_string,0,sizeof(GPS_string));
+					
+				}
+				if(strcmp(GPS_string[0],"GPGGA")==0)
+				{
+					memcpy(GPS_GGA,GPS_string,sizeof(GPS_GGA));
+					memset(GPS_string,0,sizeof(GPS_string));
+				}
+				/*
+				write_string_ln(GPS_RMC[GPS_RMC_GROUNDSPEED]);
+				write_string_ln(GPS_GGA[GPS_GGA_ALTMSL]);
+				*/
+				UART_READY_FLAG = FALSE;
+			}
 			
 			if(task_flag == 1)
 			{
@@ -527,16 +546,17 @@ int main(void)
 					write_var(altitude_filt);write_string(";");write_var(speed_filt);write_string(";");
 					write_var(alt_error);write_string(";");write_var(Phi_error);write_string(";");
 					write_var(control_gain);
-					if(bla_cnt == 20) 
+					// In case at least once a GPS Signal has been received, the GPS Info will also be printed
+					if(strcmp(GPS_RMC[GPS_RMC_MODE],"")!=0 || strcmp(GPS_GGA[GPS_GGA_MODE],"")!=0) 
 					{
 						write_string(";");
-						write_string(GPS_string[GPS_LONGITUDE]);
+						write_string(GPS_RMC[GPS_RMC_LONGITUDE]);
 						write_string(";");
-						write_string(GPS_string[GPS_LATITUDE]);
-						bla_cnt	= 0;
+						write_string(GPS_RMC[GPS_RMC_LATITUDE]);
+					
 					}
-					bla_cnt++;
 					write_string_ln(";");
+					
 				Ctrl_Mode_prev = Ctrl_Mode;		// Setting previous State
 				ctrl_out_prev[5] = ctrl_out;	// Setting previous controls
 				ctrl_in_prev[9] = ctrl_in;

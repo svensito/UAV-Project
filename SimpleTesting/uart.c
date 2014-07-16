@@ -14,10 +14,10 @@
 // UART COMMUNICATION
 
 // general definition setting
-#define UART_READY_FLAG		FALSE
 #define GPS_ACTIVE			TRUE
 
 int8_t GPS_char, GPS_param = 0;
+volatile uint8_t UART_READY_FLAG = FALSE;
 
 // UART initialization
 void init_uart()
@@ -52,26 +52,32 @@ ISR (USART_RXC_vect)
     uart_reading_ascii = UDR;
 	// the ascii number will be converted to char
 	uart_reading = (char) uart_reading_ascii;
-	
+	UART_READY_FLAG	= FALSE;
 	if(GPS_ACTIVE)
 	{
-		if ((uart_reading == ','))	/*as we are using the Carriage Return, the terminal program needs to end a transmission with CR to be detected */
-		{
-			// always terminate a string with \0
-			GPS_string[GPS_param][GPS_char] = '\0';
-			// jump to start
-			GPS_char = 0;
-			// increase row
-			GPS_param++;
-		}
-		else if (uart_reading == '\r')
+
+		if (uart_reading == '$')	/* The GPS string always starts with a $ sign to indicate new data*/
 		{
 			// always terminate a string with \0
 			GPS_string[GPS_param][GPS_char] = '\0';
 			// reset position
 			GPS_char = 0;
-			// reset row
+			// reset row = parameter
 			GPS_param = 0;
+		}
+		else if ((uart_reading == ','))	/*the information in the GPS string is separated by commata */
+		{
+			// always terminate a string with \0
+			GPS_string[GPS_param][GPS_char] = '\0';
+			// jump to start
+			GPS_char = 0;
+			// increase row = parameter
+			GPS_param++;
+		}
+		else if ((uart_reading == '\n'))	/*GPS is sending CR LF anyways so we can use the line feed to detect transmitted data */
+		{
+
+			UART_READY_FLAG	= TRUE;
 		}
 		else
 		{

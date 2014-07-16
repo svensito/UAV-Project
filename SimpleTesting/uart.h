@@ -3,7 +3,7 @@
 
 #define UART_WORD_LENGTH		40
 #define UART_COMPARE_SUCCESS	0
-#define GPS_Params				13
+#define GPS_Params				16
 #define GPS_chars				9
 
 //Init Uart Function
@@ -32,7 +32,9 @@ volatile char uart_word_reset;
 int uart_counter;
 
 volatile char GPS_string[GPS_Params][GPS_chars];
-volatile char GPS_string_prev[GPS_Params][GPS_chars];
+volatile char GPS_GGA[GPS_Params][GPS_chars];
+volatile char GPS_RMC[GPS_Params][GPS_chars];
 
+volatile uint8_t UART_READY_FLAG;
 
 #endif
