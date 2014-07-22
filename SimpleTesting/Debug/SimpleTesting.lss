@@ -5,31 +5,31 @@ Sections:
 Idx Name          Size      VMA       LMA       File off  Algn
   0 .text         000029ba  00000000  00000000  00000094  2**1
                   CONTENTS, ALLOC, LOAD, READONLY, CODE
-  1 .data         00000136  00800060  000029ba  00002a4e  2**0
+  1 .data         00000140  00800060  000029ba  00002a4e  2**0
                   CONTENTS, ALLOC, LOAD, DATA
-  2 .bss          0000028a  00800196  00800196  00002b84  2**0
+  2 .bss          00000280  008001a0  008001a0  00002b8e  2**0
                   ALLOC
-  3 .stab         000032dc  00000000  00000000  00002b84  2**2
+  3 .stab         000032dc  00000000  00000000  00002b90  2**2
                   CONTENTS, READONLY, DEBUGGING
-  4 .stabstr      00000d4e  00000000  00000000  00005e60  2**0
+  4 .stabstr      00000d4e  00000000  00000000  00005e6c  2**0
                   CONTENTS, READONLY, DEBUGGING
-  5 .comment      0000002f  00000000  00000000  00006bae  2**0
+  5 .comment      0000002f  00000000  00000000  00006bba  2**0
                   CONTENTS, READONLY
-  6 .debug_aranges 00000280  00000000  00000000  00006bdd  2**0
+  6 .debug_aranges 00000280  00000000  00000000  00006be9  2**0
                   CONTENTS, READONLY, DEBUGGING
-  7 .debug_info   0000411e  00000000  00000000  00006e5d  2**0
+  7 .debug_info   0000411e  00000000  00000000  00006e69  2**0
                   CONTENTS, READONLY, DEBUGGING
-  8 .debug_abbrev 00000d65  00000000  00000000  0000af7b  2**0
+  8 .debug_abbrev 00000d65  00000000  00000000  0000af87  2**0
                   CONTENTS, READONLY, DEBUGGING
-  9 .debug_line   00001088  00000000  00000000  0000bce0  2**0
+  9 .debug_line   00001058  00000000  00000000  0000bcec  2**0
                   CONTENTS, READONLY, DEBUGGING
- 10 .debug_frame  0000060c  00000000  00000000  0000cd68  2**2
+ 10 .debug_frame  0000060c  00000000  00000000  0000cd44  2**2
                   CONTENTS, READONLY, DEBUGGING
- 11 .debug_str    00000f04  00000000  00000000  0000d374  2**0
+ 11 .debug_str    00000eff  00000000  00000000  0000d350  2**0
                   CONTENTS, READONLY, DEBUGGING
- 12 .debug_loc    00001fed  00000000  00000000  0000e278  2**0
+ 12 .debug_loc    00001fed  00000000  00000000  0000e24f  2**0
                   CONTENTS, READONLY, DEBUGGING
- 13 .debug_ranges 00000208  00000000  00000000  00010265  2**0
+ 13 .debug_ranges 00000208  00000000  00000000  0001023c  2**0
                   CONTENTS, READONLY, DEBUGGING
 
 Disassembly of section .text:
@@ -97,13 +97,13 @@ Disassembly of section .text:
       98:	02 c0       	rjmp	.+4      	; 0x9e <__do_copy_data+0x10>
       9a:	05 90       	lpm	r0, Z+
       9c:	0d 92       	st	X+, r0
-      9e:	a6 39       	cpi	r26, 0x96	; 150
+      9e:	a0 3a       	cpi	r26, 0xA0	; 160
       a0:	b1 07       	cpc	r27, r17
       a2:	d9 f7       	brne	.-10     	; 0x9a <__do_copy_data+0xc>
 
 000000a4 <__do_clear_bss>:
       a4:	24 e0       	ldi	r18, 0x04	; 4
-      a6:	a6 e9       	ldi	r26, 0x96	; 150
+      a6:	a0 ea       	ldi	r26, 0xA0	; 160
       a8:	b1 e0       	ldi	r27, 0x01	; 1
       aa:	01 c0       	rjmp	.+2      	; 0xae <.do_clear_bss_start>
 
@@ -166,7 +166,7 @@ void acc_start(void)
       f8:	83 e2       	ldi	r24, 0x23	; 35
       fa:	0e 94 60 00 	call	0xc0	; 0xc0 <write_acc_registry>
 	write_string_ln("acc started");
-      fe:	85 e7       	ldi	r24, 0x75	; 117
+      fe:	8f e7       	ldi	r24, 0x7F	; 127
      100:	90 e0       	ldi	r25, 0x00	; 0
      102:	0e 94 06 11 	call	0x220c	; 0x220c <write_string_ln>
      106:	08 95       	ret
@@ -199,33 +199,33 @@ struct acc_readings_obj acc_reading(void)
      12e:	0e 94 6b 05 	call	0xad6	; 0xad6 <i2c_send_address_read>
 	acc_x_l = i2c_read_data_mak();
      132:	0e 94 a0 05 	call	0xb40	; 0xb40 <i2c_read_data_mak>
-     136:	80 93 a6 01 	sts	0x01A6, r24
+     136:	80 93 b0 01 	sts	0x01B0, r24
 	acc_x_h = i2c_read_data_mak();
      13a:	0e 94 a0 05 	call	0xb40	; 0xb40 <i2c_read_data_mak>
-     13e:	80 93 a7 01 	sts	0x01A7, r24
+     13e:	80 93 b1 01 	sts	0x01B1, r24
 	acc_y_l = i2c_read_data_mak();
      142:	0e 94 a0 05 	call	0xb40	; 0xb40 <i2c_read_data_mak>
-     146:	80 93 a0 01 	sts	0x01A0, r24
+     146:	80 93 aa 01 	sts	0x01AA, r24
 	acc_y_h = i2c_read_data_mak();
      14a:	0e 94 a0 05 	call	0xb40	; 0xb40 <i2c_read_data_mak>
-     14e:	80 93 a1 01 	sts	0x01A1, r24
+     14e:	80 93 ab 01 	sts	0x01AB, r24
 	acc_z_l = i2c_read_data_mak();
      152:	0e 94 a0 05 	call	0xb40	; 0xb40 <i2c_read_data_mak>
-     156:	80 93 9a 01 	sts	0x019A, r24
+     156:	80 93 a4 01 	sts	0x01A4, r24
 	acc_z_h = i2c_read_data_nmak();					// add the end we give no master ack to finish communication
      15a:	0e 94 98 05 	call	0xb30	; 0xb30 <i2c_read_data_nmak>
-     15e:	80 93 9b 01 	sts	0x019B, r24
+     15e:	80 93 a5 01 	sts	0x01A5, r24
 	i2c_stop();
      162:	0e 94 a8 05 	call	0xb50	; 0xb50 <i2c_stop>
 	
 	acc_x = ((acc_x_h<<8) | (acc_x_l))>>4;			// to combine high and low bits and to shift over not used bits
-     166:	80 91 a7 01 	lds	r24, 0x01A7
+     166:	80 91 b1 01 	lds	r24, 0x01B1
      16a:	99 27       	eor	r25, r25
      16c:	87 fd       	sbrc	r24, 7
      16e:	90 95       	com	r25
      170:	98 2f       	mov	r25, r24
      172:	88 27       	eor	r24, r24
-     174:	20 91 a6 01 	lds	r18, 0x01A6
+     174:	20 91 b0 01 	lds	r18, 0x01B0
      178:	82 2b       	or	r24, r18
      17a:	95 95       	asr	r25
      17c:	87 95       	ror	r24
@@ -235,16 +235,16 @@ struct acc_readings_obj acc_reading(void)
      184:	87 95       	ror	r24
      186:	95 95       	asr	r25
      188:	87 95       	ror	r24
-     18a:	90 93 a5 01 	sts	0x01A5, r25
-     18e:	80 93 a4 01 	sts	0x01A4, r24
+     18a:	90 93 af 01 	sts	0x01AF, r25
+     18e:	80 93 ae 01 	sts	0x01AE, r24
 	acc_y = ((acc_y_h<<8) | (acc_y_l))>>4;
-     192:	00 91 a1 01 	lds	r16, 0x01A1
+     192:	00 91 ab 01 	lds	r16, 0x01AB
      196:	11 27       	eor	r17, r17
      198:	07 fd       	sbrc	r16, 7
      19a:	10 95       	com	r17
      19c:	10 2f       	mov	r17, r16
      19e:	00 27       	eor	r16, r16
-     1a0:	20 91 a0 01 	lds	r18, 0x01A0
+     1a0:	20 91 aa 01 	lds	r18, 0x01AA
      1a4:	02 2b       	or	r16, r18
      1a6:	15 95       	asr	r17
      1a8:	07 95       	ror	r16
@@ -254,16 +254,16 @@ struct acc_readings_obj acc_reading(void)
      1b0:	07 95       	ror	r16
      1b2:	15 95       	asr	r17
      1b4:	07 95       	ror	r16
-     1b6:	10 93 9f 01 	sts	0x019F, r17
-     1ba:	00 93 9e 01 	sts	0x019E, r16
+     1b6:	10 93 a9 01 	sts	0x01A9, r17
+     1ba:	00 93 a8 01 	sts	0x01A8, r16
 	acc_z = ((acc_z_h<<8) | (acc_z_l))>>4;
-     1be:	40 91 9b 01 	lds	r20, 0x019B
+     1be:	40 91 a5 01 	lds	r20, 0x01A5
      1c2:	55 27       	eor	r21, r21
      1c4:	47 fd       	sbrc	r20, 7
      1c6:	50 95       	com	r21
      1c8:	54 2f       	mov	r21, r20
      1ca:	44 27       	eor	r20, r20
-     1cc:	20 91 9a 01 	lds	r18, 0x019A
+     1cc:	20 91 a4 01 	lds	r18, 0x01A4
      1d0:	42 2b       	or	r20, r18
      1d2:	55 95       	asr	r21
      1d4:	47 95       	ror	r20
@@ -273,24 +273,24 @@ struct acc_readings_obj acc_reading(void)
      1dc:	47 95       	ror	r20
      1de:	55 95       	asr	r21
      1e0:	47 95       	ror	r20
-     1e2:	50 93 99 01 	sts	0x0199, r21
-     1e6:	40 93 98 01 	sts	0x0198, r20
+     1e2:	50 93 a3 01 	sts	0x01A3, r21
+     1e6:	40 93 a2 01 	sts	0x01A2, r20
 	
 	acc_x_g = acc_x * 2; // in milli g => 1/1000 g		// As our FS is set to 01 (+-4G), the resolution is 2mg/digit,  LSM303 Datasheet Page 9
      1ea:	88 0f       	add	r24, r24
      1ec:	99 1f       	adc	r25, r25
-     1ee:	90 93 a3 01 	sts	0x01A3, r25
-     1f2:	80 93 a2 01 	sts	0x01A2, r24
+     1ee:	90 93 ad 01 	sts	0x01AD, r25
+     1f2:	80 93 ac 01 	sts	0x01AC, r24
 	acc_y_g = acc_y * 2;
      1f6:	00 0f       	add	r16, r16
      1f8:	11 1f       	adc	r17, r17
-     1fa:	10 93 9d 01 	sts	0x019D, r17
-     1fe:	00 93 9c 01 	sts	0x019C, r16
+     1fa:	10 93 a7 01 	sts	0x01A7, r17
+     1fe:	00 93 a6 01 	sts	0x01A6, r16
 	acc_z_g = acc_z * 2;
      202:	44 0f       	add	r20, r20
      204:	55 1f       	adc	r21, r21
-     206:	50 93 97 01 	sts	0x0197, r21
-     20a:	40 93 96 01 	sts	0x0196, r20
+     206:	50 93 a1 01 	sts	0x01A1, r21
+     20a:	40 93 a0 01 	sts	0x01A0, r20
 	
 	struct acc_readings_obj acc_values;
 	acc_values.a_x = acc_x_g;
@@ -389,7 +389,7 @@ void baro_start()
      29a:	83 e1       	ldi	r24, 0x13	; 19
      29c:	0e 94 25 01 	call	0x24a	; 0x24a <write_baro_registry>
 			write_string_ln("baro started");
-     2a0:	81 e8       	ldi	r24, 0x81	; 129
+     2a0:	8b e8       	ldi	r24, 0x8B	; 139
      2a2:	90 e0       	ldi	r25, 0x00	; 0
      2a4:	0e 94 06 11 	call	0x220c	; 0x220c <write_string_ln>
      2a8:	08 95       	ret
@@ -428,7 +428,7 @@ int16_t baro_read()
 			// if bit 2 of the Status Registry is set to 1, then new data is available
 			// -> mask for the bit, then check the value of the mask (here -> 2nd bit, gives 2
 			while(baro_cal_flag == FALSE)
-     2d6:	80 91 ae 01 	lds	r24, 0x01AE
+     2d6:	80 91 b8 01 	lds	r24, 0x01B8
      2da:	32 c0       	rjmp	.+100    	; 0x340 <baro_read+0x96>
 			{
 				if(status == 238)
@@ -453,30 +453,30 @@ int16_t baro_read()
      2fc:	0e 94 6b 05 	call	0xad6	; 0xad6 <i2c_send_address_read>
 					baro_p_h = i2c_read_data_mak();							// the output is called p, anyways as we set the ALT Bit, we will read an Altitude in m
      300:	0e 94 a0 05 	call	0xb40	; 0xb40 <i2c_read_data_mak>
-     304:	80 93 b1 01 	sts	0x01B1, r24
+     304:	80 93 bb 01 	sts	0x01BB, r24
 					baro_p_c = i2c_read_data_mak();
      308:	0e 94 a0 05 	call	0xb40	; 0xb40 <i2c_read_data_mak>
-     30c:	80 93 b0 01 	sts	0x01B0, r24
+     30c:	80 93 ba 01 	sts	0x01BA, r24
 					baro_p_l = i2c_read_data_nmak();
      310:	0e 94 98 05 	call	0xb30	; 0xb30 <i2c_read_data_nmak>
-     314:	80 93 af 01 	sts	0x01AF, r24
+     314:	80 93 b9 01 	sts	0x01B9, r24
 					i2c_stop();
      318:	0e 94 a8 05 	call	0xb50	; 0xb50 <i2c_stop>
 					// Determine the Offset
 					baro_p = (baro_p_h << 8) |(baro_p_c);
-     31c:	20 91 b1 01 	lds	r18, 0x01B1
+     31c:	20 91 bb 01 	lds	r18, 0x01BB
      320:	33 27       	eor	r19, r19
      322:	27 fd       	sbrc	r18, 7
      324:	30 95       	com	r19
      326:	32 2f       	mov	r19, r18
      328:	22 27       	eor	r18, r18
-     32a:	80 91 b0 01 	lds	r24, 0x01B0
+     32a:	80 91 ba 01 	lds	r24, 0x01BA
      32e:	28 2b       	or	r18, r24
-     330:	30 93 ab 01 	sts	0x01AB, r19
-     334:	20 93 aa 01 	sts	0x01AA, r18
+     330:	30 93 b5 01 	sts	0x01B5, r19
+     334:	20 93 b4 01 	sts	0x01B4, r18
 					baro_cal_flag = TRUE;
      338:	81 e0       	ldi	r24, 0x01	; 1
-     33a:	80 93 ae 01 	sts	0x01AE, r24
+     33a:	80 93 b8 01 	sts	0x01B8, r24
 					return baro_p;
      33e:	3f c0       	rjmp	.+126    	; 0x3be <baro_read+0x114>
 			status = i2c_read_data_nmak();
@@ -515,13 +515,13 @@ int16_t baro_read()
      364:	0e 94 6b 05 	call	0xad6	; 0xad6 <i2c_send_address_read>
 				baro_p_h = i2c_read_data_mak();							// the output is called p, anyways as we set the ALT Bit, we will read an Altitude in m
      368:	0e 94 a0 05 	call	0xb40	; 0xb40 <i2c_read_data_mak>
-     36c:	80 93 b1 01 	sts	0x01B1, r24
+     36c:	80 93 bb 01 	sts	0x01BB, r24
 				baro_p_c = i2c_read_data_mak();
      370:	0e 94 a0 05 	call	0xb40	; 0xb40 <i2c_read_data_mak>
-     374:	80 93 b0 01 	sts	0x01B0, r24
+     374:	80 93 ba 01 	sts	0x01BA, r24
 				baro_p_l = i2c_read_data_nmak();
      378:	0e 94 98 05 	call	0xb30	; 0xb30 <i2c_read_data_nmak>
-     37c:	80 93 af 01 	sts	0x01AF, r24
+     37c:	80 93 b9 01 	sts	0x01B9, r24
 				i2c_stop();
      380:	0e 94 a8 05 	call	0xb50	; 0xb50 <i2c_stop>
 						
@@ -530,31 +530,31 @@ int16_t baro_read()
 				// as we do not want the fractional part, we do not read the
 				// p_l bit.
 				baro_p = (baro_p_h << 8) |(baro_p_c);
-     384:	20 91 b1 01 	lds	r18, 0x01B1
+     384:	20 91 bb 01 	lds	r18, 0x01BB
      388:	33 27       	eor	r19, r19
      38a:	27 fd       	sbrc	r18, 7
      38c:	30 95       	com	r19
      38e:	32 2f       	mov	r19, r18
      390:	22 27       	eor	r18, r18
-     392:	80 91 b0 01 	lds	r24, 0x01B0
+     392:	80 91 ba 01 	lds	r24, 0x01BA
      396:	28 2b       	or	r18, r24
-     398:	30 93 ab 01 	sts	0x01AB, r19
-     39c:	20 93 aa 01 	sts	0x01AA, r18
+     398:	30 93 b5 01 	sts	0x01B5, r19
+     39c:	20 93 b4 01 	sts	0x01B4, r18
 				baro_previous = baro_p-baro_offset;
-     3a0:	80 91 ac 01 	lds	r24, 0x01AC
-     3a4:	90 91 ad 01 	lds	r25, 0x01AD
+     3a0:	80 91 b6 01 	lds	r24, 0x01B6
+     3a4:	90 91 b7 01 	lds	r25, 0x01B7
      3a8:	28 1b       	sub	r18, r24
      3aa:	39 0b       	sbc	r19, r25
-     3ac:	30 93 a9 01 	sts	0x01A9, r19
-     3b0:	20 93 a8 01 	sts	0x01A8, r18
+     3ac:	30 93 b3 01 	sts	0x01B3, r19
+     3b0:	20 93 b2 01 	sts	0x01B2, r18
 				//write_var_ln(baro_previous);
 				return (baro_previous);
      3b4:	04 c0       	rjmp	.+8      	; 0x3be <baro_read+0x114>
 				// This value can be used as absolute altitude above sea level standard pressure -> acquisition will be done every second, no need for permanent polling
 			}
 			else return baro_previous; 		
-     3b6:	20 91 a8 01 	lds	r18, 0x01A8
-     3ba:	30 91 a9 01 	lds	r19, 0x01A9
+     3b6:	20 91 b2 01 	lds	r18, 0x01B2
+     3ba:	30 91 b3 01 	lds	r19, 0x01B3
 			
 }
      3be:	82 2f       	mov	r24, r18
@@ -568,14 +568,14 @@ void baro_calibration()
 {
 	baro_offset = baro_read();
      3c6:	0e 94 55 01 	call	0x2aa	; 0x2aa <baro_read>
-     3ca:	90 93 ad 01 	sts	0x01AD, r25
-     3ce:	80 93 ac 01 	sts	0x01AC, r24
+     3ca:	90 93 b7 01 	sts	0x01B7, r25
+     3ce:	80 93 b6 01 	sts	0x01B6, r24
 	write_string("baro_offset ");write_var_ln(baro_offset);
-     3d2:	8e e8       	ldi	r24, 0x8E	; 142
+     3d2:	88 e9       	ldi	r24, 0x98	; 152
      3d4:	90 e0       	ldi	r25, 0x00	; 0
      3d6:	0e 94 f6 10 	call	0x21ec	; 0x21ec <write_string>
-     3da:	60 91 ac 01 	lds	r22, 0x01AC
-     3de:	70 91 ad 01 	lds	r23, 0x01AD
+     3da:	60 91 b6 01 	lds	r22, 0x01B6
+     3de:	70 91 b7 01 	lds	r23, 0x01B7
      3e2:	88 27       	eor	r24, r24
      3e4:	77 fd       	sbrc	r23, 7
      3e6:	80 95       	com	r24
@@ -605,7 +605,7 @@ void ADC_start(void)
      3f8:	86 b9       	out	0x06, r24	; 6
 	
 	write_string_ln("ADC ok");
-     3fa:	8b e9       	ldi	r24, 0x9B	; 155
+     3fa:	85 ea       	ldi	r24, 0xA5	; 165
      3fc:	90 e0       	ldi	r25, 0x00	; 0
      3fe:	0e 94 06 11 	call	0x220c	; 0x220c <write_string_ln>
      402:	08 95       	ret
@@ -630,16 +630,16 @@ int16_t ADC_read_voltage(void)
 	v_raw = (ADCL);
      40e:	c4 b1       	in	r28, 0x04	; 4
      410:	d0 e0       	ldi	r29, 0x00	; 0
-     412:	d0 93 bd 01 	sts	0x01BD, r29
-     416:	c0 93 bc 01 	sts	0x01BC, r28
+     412:	d0 93 c7 01 	sts	0x01C7, r29
+     416:	c0 93 c6 01 	sts	0x01C6, r28
 	v_raw = (ADCH << 8) | v_raw;		// it was mentioned to read out Lower Bytes before
      41a:	25 b1       	in	r18, 0x05	; 5
      41c:	92 2f       	mov	r25, r18
      41e:	80 e0       	ldi	r24, 0x00	; 0
      420:	c8 2b       	or	r28, r24
      422:	d9 2b       	or	r29, r25
-     424:	d0 93 bd 01 	sts	0x01BD, r29
-     428:	c0 93 bc 01 	sts	0x01BC, r28
+     424:	d0 93 c7 01 	sts	0x01C7, r29
+     428:	c0 93 c6 01 	sts	0x01C6, r28
 	// 1 Pa = 1N/m^2
 	// means that 2000/511 Pa per bit = 3,914 Pa
 
@@ -658,23 +658,23 @@ int16_t ADC_read_voltage(void)
      43e:	80 95       	com	r24
      440:	98 2f       	mov	r25, r24
      442:	0e 94 bc 12 	call	0x2578	; 0x2578 <__floatsisf>
-     446:	60 93 b6 01 	sts	0x01B6, r22
-     44a:	70 93 b7 01 	sts	0x01B7, r23
-     44e:	80 93 b8 01 	sts	0x01B8, r24
-     452:	90 93 b9 01 	sts	0x01B9, r25
+     446:	60 93 c0 01 	sts	0x01C0, r22
+     44a:	70 93 c1 01 	sts	0x01C1, r23
+     44e:	80 93 c2 01 	sts	0x01C2, r24
+     452:	90 93 c3 01 	sts	0x01C3, r25
 	if(ADC_cal_flag == TRUE)
-     456:	80 91 b4 01 	lds	r24, 0x01B4
-     45a:	90 91 b5 01 	lds	r25, 0x01B5
+     456:	80 91 be 01 	lds	r24, 0x01BE
+     45a:	90 91 bf 01 	lds	r25, 0x01BF
      45e:	01 97       	sbiw	r24, 0x01	; 1
      460:	51 f4       	brne	.+20     	; 0x476 <ADC_read_voltage+0x72>
 	{
 		return speed_tx = (v_raw-adc_offset);
-     462:	80 91 b2 01 	lds	r24, 0x01B2
-     466:	90 91 b3 01 	lds	r25, 0x01B3
+     462:	80 91 bc 01 	lds	r24, 0x01BC
+     466:	90 91 bd 01 	lds	r25, 0x01BD
      46a:	c8 1b       	sub	r28, r24
      46c:	d9 0b       	sbc	r29, r25
-     46e:	d0 93 bb 01 	sts	0x01BB, r29
-     472:	c0 93 ba 01 	sts	0x01BA, r28
+     46e:	d0 93 c5 01 	sts	0x01C5, r29
+     472:	c0 93 c4 01 	sts	0x01C4, r28
 	}	
 	// speed = SQRT((2*dp) / rho)
 	
@@ -700,12 +700,12 @@ void ADC_calibration()
 	{
 		adc_offset += ADC_read_voltage();
      488:	0e 94 02 02 	call	0x404	; 0x404 <ADC_read_voltage>
-     48c:	20 91 b2 01 	lds	r18, 0x01B2
-     490:	30 91 b3 01 	lds	r19, 0x01B3
+     48c:	20 91 bc 01 	lds	r18, 0x01BC
+     490:	30 91 bd 01 	lds	r19, 0x01BD
      494:	82 0f       	add	r24, r18
      496:	93 1f       	adc	r25, r19
-     498:	90 93 b3 01 	sts	0x01B3, r25
-     49c:	80 93 b2 01 	sts	0x01B2, r24
+     498:	90 93 bd 01 	sts	0x01BD, r25
+     49c:	80 93 bc 01 	sts	0x01BC, r24
      4a0:	21 97       	sbiw	r28, 0x01	; 1
 
 void ADC_calibration()
@@ -722,14 +722,14 @@ void ADC_calibration()
      4a4:	62 e3       	ldi	r22, 0x32	; 50
      4a6:	70 e0       	ldi	r23, 0x00	; 0
      4a8:	0e 94 23 14 	call	0x2846	; 0x2846 <__divmodhi4>
-     4ac:	70 93 b3 01 	sts	0x01B3, r23
-     4b0:	60 93 b2 01 	sts	0x01B2, r22
+     4ac:	70 93 bd 01 	sts	0x01BD, r23
+     4b0:	60 93 bc 01 	sts	0x01BC, r22
 	write_string("ADC_offset: ");write_var_ln(adc_offset);
-     4b4:	82 ea       	ldi	r24, 0xA2	; 162
+     4b4:	8c ea       	ldi	r24, 0xAC	; 172
      4b6:	90 e0       	ldi	r25, 0x00	; 0
      4b8:	0e 94 f6 10 	call	0x21ec	; 0x21ec <write_string>
-     4bc:	60 91 b2 01 	lds	r22, 0x01B2
-     4c0:	70 91 b3 01 	lds	r23, 0x01B3
+     4bc:	60 91 bc 01 	lds	r22, 0x01BC
+     4c0:	70 91 bd 01 	lds	r23, 0x01BD
      4c4:	88 27       	eor	r24, r24
      4c6:	77 fd       	sbrc	r23, 7
      4c8:	80 95       	com	r24
@@ -738,8 +738,8 @@ void ADC_calibration()
 	ADC_cal_flag = TRUE;
      4d0:	81 e0       	ldi	r24, 0x01	; 1
      4d2:	90 e0       	ldi	r25, 0x00	; 0
-     4d4:	90 93 b5 01 	sts	0x01B5, r25
-     4d8:	80 93 b4 01 	sts	0x01B4, r24
+     4d4:	90 93 bf 01 	sts	0x01BF, r25
+     4d8:	80 93 be 01 	sts	0x01BE, r24
 	#else
 		//round up by default
 		__ticks_dc = (uint32_t)(ceil(fabs(__tmp)));
@@ -814,7 +814,7 @@ void gyro_start(void)
      534:	84 e2       	ldi	r24, 0x24	; 36
      536:	0e 94 7a 02 	call	0x4f4	; 0x4f4 <write_gyro_registry>
 	write_string_ln("gyro started");
-     53a:	8f ea       	ldi	r24, 0xAF	; 175
+     53a:	89 eb       	ldi	r24, 0xB9	; 185
      53c:	90 e0       	ldi	r25, 0x00	; 0
      53e:	0e 94 06 11 	call	0x220c	; 0x220c <write_string_ln>
      542:	08 95       	ret
@@ -857,58 +857,58 @@ struct three_elements_obj gyro_read(void)
      57a:	0e 94 6b 05 	call	0xad6	; 0xad6 <i2c_send_address_read>
 	gyro_x_l = i2c_read_data_mak();
      57e:	0e 94 a0 05 	call	0xb40	; 0xb40 <i2c_read_data_mak>
-     582:	80 93 d2 01 	sts	0x01D2, r24
+     582:	80 93 dc 01 	sts	0x01DC, r24
 	gyro_x_h = i2c_read_data_mak();
      586:	0e 94 a0 05 	call	0xb40	; 0xb40 <i2c_read_data_mak>
-     58a:	80 93 d3 01 	sts	0x01D3, r24
+     58a:	80 93 dd 01 	sts	0x01DD, r24
 	gyro_y_l = i2c_read_data_mak();
      58e:	0e 94 a0 05 	call	0xb40	; 0xb40 <i2c_read_data_mak>
-     592:	80 93 ce 01 	sts	0x01CE, r24
+     592:	80 93 d8 01 	sts	0x01D8, r24
 	gyro_y_h = i2c_read_data_mak();
      596:	0e 94 a0 05 	call	0xb40	; 0xb40 <i2c_read_data_mak>
-     59a:	80 93 cf 01 	sts	0x01CF, r24
+     59a:	80 93 d9 01 	sts	0x01D9, r24
 	gyro_z_l = i2c_read_data_mak();
      59e:	0e 94 a0 05 	call	0xb40	; 0xb40 <i2c_read_data_mak>
-     5a2:	80 93 ca 01 	sts	0x01CA, r24
+     5a2:	80 93 d4 01 	sts	0x01D4, r24
 	gyro_z_h = i2c_read_data_nmak();					// add the end we give no master ack to finish communication
      5a6:	0e 94 98 05 	call	0xb30	; 0xb30 <i2c_read_data_nmak>
-     5aa:	80 93 cb 01 	sts	0x01CB, r24
+     5aa:	80 93 d5 01 	sts	0x01D5, r24
 	i2c_stop();
      5ae:	0e 94 a8 05 	call	0xb50	; 0xb50 <i2c_stop>
 	
 	gyro_x = (gyro_x_h<<8) | (gyro_x_l);
-     5b2:	60 91 d3 01 	lds	r22, 0x01D3
+     5b2:	60 91 dd 01 	lds	r22, 0x01DD
      5b6:	77 27       	eor	r23, r23
      5b8:	67 fd       	sbrc	r22, 7
      5ba:	70 95       	com	r23
      5bc:	76 2f       	mov	r23, r22
      5be:	66 27       	eor	r22, r22
-     5c0:	80 91 d2 01 	lds	r24, 0x01D2
+     5c0:	80 91 dc 01 	lds	r24, 0x01DC
      5c4:	68 2b       	or	r22, r24
-     5c6:	70 93 d1 01 	sts	0x01D1, r23
-     5ca:	60 93 d0 01 	sts	0x01D0, r22
+     5c6:	70 93 db 01 	sts	0x01DB, r23
+     5ca:	60 93 da 01 	sts	0x01DA, r22
 	gyro_y = (gyro_y_h<<8) | (gyro_y_l);
-     5ce:	e0 90 cf 01 	lds	r14, 0x01CF
+     5ce:	e0 90 d9 01 	lds	r14, 0x01D9
      5d2:	ff 24       	eor	r15, r15
      5d4:	e7 fc       	sbrc	r14, 7
      5d6:	f0 94       	com	r15
      5d8:	fe 2c       	mov	r15, r14
      5da:	ee 24       	eor	r14, r14
-     5dc:	80 91 ce 01 	lds	r24, 0x01CE
+     5dc:	80 91 d8 01 	lds	r24, 0x01D8
      5e0:	e8 2a       	or	r14, r24
-     5e2:	f0 92 cd 01 	sts	0x01CD, r15
-     5e6:	e0 92 cc 01 	sts	0x01CC, r14
+     5e2:	f0 92 d7 01 	sts	0x01D7, r15
+     5e6:	e0 92 d6 01 	sts	0x01D6, r14
 	gyro_z = (gyro_z_h<<8) | (gyro_z_l);
-     5ea:	00 91 cb 01 	lds	r16, 0x01CB
+     5ea:	00 91 d5 01 	lds	r16, 0x01D5
      5ee:	11 27       	eor	r17, r17
      5f0:	07 fd       	sbrc	r16, 7
      5f2:	10 95       	com	r17
      5f4:	10 2f       	mov	r17, r16
      5f6:	00 27       	eor	r16, r16
-     5f8:	80 91 ca 01 	lds	r24, 0x01CA
+     5f8:	80 91 d4 01 	lds	r24, 0x01D4
      5fc:	08 2b       	or	r16, r24
-     5fe:	10 93 c9 01 	sts	0x01C9, r17
-     602:	00 93 c8 01 	sts	0x01C8, r16
+     5fe:	10 93 d3 01 	sts	0x01D3, r17
+     602:	00 93 d2 01 	sts	0x01D2, r16
 	
 	struct three_elements_obj turn_rates;
 	turn_rates.p = gyro_x * 0.00875;						// the conversion comes from the default sensitivity value: FS = 250dps	-> 8.75mdps/digit
@@ -955,15 +955,15 @@ struct three_elements_obj gyro_read(void)
      662:	0e 94 89 12 	call	0x2512	; 0x2512 <__fixsfsi>
 	
 	if(cal_complete == TRUE) 
-     666:	20 91 be 01 	lds	r18, 0x01BE
-     66a:	30 91 bf 01 	lds	r19, 0x01BF
+     666:	20 91 c8 01 	lds	r18, 0x01C8
+     66a:	30 91 c9 01 	lds	r19, 0x01C9
      66e:	21 30       	cpi	r18, 0x01	; 1
      670:	31 05       	cpc	r19, r1
      672:	21 f5       	brne	.+72     	; 0x6bc <gyro_read+0x178>
 	{
 		turn_rates.p -= gyro_p_offset;
-     674:	00 91 c4 01 	lds	r16, 0x01C4
-     678:	10 91 c5 01 	lds	r17, 0x01C5
+     674:	00 91 ce 01 	lds	r16, 0x01CE
+     678:	10 91 cf 01 	lds	r17, 0x01CF
      67c:	22 27       	eor	r18, r18
      67e:	17 fd       	sbrc	r17, 7
      680:	20 95       	com	r18
@@ -973,8 +973,8 @@ struct three_elements_obj gyro_read(void)
      688:	a2 0a       	sbc	r10, r18
      68a:	b3 0a       	sbc	r11, r19
 		turn_rates.q -= gyro_q_offset;
-     68c:	00 91 c2 01 	lds	r16, 0x01C2
-     690:	10 91 c3 01 	lds	r17, 0x01C3
+     68c:	00 91 cc 01 	lds	r16, 0x01CC
+     690:	10 91 cd 01 	lds	r17, 0x01CD
      694:	22 27       	eor	r18, r18
      696:	17 fd       	sbrc	r17, 7
      698:	20 95       	com	r18
@@ -984,8 +984,8 @@ struct three_elements_obj gyro_read(void)
      6a0:	e2 0a       	sbc	r14, r18
      6a2:	f3 0a       	sbc	r15, r19
 		turn_rates.r -= gyro_r_offset;
-     6a4:	00 91 c0 01 	lds	r16, 0x01C0
-     6a8:	10 91 c1 01 	lds	r17, 0x01C1
+     6a4:	00 91 ca 01 	lds	r16, 0x01CA
+     6a8:	10 91 cb 01 	lds	r17, 0x01CB
      6ac:	22 27       	eor	r18, r18
      6ae:	17 fd       	sbrc	r17, 7
      6b0:	20 95       	com	r18
@@ -1044,8 +1044,8 @@ void gyro_calibration(void)
 	// defining the temporary stored turn rates
 	struct three_elements_obj turn_rates_temp;
 	while(cal_count < 10)
-     704:	20 91 c6 01 	lds	r18, 0x01C6
-     708:	30 91 c7 01 	lds	r19, 0x01C7
+     704:	20 91 d0 01 	lds	r18, 0x01D0
+     708:	30 91 d1 01 	lds	r19, 0x01D1
      70c:	2a 30       	cpi	r18, 0x0A	; 10
      70e:	31 05       	cpc	r19, r1
      710:	ac f5       	brge	.+106    	; 0x77c <gyro_calibration+0x8c>
@@ -1053,47 +1053,47 @@ void gyro_calibration(void)
 		cal_count ++;
      712:	2f 5f       	subi	r18, 0xFF	; 255
      714:	3f 4f       	sbci	r19, 0xFF	; 255
-     716:	30 93 c7 01 	sts	0x01C7, r19
-     71a:	20 93 c6 01 	sts	0x01C6, r18
+     716:	30 93 d1 01 	sts	0x01D1, r19
+     71a:	20 93 d0 01 	sts	0x01D0, r18
 		turn_rates_temp = gyro_read();
      71e:	ce 01       	movw	r24, r28
      720:	01 96       	adiw	r24, 0x01	; 1
      722:	0e 94 a2 02 	call	0x544	; 0x544 <gyro_read>
 		gyro_p_offset += turn_rates_temp.p;
-     726:	20 91 c4 01 	lds	r18, 0x01C4
-     72a:	30 91 c5 01 	lds	r19, 0x01C5
+     726:	20 91 ce 01 	lds	r18, 0x01CE
+     72a:	30 91 cf 01 	lds	r19, 0x01CF
      72e:	89 81       	ldd	r24, Y+1	; 0x01
      730:	9a 81       	ldd	r25, Y+2	; 0x02
      732:	82 0f       	add	r24, r18
      734:	93 1f       	adc	r25, r19
-     736:	90 93 c5 01 	sts	0x01C5, r25
-     73a:	80 93 c4 01 	sts	0x01C4, r24
+     736:	90 93 cf 01 	sts	0x01CF, r25
+     73a:	80 93 ce 01 	sts	0x01CE, r24
 		gyro_q_offset += turn_rates_temp.q;
-     73e:	20 91 c2 01 	lds	r18, 0x01C2
-     742:	30 91 c3 01 	lds	r19, 0x01C3
+     73e:	20 91 cc 01 	lds	r18, 0x01CC
+     742:	30 91 cd 01 	lds	r19, 0x01CD
      746:	8d 81       	ldd	r24, Y+5	; 0x05
      748:	9e 81       	ldd	r25, Y+6	; 0x06
      74a:	82 0f       	add	r24, r18
      74c:	93 1f       	adc	r25, r19
-     74e:	90 93 c3 01 	sts	0x01C3, r25
-     752:	80 93 c2 01 	sts	0x01C2, r24
+     74e:	90 93 cd 01 	sts	0x01CD, r25
+     752:	80 93 cc 01 	sts	0x01CC, r24
 		gyro_r_offset += turn_rates_temp.r;
-     756:	20 91 c0 01 	lds	r18, 0x01C0
-     75a:	30 91 c1 01 	lds	r19, 0x01C1
+     756:	20 91 ca 01 	lds	r18, 0x01CA
+     75a:	30 91 cb 01 	lds	r19, 0x01CB
      75e:	89 85       	ldd	r24, Y+9	; 0x09
      760:	9a 85       	ldd	r25, Y+10	; 0x0a
      762:	82 0f       	add	r24, r18
      764:	93 1f       	adc	r25, r19
-     766:	90 93 c1 01 	sts	0x01C1, r25
-     76a:	80 93 c0 01 	sts	0x01C0, r24
+     766:	90 93 cb 01 	sts	0x01CB, r25
+     76a:	80 93 ca 01 	sts	0x01CA, r24
 // Gyro calibration routine
 void gyro_calibration(void)
 {
 	// defining the temporary stored turn rates
 	struct three_elements_obj turn_rates_temp;
 	while(cal_count < 10)
-     76e:	20 91 c6 01 	lds	r18, 0x01C6
-     772:	30 91 c7 01 	lds	r19, 0x01C7
+     76e:	20 91 d0 01 	lds	r18, 0x01D0
+     772:	30 91 d1 01 	lds	r19, 0x01D1
      776:	2a 30       	cpi	r18, 0x0A	; 10
      778:	31 05       	cpc	r19, r1
      77a:	5c f2       	brlt	.-106    	; 0x712 <gyro_calibration+0x22>
@@ -1103,58 +1103,58 @@ void gyro_calibration(void)
 		gyro_r_offset += turn_rates_temp.r;
 	}
 	gyro_p_offset /= cal_count;
-     77c:	80 91 c4 01 	lds	r24, 0x01C4
-     780:	90 91 c5 01 	lds	r25, 0x01C5
+     77c:	80 91 ce 01 	lds	r24, 0x01CE
+     780:	90 91 cf 01 	lds	r25, 0x01CF
      784:	b9 01       	movw	r22, r18
      786:	0e 94 23 14 	call	0x2846	; 0x2846 <__divmodhi4>
-     78a:	70 93 c5 01 	sts	0x01C5, r23
-     78e:	60 93 c4 01 	sts	0x01C4, r22
+     78a:	70 93 cf 01 	sts	0x01CF, r23
+     78e:	60 93 ce 01 	sts	0x01CE, r22
 	gyro_q_offset /= cal_count;
-     792:	80 91 c2 01 	lds	r24, 0x01C2
-     796:	90 91 c3 01 	lds	r25, 0x01C3
+     792:	80 91 cc 01 	lds	r24, 0x01CC
+     796:	90 91 cd 01 	lds	r25, 0x01CD
      79a:	b9 01       	movw	r22, r18
      79c:	0e 94 23 14 	call	0x2846	; 0x2846 <__divmodhi4>
-     7a0:	70 93 c3 01 	sts	0x01C3, r23
-     7a4:	60 93 c2 01 	sts	0x01C2, r22
+     7a0:	70 93 cd 01 	sts	0x01CD, r23
+     7a4:	60 93 cc 01 	sts	0x01CC, r22
 	gyro_r_offset /= cal_count;
-     7a8:	80 91 c0 01 	lds	r24, 0x01C0
-     7ac:	90 91 c1 01 	lds	r25, 0x01C1
+     7a8:	80 91 ca 01 	lds	r24, 0x01CA
+     7ac:	90 91 cb 01 	lds	r25, 0x01CB
      7b0:	b9 01       	movw	r22, r18
      7b2:	0e 94 23 14 	call	0x2846	; 0x2846 <__divmodhi4>
-     7b6:	70 93 c1 01 	sts	0x01C1, r23
-     7ba:	60 93 c0 01 	sts	0x01C0, r22
+     7b6:	70 93 cb 01 	sts	0x01CB, r23
+     7ba:	60 93 ca 01 	sts	0x01CA, r22
 	write_string_ln("Gyro Offset: ");
-     7be:	8c eb       	ldi	r24, 0xBC	; 188
+     7be:	86 ec       	ldi	r24, 0xC6	; 198
      7c0:	90 e0       	ldi	r25, 0x00	; 0
      7c2:	0e 94 06 11 	call	0x220c	; 0x220c <write_string_ln>
 	write_string("p: ");write_var_ln(gyro_p_offset);
-     7c6:	8a ec       	ldi	r24, 0xCA	; 202
+     7c6:	84 ed       	ldi	r24, 0xD4	; 212
      7c8:	90 e0       	ldi	r25, 0x00	; 0
      7ca:	0e 94 f6 10 	call	0x21ec	; 0x21ec <write_string>
-     7ce:	60 91 c4 01 	lds	r22, 0x01C4
-     7d2:	70 91 c5 01 	lds	r23, 0x01C5
+     7ce:	60 91 ce 01 	lds	r22, 0x01CE
+     7d2:	70 91 cf 01 	lds	r23, 0x01CF
      7d6:	88 27       	eor	r24, r24
      7d8:	77 fd       	sbrc	r23, 7
      7da:	80 95       	com	r24
      7dc:	98 2f       	mov	r25, r24
      7de:	0e 94 38 11 	call	0x2270	; 0x2270 <write_var_ln>
 	write_string("q: ");write_var_ln(gyro_q_offset);
-     7e2:	8e ec       	ldi	r24, 0xCE	; 206
+     7e2:	88 ed       	ldi	r24, 0xD8	; 216
      7e4:	90 e0       	ldi	r25, 0x00	; 0
      7e6:	0e 94 f6 10 	call	0x21ec	; 0x21ec <write_string>
-     7ea:	60 91 c2 01 	lds	r22, 0x01C2
-     7ee:	70 91 c3 01 	lds	r23, 0x01C3
+     7ea:	60 91 cc 01 	lds	r22, 0x01CC
+     7ee:	70 91 cd 01 	lds	r23, 0x01CD
      7f2:	88 27       	eor	r24, r24
      7f4:	77 fd       	sbrc	r23, 7
      7f6:	80 95       	com	r24
      7f8:	98 2f       	mov	r25, r24
      7fa:	0e 94 38 11 	call	0x2270	; 0x2270 <write_var_ln>
 	write_string("r: ");write_var_ln(gyro_r_offset);
-     7fe:	82 ed       	ldi	r24, 0xD2	; 210
+     7fe:	8c ed       	ldi	r24, 0xDC	; 220
      800:	90 e0       	ldi	r25, 0x00	; 0
      802:	0e 94 f6 10 	call	0x21ec	; 0x21ec <write_string>
-     806:	60 91 c0 01 	lds	r22, 0x01C0
-     80a:	70 91 c1 01 	lds	r23, 0x01C1
+     806:	60 91 ca 01 	lds	r22, 0x01CA
+     80a:	70 91 cb 01 	lds	r23, 0x01CB
      80e:	88 27       	eor	r24, r24
      810:	77 fd       	sbrc	r23, 7
      812:	80 95       	com	r24
@@ -1173,10 +1173,10 @@ void gyro_calibration(void)
 	cal_complete = TRUE;
      82c:	81 e0       	ldi	r24, 0x01	; 1
      82e:	90 e0       	ldi	r25, 0x00	; 0
-     830:	90 93 bf 01 	sts	0x01BF, r25
-     834:	80 93 be 01 	sts	0x01BE, r24
+     830:	90 93 c9 01 	sts	0x01C9, r25
+     834:	80 93 c8 01 	sts	0x01C8, r24
 	write_string_ln("Gyro Cal Complete");
-     838:	86 ed       	ldi	r24, 0xD6	; 214
+     838:	80 ee       	ldi	r24, 0xE0	; 224
      83a:	90 e0       	ldi	r25, 0x00	; 0
      83c:	0e 94 06 11 	call	0x220c	; 0x220c <write_string_ln>
      840:	2c 96       	adiw	r28, 0x0c	; 12
@@ -1235,7 +1235,7 @@ void write_mag_registry(char registry, char data)
 															
 															
 		write_string_ln("mag started");
-     888:	88 ee       	ldi	r24, 0xE8	; 232
+     888:	82 ef       	ldi	r24, 0xF2	; 242
      88a:	90 e0       	ldi	r25, 0x00	; 0
      88c:	0e 94 06 11 	call	0x220c	; 0x220c <write_string_ln>
      890:	08 95       	ret
@@ -1270,58 +1270,58 @@ void mag_read(void)
      8ba:	0e 94 6b 05 	call	0xad6	; 0xad6 <i2c_send_address_read>
 	mag_x_h = i2c_read_data_mak();
      8be:	0e 94 a0 05 	call	0xb40	; 0xb40 <i2c_read_data_mak>
-     8c2:	80 93 e1 01 	sts	0x01E1, r24
+     8c2:	80 93 eb 01 	sts	0x01EB, r24
 	mag_x_l = i2c_read_data_mak();
      8c6:	0e 94 a0 05 	call	0xb40	; 0xb40 <i2c_read_data_mak>
-     8ca:	80 93 e0 01 	sts	0x01E0, r24
+     8ca:	80 93 ea 01 	sts	0x01EA, r24
 	mag_z_h = i2c_read_data_mak();
      8ce:	0e 94 a0 05 	call	0xb40	; 0xb40 <i2c_read_data_mak>
-     8d2:	80 93 d9 01 	sts	0x01D9, r24
+     8d2:	80 93 e3 01 	sts	0x01E3, r24
 	mag_z_l = i2c_read_data_mak();
      8d6:	0e 94 a0 05 	call	0xb40	; 0xb40 <i2c_read_data_mak>
-     8da:	80 93 d8 01 	sts	0x01D8, r24
+     8da:	80 93 e2 01 	sts	0x01E2, r24
 	mag_y_h = i2c_read_data_mak();
      8de:	0e 94 a0 05 	call	0xb40	; 0xb40 <i2c_read_data_mak>
-     8e2:	80 93 dd 01 	sts	0x01DD, r24
+     8e2:	80 93 e7 01 	sts	0x01E7, r24
 	mag_y_l = i2c_read_data_nmak();
      8e6:	0e 94 98 05 	call	0xb30	; 0xb30 <i2c_read_data_nmak>
-     8ea:	80 93 dc 01 	sts	0x01DC, r24
+     8ea:	80 93 e6 01 	sts	0x01E6, r24
 	i2c_stop();
      8ee:	0e 94 a8 05 	call	0xb50	; 0xb50 <i2c_stop>
 	
 	mag_x = ((mag_x_h<<8)|(mag_x_l));
-     8f2:	c0 91 e1 01 	lds	r28, 0x01E1
+     8f2:	c0 91 eb 01 	lds	r28, 0x01EB
      8f6:	dd 27       	eor	r29, r29
      8f8:	c7 fd       	sbrc	r28, 7
      8fa:	d0 95       	com	r29
      8fc:	dc 2f       	mov	r29, r28
      8fe:	cc 27       	eor	r28, r28
-     900:	80 91 e0 01 	lds	r24, 0x01E0
+     900:	80 91 ea 01 	lds	r24, 0x01EA
      904:	c8 2b       	or	r28, r24
-     906:	d0 93 df 01 	sts	0x01DF, r29
-     90a:	c0 93 de 01 	sts	0x01DE, r28
+     906:	d0 93 e9 01 	sts	0x01E9, r29
+     90a:	c0 93 e8 01 	sts	0x01E8, r28
 	mag_y = ((mag_y_h<<8)|(mag_y_l));
-     90e:	60 91 dd 01 	lds	r22, 0x01DD
+     90e:	60 91 e7 01 	lds	r22, 0x01E7
      912:	77 27       	eor	r23, r23
      914:	67 fd       	sbrc	r22, 7
      916:	70 95       	com	r23
      918:	76 2f       	mov	r23, r22
      91a:	66 27       	eor	r22, r22
-     91c:	80 91 dc 01 	lds	r24, 0x01DC
+     91c:	80 91 e6 01 	lds	r24, 0x01E6
      920:	68 2b       	or	r22, r24
-     922:	70 93 db 01 	sts	0x01DB, r23
-     926:	60 93 da 01 	sts	0x01DA, r22
+     922:	70 93 e5 01 	sts	0x01E5, r23
+     926:	60 93 e4 01 	sts	0x01E4, r22
 	mag_z = ((mag_z_h<<8)|(mag_z_l));
-     92a:	80 91 d9 01 	lds	r24, 0x01D9
+     92a:	80 91 e3 01 	lds	r24, 0x01E3
      92e:	99 27       	eor	r25, r25
      930:	87 fd       	sbrc	r24, 7
      932:	90 95       	com	r25
      934:	98 2f       	mov	r25, r24
      936:	88 27       	eor	r24, r24
-     938:	20 91 d8 01 	lds	r18, 0x01D8
+     938:	20 91 e2 01 	lds	r18, 0x01E2
      93c:	82 2b       	or	r24, r18
-     93e:	90 93 d7 01 	sts	0x01D7, r25
-     942:	80 93 d6 01 	sts	0x01D6, r24
+     93e:	90 93 e1 01 	sts	0x01E1, r25
+     942:	80 93 e0 01 	sts	0x01E0, r24
 	
 	// Calculating the heading with the calibrated data
 	
@@ -1366,8 +1366,8 @@ void mag_read(void)
      994:	91 e0       	ldi	r25, 0x01	; 1
      996:	86 1b       	sub	r24, r22
      998:	97 0b       	sbc	r25, r23
-     99a:	90 93 d5 01 	sts	0x01D5, r25
-     99e:	80 93 d4 01 	sts	0x01D4, r24
+     99a:	90 93 df 01 	sts	0x01DF, r25
+     99e:	80 93 de 01 	sts	0x01DE, r24
      9a2:	7c c0       	rjmp	.+248    	; 0xa9c <mag_read+0x20a>
 	}
 	else if ((mag_x >= 0) && (mag_y < 0))
@@ -1400,8 +1400,8 @@ void mag_read(void)
      9de:	0e 94 d7 13 	call	0x27ae	; 0x27ae <round>
      9e2:	90 58       	subi	r25, 0x80	; 128
      9e4:	0e 94 89 12 	call	0x2512	; 0x2512 <__fixsfsi>
-     9e8:	70 93 d5 01 	sts	0x01D5, r23
-     9ec:	60 93 d4 01 	sts	0x01D4, r22
+     9e8:	70 93 df 01 	sts	0x01DF, r23
+     9ec:	60 93 de 01 	sts	0x01DE, r22
      9f0:	55 c0       	rjmp	.+170    	; 0xa9c <mag_read+0x20a>
 	}
 	else if ((mag_x < 0) && (mag_y >= 0))
@@ -1440,8 +1440,8 @@ void mag_read(void)
      a3a:	90 e0       	ldi	r25, 0x00	; 0
      a3c:	86 1b       	sub	r24, r22
      a3e:	97 0b       	sbc	r25, r23
-     a40:	90 93 d5 01 	sts	0x01D5, r25
-     a44:	80 93 d4 01 	sts	0x01D4, r24
+     a40:	90 93 df 01 	sts	0x01DF, r25
+     a44:	80 93 de 01 	sts	0x01DE, r24
      a48:	29 c0       	rjmp	.+82     	; 0xa9c <mag_read+0x20a>
 		
 	}
@@ -1479,8 +1479,8 @@ void mag_read(void)
      a8e:	90 e0       	ldi	r25, 0x00	; 0
      a90:	86 1b       	sub	r24, r22
      a92:	97 0b       	sbc	r25, r23
-     a94:	90 93 d5 01 	sts	0x01D5, r25
-     a98:	80 93 d4 01 	sts	0x01D4, r24
+     a94:	90 93 df 01 	sts	0x01DF, r25
+     a98:	80 93 de 01 	sts	0x01DE, r24
 	}
 	
 	
@@ -1758,7 +1758,7 @@ void i2c_stop()
 	TCNT2 = 0;
      b84:	14 bc       	out	0x24, r1	; 36
 	write_string_ln("ServoTimerStarted");
-     b86:	84 ef       	ldi	r24, 0xF4	; 244
+     b86:	8e ef       	ldi	r24, 0xFE	; 254
      b88:	90 e0       	ldi	r25, 0x00	; 0
      b8a:	0e 94 06 11 	call	0x220c	; 0x220c <write_string_ln>
      b8e:	08 95       	ret
@@ -1783,7 +1783,7 @@ ISR(TIMER1_COMPA_vect)
      ba6:	af 93       	push	r26
      ba8:	bf 93       	push	r27
 	switch (ctrl)
-     baa:	80 91 e5 01 	lds	r24, 0x01E5
+     baa:	80 91 ef 01 	lds	r24, 0x01EF
      bae:	84 30       	cpi	r24, 0x04	; 4
      bb0:	09 f4       	brne	.+2      	; 0xbb4 <__vector_7+0x24>
      bb2:	6d c0       	rjmp	.+218    	; 0xc8e <__vector_7+0xfe>
@@ -1833,9 +1833,9 @@ ISR(TIMER1_COMPA_vect)
      c04:	9b bd       	out	0x2b, r25	; 43
      c06:	8a bd       	out	0x2a, r24	; 42
 			ctrl++;		// increase the ctrl pointer
-     c08:	80 91 e5 01 	lds	r24, 0x01E5
+     c08:	80 91 ef 01 	lds	r24, 0x01EF
      c0c:	8f 5f       	subi	r24, 0xFF	; 255
-     c0e:	80 93 e5 01 	sts	0x01E5, r24
+     c0e:	80 93 ef 01 	sts	0x01EF, r24
 			//sei();
 		break;
      c12:	ae c0       	rjmp	.+348    	; 0xd70 <__vector_7+0x1e0>
@@ -1857,9 +1857,9 @@ ISR(TIMER1_COMPA_vect)
      c30:	5b bd       	out	0x2b, r21	; 43
      c32:	4a bd       	out	0x2a, r20	; 42
 			ctrl++;
-     c34:	80 91 e5 01 	lds	r24, 0x01E5
+     c34:	80 91 ef 01 	lds	r24, 0x01EF
      c38:	8f 5f       	subi	r24, 0xFF	; 255
-     c3a:	80 93 e5 01 	sts	0x01E5, r24
+     c3a:	80 93 ef 01 	sts	0x01EF, r24
 			//sei();
 		break;
      c3e:	98 c0       	rjmp	.+304    	; 0xd70 <__vector_7+0x1e0>
@@ -1876,9 +1876,9 @@ ISR(TIMER1_COMPA_vect)
      c52:	9b bd       	out	0x2b, r25	; 43
      c54:	8a bd       	out	0x2a, r24	; 42
 			ctrl++;
-     c56:	80 91 e5 01 	lds	r24, 0x01E5
+     c56:	80 91 ef 01 	lds	r24, 0x01EF
      c5a:	8f 5f       	subi	r24, 0xFF	; 255
-     c5c:	80 93 e5 01 	sts	0x01E5, r24
+     c5c:	80 93 ef 01 	sts	0x01EF, r24
 			//sei();
 		break;
      c60:	87 c0       	rjmp	.+270    	; 0xd70 <__vector_7+0x1e0>
@@ -1900,9 +1900,9 @@ ISR(TIMER1_COMPA_vect)
      c7e:	5b bd       	out	0x2b, r21	; 43
      c80:	4a bd       	out	0x2a, r20	; 42
 			ctrl++;
-     c82:	80 91 e5 01 	lds	r24, 0x01E5
+     c82:	80 91 ef 01 	lds	r24, 0x01EF
      c86:	8f 5f       	subi	r24, 0xFF	; 255
-     c88:	80 93 e5 01 	sts	0x01E5, r24
+     c88:	80 93 ef 01 	sts	0x01EF, r24
 			//sei();
 		break;
      c8c:	71 c0       	rjmp	.+226    	; 0xd70 <__vector_7+0x1e0>
@@ -1919,9 +1919,9 @@ ISR(TIMER1_COMPA_vect)
      ca0:	9b bd       	out	0x2b, r25	; 43
      ca2:	8a bd       	out	0x2a, r24	; 42
 			ctrl++;
-     ca4:	80 91 e5 01 	lds	r24, 0x01E5
+     ca4:	80 91 ef 01 	lds	r24, 0x01EF
      ca8:	8f 5f       	subi	r24, 0xFF	; 255
-     caa:	80 93 e5 01 	sts	0x01E5, r24
+     caa:	80 93 ef 01 	sts	0x01EF, r24
 			//sei();
 		break;
      cae:	60 c0       	rjmp	.+192    	; 0xd70 <__vector_7+0x1e0>
@@ -1943,9 +1943,9 @@ ISR(TIMER1_COMPA_vect)
      ccc:	5b bd       	out	0x2b, r21	; 43
      cce:	4a bd       	out	0x2a, r20	; 42
 			ctrl++;
-     cd0:	80 91 e5 01 	lds	r24, 0x01E5
+     cd0:	80 91 ef 01 	lds	r24, 0x01EF
      cd4:	8f 5f       	subi	r24, 0xFF	; 255
-     cd6:	80 93 e5 01 	sts	0x01E5, r24
+     cd6:	80 93 ef 01 	sts	0x01EF, r24
 			//sei();
 		break;
      cda:	4a c0       	rjmp	.+148    	; 0xd70 <__vector_7+0x1e0>
@@ -1962,9 +1962,9 @@ ISR(TIMER1_COMPA_vect)
      cee:	9b bd       	out	0x2b, r25	; 43
      cf0:	8a bd       	out	0x2a, r24	; 42
 			ctrl++;
-     cf2:	80 91 e5 01 	lds	r24, 0x01E5
+     cf2:	80 91 ef 01 	lds	r24, 0x01EF
      cf6:	8f 5f       	subi	r24, 0xFF	; 255
-     cf8:	80 93 e5 01 	sts	0x01E5, r24
+     cf8:	80 93 ef 01 	sts	0x01EF, r24
 			//sei();
 		break;
      cfc:	39 c0       	rjmp	.+114    	; 0xd70 <__vector_7+0x1e0>
@@ -1986,9 +1986,9 @@ ISR(TIMER1_COMPA_vect)
      d1a:	5b bd       	out	0x2b, r21	; 43
      d1c:	4a bd       	out	0x2a, r20	; 42
 			ctrl++;
-     d1e:	80 91 e5 01 	lds	r24, 0x01E5
+     d1e:	80 91 ef 01 	lds	r24, 0x01EF
      d22:	8f 5f       	subi	r24, 0xFF	; 255
-     d24:	80 93 e5 01 	sts	0x01E5, r24
+     d24:	80 93 ef 01 	sts	0x01EF, r24
 			//sei();
 		break;
      d28:	23 c0       	rjmp	.+70     	; 0xd70 <__vector_7+0x1e0>
@@ -2005,9 +2005,9 @@ ISR(TIMER1_COMPA_vect)
      d3c:	9b bd       	out	0x2b, r25	; 43
      d3e:	8a bd       	out	0x2a, r24	; 42
 			ctrl++;
-     d40:	80 91 e5 01 	lds	r24, 0x01E5
+     d40:	80 91 ef 01 	lds	r24, 0x01EF
      d44:	8f 5f       	subi	r24, 0xFF	; 255
-     d46:	80 93 e5 01 	sts	0x01E5, r24
+     d46:	80 93 ef 01 	sts	0x01EF, r24
 			//sei();
 		break;
      d4a:	12 c0       	rjmp	.+36     	; 0xd70 <__vector_7+0x1e0>
@@ -2029,7 +2029,7 @@ ISR(TIMER1_COMPA_vect)
      d68:	5b bd       	out	0x2b, r21	; 43
      d6a:	4a bd       	out	0x2a, r20	; 42
 			ctrl= 0;	// reset the ctrl pointer
-     d6c:	10 92 e5 01 	sts	0x01E5, r1
+     d6c:	10 92 ef 01 	sts	0x01EF, r1
 			//sei();
 		break;
 	}
@@ -2064,34 +2064,34 @@ ISR(INT0_vect)
      d9a:	ef 93       	push	r30
      d9c:	ff 93       	push	r31
 	if(first_pulse == TRUE)
-     d9e:	80 91 e2 01 	lds	r24, 0x01E2
-     da2:	90 91 e3 01 	lds	r25, 0x01E3
+     d9e:	80 91 ec 01 	lds	r24, 0x01EC
+     da2:	90 91 ed 01 	lds	r25, 0x01ED
      da6:	01 97       	sbiw	r24, 0x01	; 1
      da8:	29 f4       	brne	.+10     	; 0xdb4 <__vector_1+0x2a>
 	{
 		first_pulse = FALSE;
-     daa:	10 92 e3 01 	sts	0x01E3, r1
-     dae:	10 92 e2 01 	sts	0x01E2, r1
+     daa:	10 92 ed 01 	sts	0x01ED, r1
+     dae:	10 92 ec 01 	sts	0x01EC, r1
      db2:	0f c0       	rjmp	.+30     	; 0xdd2 <__vector_1+0x48>
 	}
 	else
 	{
 		//write_ubyte_ln(channel);
 		ctrl_in[channel] = TCNT2;
-     db4:	20 91 e4 01 	lds	r18, 0x01E4
+     db4:	20 91 ee 01 	lds	r18, 0x01EE
      db8:	e2 2f       	mov	r30, r18
      dba:	f0 e0       	ldi	r31, 0x00	; 0
      dbc:	84 b5       	in	r24, 0x24	; 36
      dbe:	90 e0       	ldi	r25, 0x00	; 0
      dc0:	ee 0f       	add	r30, r30
      dc2:	ff 1f       	adc	r31, r31
-     dc4:	ea 51       	subi	r30, 0x1A	; 26
+     dc4:	e0 51       	subi	r30, 0x10	; 16
      dc6:	fe 4f       	sbci	r31, 0xFE	; 254
      dc8:	91 83       	std	Z+1, r25	; 0x01
      dca:	80 83       	st	Z, r24
 		channel++;
      dcc:	2f 5f       	subi	r18, 0xFF	; 255
-     dce:	20 93 e4 01 	sts	0x01E4, r18
+     dce:	20 93 ee 01 	sts	0x01EE, r18
 	}
 	TCNT2 = 0;
      dd2:	14 bc       	out	0x24, r1	; 36
@@ -2119,12 +2119,12 @@ ISR(TIMER2_OVF_vect)
      df2:	8f 93       	push	r24
      df4:	9f 93       	push	r25
 	channel = 0;
-     df6:	10 92 e4 01 	sts	0x01E4, r1
+     df6:	10 92 ee 01 	sts	0x01EE, r1
 	first_pulse = TRUE;
      dfa:	81 e0       	ldi	r24, 0x01	; 1
      dfc:	90 e0       	ldi	r25, 0x00	; 0
-     dfe:	90 93 e3 01 	sts	0x01E3, r25
-     e02:	80 93 e2 01 	sts	0x01E2, r24
+     dfe:	90 93 ed 01 	sts	0x01ED, r25
+     e02:	80 93 ec 01 	sts	0x01EC, r24
 	//write_string_ln("OVF");
      e06:	9f 91       	pop	r25
      e08:	8f 91       	pop	r24
@@ -2152,7 +2152,7 @@ ISR(TIMER2_OVF_vect)
      e18:	83 ec       	ldi	r24, 0xC3	; 195
      e1a:	8c bf       	out	0x3c, r24	; 60
 	write_string_ln("TaskTimerStarted");
-     e1c:	86 e0       	ldi	r24, 0x06	; 6
+     e1c:	80 e1       	ldi	r24, 0x10	; 16
      e1e:	91 e0       	ldi	r25, 0x01	; 1
      e20:	0e 94 06 11 	call	0x220c	; 0x220c <write_string_ln>
      e24:	08 95       	ret
@@ -2169,9 +2169,9 @@ ISR(TIMER0_COMP_vect)
      e2e:	11 24       	eor	r1, r1
      e30:	8f 93       	push	r24
 	comp_count++;
-     e32:	80 91 f8 01 	lds	r24, 0x01F8
+     e32:	80 91 02 02 	lds	r24, 0x0202
      e36:	8f 5f       	subi	r24, 0xFF	; 255
-     e38:	80 93 f8 01 	sts	0x01F8, r24
+     e38:	80 93 02 02 	sts	0x0202, r24
 	if (comp_count >= 3)
      e3c:	83 30       	cpi	r24, 0x03	; 3
      e3e:	28 f0       	brcs	.+10     	; 0xe4a <__vector_10+0x24>
@@ -2179,9 +2179,9 @@ ISR(TIMER0_COMP_vect)
 		// Setting the task flag
 		task_flag = 1;
      e40:	81 e0       	ldi	r24, 0x01	; 1
-     e42:	80 93 f9 01 	sts	0x01F9, r24
+     e42:	80 93 03 02 	sts	0x0203, r24
 		comp_count = 0; // Resetting comp count
-     e46:	10 92 f8 01 	sts	0x01F8, r1
+     e46:	10 92 02 02 	sts	0x0202, r1
 	}
 	
 }
@@ -2232,7 +2232,7 @@ int main(void)
      e78:	04 b6       	in	r0, 0x34	; 52
      e7a:	03 fe       	sbrs	r0, 3
      e7c:	05 c0       	rjmp	.+10     	; 0xe88 <main+0x2a>
-     e7e:	81 e2       	ldi	r24, 0x21	; 33
+     e7e:	8b e2       	ldi	r24, 0x2B	; 43
      e80:	91 e0       	ldi	r25, 0x01	; 1
      e82:	0e 94 f6 10 	call	0x21ec	; 0x21ec <write_string>
      e86:	1c c0       	rjmp	.+56     	; 0xec0 <main+0x62>
@@ -2240,7 +2240,7 @@ int main(void)
      e88:	04 b6       	in	r0, 0x34	; 52
      e8a:	00 fe       	sbrs	r0, 0
      e8c:	05 c0       	rjmp	.+10     	; 0xe98 <main+0x3a>
-     e8e:	89 e2       	ldi	r24, 0x29	; 41
+     e8e:	83 e3       	ldi	r24, 0x33	; 51
      e90:	91 e0       	ldi	r25, 0x01	; 1
      e92:	0e 94 f6 10 	call	0x21ec	; 0x21ec <write_string>
      e96:	14 c0       	rjmp	.+40     	; 0xec0 <main+0x62>
@@ -2248,7 +2248,7 @@ int main(void)
      e98:	04 b6       	in	r0, 0x34	; 52
      e9a:	02 fe       	sbrs	r0, 2
      e9c:	05 c0       	rjmp	.+10     	; 0xea8 <main+0x4a>
-     e9e:	82 e3       	ldi	r24, 0x32	; 50
+     e9e:	8c e3       	ldi	r24, 0x3C	; 60
      ea0:	91 e0       	ldi	r25, 0x01	; 1
      ea2:	0e 94 f6 10 	call	0x21ec	; 0x21ec <write_string>
      ea6:	0c c0       	rjmp	.+24     	; 0xec0 <main+0x62>
@@ -2256,7 +2256,7 @@ int main(void)
      ea8:	04 b6       	in	r0, 0x34	; 52
      eaa:	01 fe       	sbrs	r0, 1
      eac:	05 c0       	rjmp	.+10     	; 0xeb8 <main+0x5a>
-     eae:	8d e3       	ldi	r24, 0x3D	; 61
+     eae:	87 e4       	ldi	r24, 0x47	; 71
      eb0:	91 e0       	ldi	r25, 0x01	; 1
      eb2:	0e 94 f6 10 	call	0x21ec	; 0x21ec <write_string>
      eb6:	04 c0       	rjmp	.+8      	; 0xec0 <main+0x62>
@@ -2287,8 +2287,8 @@ int main(void)
 	
 	
 	if(task_gyro == TRUE)	
-     edc:	80 91 05 02 	lds	r24, 0x0205
-     ee0:	90 91 06 02 	lds	r25, 0x0206
+     edc:	80 91 7d 00 	lds	r24, 0x007D
+     ee0:	90 91 7e 00 	lds	r25, 0x007E
      ee4:	01 97       	sbiw	r24, 0x01	; 1
      ee6:	21 f4       	brne	.+8      	; 0xef0 <main+0x92>
 	{
@@ -2298,14 +2298,14 @@ int main(void)
      eec:	0e 94 78 03 	call	0x6f0	; 0x6f0 <gyro_calibration>
 	}		
 	if(task_acc == TRUE)	acc_start();
-     ef0:	80 91 03 02 	lds	r24, 0x0203
-     ef4:	90 91 04 02 	lds	r25, 0x0204
+     ef0:	80 91 7b 00 	lds	r24, 0x007B
+     ef4:	90 91 7c 00 	lds	r25, 0x007C
      ef8:	01 97       	sbiw	r24, 0x01	; 1
      efa:	11 f4       	brne	.+4      	; 0xf00 <main+0xa2>
      efc:	0e 94 77 00 	call	0xee	; 0xee <acc_start>
 	if(task_baro == TRUE)	
-     f00:	80 91 ff 01 	lds	r24, 0x01FF
-     f04:	90 91 00 02 	lds	r25, 0x0200
+     f00:	80 91 77 00 	lds	r24, 0x0077
+     f04:	90 91 78 00 	lds	r25, 0x0078
      f08:	01 97       	sbiw	r24, 0x01	; 1
      f0a:	21 f4       	brne	.+8      	; 0xf14 <main+0xb6>
 	{
@@ -2315,14 +2315,14 @@ int main(void)
      f10:	0e 94 e3 01 	call	0x3c6	; 0x3c6 <baro_calibration>
 	}		
 	if(task_mag == TRUE)	mag_start();
-     f14:	80 91 01 02 	lds	r24, 0x0201
-     f18:	90 91 02 02 	lds	r25, 0x0202
+     f14:	80 91 79 00 	lds	r24, 0x0079
+     f18:	90 91 7a 00 	lds	r25, 0x007A
      f1c:	01 97       	sbiw	r24, 0x01	; 1
      f1e:	11 f4       	brne	.+4      	; 0xf24 <main+0xc6>
      f20:	0e 94 40 04 	call	0x880	; 0x880 <mag_start>
 	if(task_speed == TRUE)	
-     f24:	80 91 fd 01 	lds	r24, 0x01FD
-     f28:	90 91 fe 01 	lds	r25, 0x01FE
+     f24:	80 91 75 00 	lds	r24, 0x0075
+     f28:	90 91 76 00 	lds	r25, 0x0076
      f2c:	01 97       	sbiw	r24, 0x01	; 1
      f2e:	21 f4       	brne	.+8      	; 0xf38 <main+0xda>
 	{
@@ -2500,8 +2500,8 @@ int main(void)
      ff2:	ab 97       	sbiw	r28, 0x2b	; 43
 					
 					}
-					
 					write_string_ln(";");
+					
 				Ctrl_Mode_prev = Ctrl_Mode;		// Setting previous State
 				ctrl_out_prev[5] = ctrl_out;	// Setting previous controls
      ff4:	80 e6       	ldi	r24, 0x60	; 96
@@ -2526,10 +2526,8 @@ int main(void)
     1010:	81 30       	cpi	r24, 0x01	; 1
     1012:	b1 f5       	brne	.+108    	; 0x1080 <main+0x222>
 			{
-				
-				
 				if(strcmp(GPS_string[0],"GPRMC")==0)
-    1014:	64 e4       	ldi	r22, 0x44	; 68
+    1014:	6e e4       	ldi	r22, 0x4E	; 78
     1016:	71 e0       	ldi	r23, 0x01	; 1
     1018:	8c e2       	ldi	r24, 0x2C	; 44
     101a:	93 e0       	ldi	r25, 0x03	; 3
@@ -2560,7 +2558,7 @@ int main(void)
 					
 				}
 				if(strcmp(GPS_string[0],"GPGGA")==0)
-    1048:	6a e4       	ldi	r22, 0x4A	; 74
+    1048:	64 e5       	ldi	r22, 0x54	; 84
     104a:	71 e0       	ldi	r23, 0x01	; 1
     104c:	8c e2       	ldi	r24, 0x2C	; 44
     104e:	93 e0       	ldi	r25, 0x03	; 3
@@ -2598,21 +2596,21 @@ int main(void)
 			}
 			
 			if(task_flag == 1)
-    1080:	80 91 f9 01 	lds	r24, 0x01F9
+    1080:	80 91 03 02 	lds	r24, 0x0203
     1084:	81 30       	cpi	r24, 0x01	; 1
     1086:	11 f0       	breq	.+4      	; 0x108c <main+0x22e>
     1088:	0c 94 59 10 	jmp	0x20b2	; 0x20b2 <main+0x1254>
 			{
 				// Resetting the task call:
 				task_flag = 0;
-    108c:	10 92 f9 01 	sts	0x01F9, r1
+    108c:	10 92 03 02 	sts	0x0203, r1
 				//bla_cnt++;
 				
 				// Defining struct to read the gyro channels
 				struct three_elements_obj turn_rate;
 				if(task_gyro == TRUE)	
-    1090:	80 91 05 02 	lds	r24, 0x0205
-    1094:	90 91 06 02 	lds	r25, 0x0206
+    1090:	80 91 7d 00 	lds	r24, 0x007D
+    1094:	90 91 7e 00 	lds	r25, 0x007E
     1098:	01 97       	sbiw	r24, 0x01	; 1
     109a:	09 f0       	breq	.+2      	; 0x109e <main+0x240>
     109c:	5c c0       	rjmp	.+184    	; 0x1156 <main+0x2f8>
@@ -2711,8 +2709,8 @@ int main(void)
 				}
 				struct acc_readings_obj acc_val;
 				if(task_acc == TRUE)	
-    1156:	80 91 03 02 	lds	r24, 0x0203
-    115a:	90 91 04 02 	lds	r25, 0x0204
+    1156:	80 91 7b 00 	lds	r24, 0x007B
+    115a:	90 91 7c 00 	lds	r25, 0x007C
     115e:	01 97       	sbiw	r24, 0x01	; 1
     1160:	09 f0       	breq	.+2      	; 0x1164 <main+0x306>
     1162:	5c c0       	rjmp	.+184    	; 0x121c <main+0x3be>
@@ -2808,8 +2806,8 @@ int main(void)
 					//write_string("acc: "); write_var_ln(acc_reading());
 				}
 				if(task_baro == TRUE)// && (bla_cnt==100))	
-    121c:	80 91 ff 01 	lds	r24, 0x01FF
-    1220:	90 91 00 02 	lds	r25, 0x0200
+    121c:	80 91 77 00 	lds	r24, 0x0077
+    1220:	90 91 78 00 	lds	r25, 0x0078
     1224:	01 97       	sbiw	r24, 0x01	; 1
     1226:	71 f5       	brne	.+92     	; 0x1284 <main+0x426>
 				{
@@ -2859,14 +2857,14 @@ int main(void)
 				}
 						
 				if(task_mag == TRUE)	mag = mag_read();
-    1284:	80 91 01 02 	lds	r24, 0x0201
-    1288:	90 91 02 02 	lds	r25, 0x0202
+    1284:	80 91 79 00 	lds	r24, 0x0079
+    1288:	90 91 7a 00 	lds	r25, 0x007A
     128c:	01 97       	sbiw	r24, 0x01	; 1
     128e:	11 f4       	brne	.+4      	; 0x1294 <main+0x436>
     1290:	0e 94 49 04 	call	0x892	; 0x892 <mag_read>
 				if(task_speed == TRUE)
-    1294:	80 91 fd 01 	lds	r24, 0x01FD
-    1298:	90 91 fe 01 	lds	r25, 0x01FE
+    1294:	80 91 75 00 	lds	r24, 0x0075
+    1298:	90 91 76 00 	lds	r25, 0x0076
     129c:	01 97       	sbiw	r24, 0x01	; 1
     129e:	71 f5       	brne	.+92     	; 0x12fc <main+0x49e>
 				{
@@ -2960,10 +2958,10 @@ int main(void)
     134e:	8f 2f       	mov	r24, r31
     1350:	9e 2f       	mov	r25, r30
     1352:	0e 94 5b 11 	call	0x22b6	; 0x22b6 <__addsf3>
-    1356:	2f e6       	ldi	r18, 0x6F	; 111
-    1358:	32 e1       	ldi	r19, 0x12	; 18
-    135a:	43 e8       	ldi	r20, 0x83	; 131
-    135c:	5a e3       	ldi	r21, 0x3A	; 58
+    1356:	2a e0       	ldi	r18, 0x0A	; 10
+    1358:	37 ed       	ldi	r19, 0xD7	; 215
+    135a:	43 ea       	ldi	r20, 0xA3	; 163
+    135c:	5b e3       	ldi	r21, 0x3B	; 59
     135e:	0e 94 5a 11 	call	0x22b4	; 0x22b4 <__subsf3>
     1362:	2d ec       	ldi	r18, 0xCD	; 205
     1364:	3c ec       	ldi	r19, 0xCC	; 204
@@ -3043,10 +3041,10 @@ int main(void)
     13f8:	8f 2f       	mov	r24, r31
     13fa:	9e 2f       	mov	r25, r30
     13fc:	0e 94 5b 11 	call	0x22b6	; 0x22b6 <__addsf3>
-    1400:	2f e6       	ldi	r18, 0x6F	; 111
-    1402:	32 e1       	ldi	r19, 0x12	; 18
-    1404:	43 e8       	ldi	r20, 0x83	; 131
-    1406:	5a e3       	ldi	r21, 0x3A	; 58
+    1400:	2a e0       	ldi	r18, 0x0A	; 10
+    1402:	37 ed       	ldi	r19, 0xD7	; 215
+    1404:	43 ea       	ldi	r20, 0xA3	; 163
+    1406:	5b e3       	ldi	r21, 0x3B	; 59
     1408:	0e 94 5a 11 	call	0x22b4	; 0x22b4 <__subsf3>
     140c:	2d ec       	ldi	r18, 0xCD	; 205
     140e:	3c ec       	ldi	r19, 0xCC	; 204
@@ -3072,10 +3070,10 @@ int main(void)
 				*/
 				Theta_temp = Theta_acc - Theta;
 				S_Theta = P_00_Theta + R_angle;
-    1434:	2d ec       	ldi	r18, 0xCD	; 205
-    1436:	3c ec       	ldi	r19, 0xCC	; 204
-    1438:	4c e4       	ldi	r20, 0x4C	; 76
-    143a:	5d e3       	ldi	r21, 0x3D	; 61
+    1434:	2a e0       	ldi	r18, 0x0A	; 10
+    1436:	37 ed       	ldi	r19, 0xD7	; 215
+    1438:	43 ea       	ldi	r20, 0xA3	; 163
+    143a:	5c e3       	ldi	r21, 0x3C	; 60
     143c:	6a 2d       	mov	r22, r10
     143e:	7b 2d       	mov	r23, r11
     1440:	8c 2d       	mov	r24, r12
@@ -3136,10 +3134,10 @@ int main(void)
     14ac:	8b ab       	std	Y+51, r24	; 0x33
     14ae:	9c ab       	std	Y+52, r25	; 0x34
 				S_Phi = P_00_Phi + R_angle;
-    14b0:	2d ec       	ldi	r18, 0xCD	; 205
-    14b2:	3c ec       	ldi	r19, 0xCC	; 204
-    14b4:	4c e4       	ldi	r20, 0x4C	; 76
-    14b6:	5d e3       	ldi	r21, 0x3D	; 61
+    14b0:	2a e0       	ldi	r18, 0x0A	; 10
+    14b2:	37 ed       	ldi	r19, 0xD7	; 215
+    14b4:	43 ea       	ldi	r20, 0xA3	; 163
+    14b6:	5c e3       	ldi	r21, 0x3C	; 60
     14b8:	6e 2d       	mov	r22, r14
     14ba:	7f 2d       	mov	r23, r15
     14bc:	80 2f       	mov	r24, r16
@@ -3528,7 +3526,7 @@ int main(void)
 				*/
 				// changing from knob to normal switch for mode control
 				if(ctrl_in[5]>144) Ctrl_Mode = HOLD_CTRL;
-    179a:	e0 ef       	ldi	r30, 0xF0	; 240
+    179a:	ea ef       	ldi	r30, 0xFA	; 250
     179c:	f1 e0       	ldi	r31, 0x01	; 1
     179e:	80 81       	ld	r24, Z
     17a0:	91 81       	ldd	r25, Z+1	; 0x01
@@ -3536,10 +3534,10 @@ int main(void)
     17a4:	91 05       	cpc	r25, r1
     17a6:	24 f0       	brlt	.+8      	; 0x17b0 <main+0x952>
     17a8:	83 e0       	ldi	r24, 0x03	; 3
-    17aa:	80 93 fc 01 	sts	0x01FC, r24
+    17aa:	80 93 06 02 	sts	0x0206, r24
     17ae:	12 c0       	rjmp	.+36     	; 0x17d4 <main+0x976>
 				else if (ctrl_in[5] > 139 && ctrl_in[5] < 144) Ctrl_Mode = DIRECT_CTRL;
-    17b0:	a0 ef       	ldi	r26, 0xF0	; 240
+    17b0:	aa ef       	ldi	r26, 0xFA	; 250
     17b2:	b1 e0       	ldi	r27, 0x01	; 1
     17b4:	8d 91       	ld	r24, X+
     17b6:	9c 91       	ld	r25, X
@@ -3552,28 +3550,28 @@ int main(void)
     17c4:	80 39       	cpi	r24, 0x90	; 144
     17c6:	91 05       	cpc	r25, r1
     17c8:	1c f4       	brge	.+6      	; 0x17d0 <main+0x972>
-    17ca:	10 92 fc 01 	sts	0x01FC, r1
+    17ca:	10 92 06 02 	sts	0x0206, r1
     17ce:	02 c0       	rjmp	.+4      	; 0x17d4 <main+0x976>
 				else Ctrl_Mode = DIRECT_CTRL;				
-    17d0:	10 92 fc 01 	sts	0x01FC, r1
+    17d0:	10 92 06 02 	sts	0x0206, r1
 										
 				if(Ctrl_Mode_prev != Ctrl_Mode)
-    17d4:	80 91 fc 01 	lds	r24, 0x01FC
-    17d8:	90 91 fb 01 	lds	r25, 0x01FB
+    17d4:	80 91 06 02 	lds	r24, 0x0206
+    17d8:	90 91 05 02 	lds	r25, 0x0205
     17dc:	98 17       	cp	r25, r24
     17de:	21 f0       	breq	.+8      	; 0x17e8 <main+0x98a>
 				{
 					// If a state change happens
 					state_change = TRUE;
     17e0:	91 e0       	ldi	r25, 0x01	; 1
-    17e2:	90 93 fa 01 	sts	0x01FA, r25
+    17e2:	90 93 04 02 	sts	0x0204, r25
     17e6:	02 c0       	rjmp	.+4      	; 0x17ec <main+0x98e>
 				}
 				else
 				{
 					// Otherwise no state change
 					state_change = FALSE;
-    17e8:	10 92 fa 01 	sts	0x01FA, r1
+    17e8:	10 92 04 02 	sts	0x0204, r1
 				}
 				
 				switch(Ctrl_Mode)
@@ -3588,12 +3586,12 @@ int main(void)
 					// Direct Law is used for direct Remote Control input -> Servos
 					// + / - in front of the long bracket inverses the Control
 						if(state_change == TRUE)
-    17f8:	80 91 fa 01 	lds	r24, 0x01FA
+    17f8:	80 91 04 02 	lds	r24, 0x0204
     17fc:	81 30       	cpi	r24, 0x01	; 1
     17fe:	21 f4       	brne	.+8      	; 0x1808 <main+0x9aa>
 						{
 							write_string_ln("DIRECT CTRL");
-    1800:	80 e5       	ldi	r24, 0x50	; 80
+    1800:	8a e5       	ldi	r24, 0x5A	; 90
     1802:	91 e0       	ldi	r25, 0x01	; 1
     1804:	0e 94 06 11 	call	0x220c	; 0x220c <write_string_ln>
 							if (ctrl_in > ctrl_in_prev)
@@ -3602,7 +3600,7 @@ int main(void)
 							}
 						 
 						 ctrl_out[motor]	=	NEUTRAL+((ctrl_in[stick_l_up_down]-SERVO_TRIM_MOTOR)*SERVO_GAIN_MOTOR);		
-    1808:	e6 ee       	ldi	r30, 0xE6	; 230
+    1808:	e0 ef       	ldi	r30, 0xF0	; 240
     180a:	f1 e0       	ldi	r31, 0x01	; 1
     180c:	20 81       	ld	r18, Z
     180e:	31 81       	ldd	r19, Z+1	; 0x01
@@ -3630,8 +3628,8 @@ int main(void)
     183a:	a2 83       	std	Z+2, r26	; 0x02
     183c:	b3 83       	std	Z+3, r27	; 0x03
 						 ctrl_out[aileron]	=	NEUTRAL+((ctrl_in[stick_r_left_right]-SERVO_TRIM_AILERON)*SERVO_GAIN_AILERON);
-    183e:	20 91 e8 01 	lds	r18, 0x01E8
-    1842:	30 91 e9 01 	lds	r19, 0x01E9
+    183e:	20 91 f2 01 	lds	r18, 0x01F2
+    1842:	30 91 f3 01 	lds	r19, 0x01F3
     1846:	4f e0       	ldi	r20, 0x0F	; 15
     1848:	42 9f       	mul	r20, r18
     184a:	c0 01       	movw	r24, r0
@@ -3651,8 +3649,8 @@ int main(void)
     1866:	a2 83       	std	Z+2, r26	; 0x02
     1868:	b3 83       	std	Z+3, r27	; 0x03
 						 ctrl_out[elevator] =	NEUTRAL+((ctrl_in[stick_r_up_down]-SERVO_TRIM_ELEVATOR)*SERVO_GAIN_ELEVATOR);
-    186a:	20 91 ea 01 	lds	r18, 0x01EA
-    186e:	30 91 eb 01 	lds	r19, 0x01EB
+    186a:	20 91 f4 01 	lds	r18, 0x01F4
+    186e:	30 91 f5 01 	lds	r19, 0x01F5
     1872:	42 9f       	mul	r20, r18
     1874:	c0 01       	movw	r24, r0
     1876:	43 9f       	mul	r20, r19
@@ -3669,8 +3667,8 @@ int main(void)
     188c:	a2 83       	std	Z+2, r26	; 0x02
     188e:	b3 83       	std	Z+3, r27	; 0x03
 						 ctrl_out[rudder]	=	NEUTRAL+((ctrl_in[stick_l_left_right]-SERVO_TRIM_RUDDER)*SERVO_GAIN_RUDDER);
-    1890:	20 91 ec 01 	lds	r18, 0x01EC
-    1894:	30 91 ed 01 	lds	r19, 0x01ED
+    1890:	20 91 f6 01 	lds	r18, 0x01F6
+    1894:	30 91 f7 01 	lds	r19, 0x01F7
     1898:	22 0f       	add	r18, r18
     189a:	33 1f       	adc	r19, r19
     189c:	c9 01       	movw	r24, r18
@@ -3700,35 +3698,35 @@ int main(void)
 						 
 						 // Flap Control
 						 if(ctrl_in[rotary_knob]<135 && ctrl_in[rotary_knob]>120)		flap_target = FLAP_UP;
-    18c6:	80 91 ee 01 	lds	r24, 0x01EE
-    18ca:	90 91 ef 01 	lds	r25, 0x01EF
+    18c6:	80 91 f8 01 	lds	r24, 0x01F8
+    18ca:	90 91 f9 01 	lds	r25, 0x01F9
     18ce:	87 38       	cpi	r24, 0x87	; 135
     18d0:	91 05       	cpc	r25, r1
     18d2:	3c f4       	brge	.+14     	; 0x18e2 <main+0xa84>
-    18d4:	80 91 ee 01 	lds	r24, 0x01EE
-    18d8:	90 91 ef 01 	lds	r25, 0x01EF
+    18d4:	80 91 f8 01 	lds	r24, 0x01F8
+    18d8:	90 91 f9 01 	lds	r25, 0x01F9
     18dc:	89 37       	cpi	r24, 0x79	; 121
     18de:	91 05       	cpc	r25, r1
     18e0:	fc f4       	brge	.+62     	; 0x1920 <main+0xac2>
 						 else if(ctrl_in[rotary_knob]<150 && ctrl_in[rotary_knob]>135)	flap_target = FLAP_1;
-    18e2:	80 91 ee 01 	lds	r24, 0x01EE
-    18e6:	90 91 ef 01 	lds	r25, 0x01EF
+    18e2:	80 91 f8 01 	lds	r24, 0x01F8
+    18e6:	90 91 f9 01 	lds	r25, 0x01F9
     18ea:	86 39       	cpi	r24, 0x96	; 150
     18ec:	91 05       	cpc	r25, r1
     18ee:	3c f4       	brge	.+14     	; 0x18fe <main+0xaa0>
-    18f0:	80 91 ee 01 	lds	r24, 0x01EE
-    18f4:	90 91 ef 01 	lds	r25, 0x01EF
+    18f0:	80 91 f8 01 	lds	r24, 0x01F8
+    18f4:	90 91 f9 01 	lds	r25, 0x01F9
     18f8:	88 38       	cpi	r24, 0x88	; 136
     18fa:	91 05       	cpc	r25, r1
     18fc:	a4 f4       	brge	.+40     	; 0x1926 <main+0xac8>
 						 else if(ctrl_in[rotary_knob]<160 && ctrl_in[rotary_knob]>150)	flap_target = FLAP_FULL;
-    18fe:	80 91 ee 01 	lds	r24, 0x01EE
-    1902:	90 91 ef 01 	lds	r25, 0x01EF
+    18fe:	80 91 f8 01 	lds	r24, 0x01F8
+    1902:	90 91 f9 01 	lds	r25, 0x01F9
     1906:	80 3a       	cpi	r24, 0xA0	; 160
     1908:	91 05       	cpc	r25, r1
     190a:	84 f4       	brge	.+32     	; 0x192c <main+0xace>
-    190c:	80 91 ee 01 	lds	r24, 0x01EE
-    1910:	90 91 ef 01 	lds	r25, 0x01EF
+    190c:	80 91 f8 01 	lds	r24, 0x01F8
+    1910:	90 91 f9 01 	lds	r25, 0x01F9
     1914:	87 39       	cpi	r24, 0x97	; 151
     1916:	91 05       	cpc	r25, r1
     1918:	64 f4       	brge	.+24     	; 0x1932 <main+0xad4>
@@ -3838,13 +3836,13 @@ int main(void)
 					case HOLD_CTRL:
 						// entry condition
 						if(state_change == TRUE)
-    19a8:	80 91 fa 01 	lds	r24, 0x01FA
+    19a8:	80 91 04 02 	lds	r24, 0x0204
     19ac:	81 30       	cpi	r24, 0x01	; 1
     19ae:	09 f0       	breq	.+2      	; 0x19b2 <main+0xb54>
     19b0:	87 c0       	rjmp	.+270    	; 0x1ac0 <main+0xc62>
 						{
 							write_string_ln("HOLD CONTROL");
-    19b2:	8c e5       	ldi	r24, 0x5C	; 92
+    19b2:	86 e6       	ldi	r24, 0x66	; 102
     19b4:	91 e0       	ldi	r25, 0x01	; 1
     19b6:	0e 94 06 11 	call	0x220c	; 0x220c <write_string_ln>
 							alt_hold = altitude_filt; // Setting current values as control values
@@ -3884,7 +3882,7 @@ int main(void)
 							Phi_error_sum = 0;
 							Phi_error_prev = 0;
 							write_string("Trim El / Ail: ");write_var(trimmed_elevator);write_string(" - ");write_var_ln(trimmed_aileron);
-    19ee:	89 e6       	ldi	r24, 0x69	; 105
+    19ee:	83 e7       	ldi	r24, 0x73	; 115
     19f0:	91 e0       	ldi	r25, 0x01	; 1
     19f2:	0e 94 f6 10 	call	0x21ec	; 0x21ec <write_string>
     19f6:	a9 96       	adiw	r28, 0x29	; 41
@@ -3892,7 +3890,7 @@ int main(void)
     19fa:	9f ad       	ldd	r25, Y+63	; 0x3f
     19fc:	a9 97       	sbiw	r28, 0x29	; 41
     19fe:	0e 94 1a 11 	call	0x2234	; 0x2234 <write_var>
-    1a02:	89 e7       	ldi	r24, 0x79	; 121
+    1a02:	83 e8       	ldi	r24, 0x83	; 131
     1a04:	91 e0       	ldi	r25, 0x01	; 1
     1a06:	0e 94 f6 10 	call	0x21ec	; 0x21ec <write_string>
     1a0a:	af 96       	adiw	r28, 0x2f	; 47
@@ -3903,7 +3901,7 @@ int main(void)
     1a14:	af 97       	sbiw	r28, 0x2f	; 47
     1a16:	0e 94 38 11 	call	0x2270	; 0x2270 <write_var_ln>
 							write_string("Target Alt / Bank: ");write_var(alt_hold);write_string(" - ");write_var_ln(Phi_hold);
-    1a1a:	8d e7       	ldi	r24, 0x7D	; 125
+    1a1a:	87 e8       	ldi	r24, 0x87	; 135
     1a1c:	91 e0       	ldi	r25, 0x01	; 1
     1a1e:	0e 94 f6 10 	call	0x21ec	; 0x21ec <write_string>
     1a22:	2f 96       	adiw	r28, 0x0f	; 15
@@ -3911,7 +3909,7 @@ int main(void)
     1a26:	9f ad       	ldd	r25, Y+63	; 0x3f
     1a28:	2f 97       	sbiw	r28, 0x0f	; 15
     1a2a:	0e 94 1a 11 	call	0x2234	; 0x2234 <write_var>
-    1a2e:	89 e7       	ldi	r24, 0x79	; 121
+    1a2e:	83 e8       	ldi	r24, 0x83	; 131
     1a30:	91 e0       	ldi	r25, 0x01	; 1
     1a32:	0e 94 f6 10 	call	0x21ec	; 0x21ec <write_string>
     1a36:	59 8d       	ldd	r21, Y+25	; 0x19
@@ -4036,7 +4034,7 @@ int main(void)
 						//POSITION3 = NEUTRAL+((ctrl_in[2]-SERVO_TRIM_ELEVATOR)*SERVO_GAIN_ELEVATOR);	// Elevator	up:			POSITION++	down: POSITION--
 						//POSITION4 = NEUTRAL+((ctrl_in[3]-SERVO_TRIM_RUDDER)*SERVO_GAIN_RUDDER);		// Rudder
 						ctrl_out[motor] = NEUTRAL+((ctrl_in[stick_l_up_down]-SERVO_TRIM_MOTOR)*SERVO_GAIN_MOTOR);
-    1af0:	a6 ee       	ldi	r26, 0xE6	; 230
+    1af0:	a0 ef       	ldi	r26, 0xF0	; 240
     1af2:	b1 e0       	ldi	r27, 0x01	; 1
     1af4:	2d 91       	ld	r18, X+
     1af6:	3c 91       	ld	r19, X
@@ -4066,8 +4064,8 @@ int main(void)
 						//ctrl_out[aileron] = NEUTRAL+((ctrl_in[stick_r_left_right]-SERVO_TRIM_AILERON)*SERVO_GAIN_AILERON);
 						//ctrl_out[elevator] = NEUTRAL+((ctrl_in[stick_r_up_down]-SERVO_TRIM_ELEVATOR)*SERVO_GAIN_ELEVATOR);
 						ctrl_out[rudder] = NEUTRAL+((ctrl_in[stick_l_left_right]-SERVO_TRIM_RUDDER)*SERVO_GAIN_RUDDER);
-    1b26:	20 91 ec 01 	lds	r18, 0x01EC
-    1b2a:	30 91 ed 01 	lds	r19, 0x01ED
+    1b26:	20 91 f6 01 	lds	r18, 0x01F6
+    1b2a:	30 91 f7 01 	lds	r19, 0x01F7
     1b2e:	22 0f       	add	r18, r18
     1b30:	33 1f       	adc	r19, r19
     1b32:	c9 01       	movw	r24, r18
@@ -4095,13 +4093,13 @@ int main(void)
 						// Flying without Flaps only!
 						// We use the knob to increase gain of the control
 						if(ctrl_in[rotary_knob]<135 && ctrl_in[rotary_knob]>120) 
-    1b5c:	80 91 ee 01 	lds	r24, 0x01EE
-    1b60:	90 91 ef 01 	lds	r25, 0x01EF
+    1b5c:	80 91 f8 01 	lds	r24, 0x01F8
+    1b60:	90 91 f9 01 	lds	r25, 0x01F9
     1b64:	87 38       	cpi	r24, 0x87	; 135
     1b66:	91 05       	cpc	r25, r1
     1b68:	5c f4       	brge	.+22     	; 0x1b80 <main+0xd22>
-    1b6a:	80 91 ee 01 	lds	r24, 0x01EE
-    1b6e:	90 91 ef 01 	lds	r25, 0x01EF
+    1b6a:	80 91 f8 01 	lds	r24, 0x01F8
+    1b6e:	90 91 f9 01 	lds	r25, 0x01F9
     1b72:	89 37       	cpi	r24, 0x79	; 121
     1b74:	91 05       	cpc	r25, r1
     1b76:	24 f0       	brlt	.+8      	; 0x1b80 <main+0xd22>
@@ -4112,13 +4110,13 @@ int main(void)
     1b7e:	23 c0       	rjmp	.+70     	; 0x1bc6 <main+0xd68>
 						}
 						else if(ctrl_in[rotary_knob]<150 && ctrl_in[rotary_knob]>135) 
-    1b80:	80 91 ee 01 	lds	r24, 0x01EE
-    1b84:	90 91 ef 01 	lds	r25, 0x01EF
+    1b80:	80 91 f8 01 	lds	r24, 0x01F8
+    1b84:	90 91 f9 01 	lds	r25, 0x01F9
     1b88:	86 39       	cpi	r24, 0x96	; 150
     1b8a:	91 05       	cpc	r25, r1
     1b8c:	5c f4       	brge	.+22     	; 0x1ba4 <main+0xd46>
-    1b8e:	80 91 ee 01 	lds	r24, 0x01EE
-    1b92:	90 91 ef 01 	lds	r25, 0x01EF
+    1b8e:	80 91 f8 01 	lds	r24, 0x01F8
+    1b92:	90 91 f9 01 	lds	r25, 0x01F9
     1b96:	88 38       	cpi	r24, 0x88	; 136
     1b98:	91 05       	cpc	r25, r1
     1b9a:	24 f0       	brlt	.+8      	; 0x1ba4 <main+0xd46>
@@ -4129,13 +4127,13 @@ int main(void)
     1ba2:	11 c0       	rjmp	.+34     	; 0x1bc6 <main+0xd68>
 						}
 						else if(ctrl_in[rotary_knob]<160 && ctrl_in[rotary_knob]>150) 
-    1ba4:	80 91 ee 01 	lds	r24, 0x01EE
-    1ba8:	90 91 ef 01 	lds	r25, 0x01EF
+    1ba4:	80 91 f8 01 	lds	r24, 0x01F8
+    1ba8:	90 91 f9 01 	lds	r25, 0x01F9
     1bac:	80 3a       	cpi	r24, 0xA0	; 160
     1bae:	91 05       	cpc	r25, r1
     1bb0:	54 f4       	brge	.+20     	; 0x1bc6 <main+0xd68>
-    1bb2:	80 91 ee 01 	lds	r24, 0x01EE
-    1bb6:	90 91 ef 01 	lds	r25, 0x01EF
+    1bb2:	80 91 f8 01 	lds	r24, 0x01F8
+    1bb6:	90 91 f9 01 	lds	r25, 0x01F9
     1bba:	87 39       	cpi	r24, 0x97	; 151
     1bbc:	91 05       	cpc	r25, r1
     1bbe:	1c f0       	brlt	.+6      	; 0x1bc6 <main+0xd68>
@@ -4555,7 +4553,7 @@ int main(void)
     1ef0:	a2 81       	ldd	r26, Z+2	; 0x02
     1ef2:	b3 81       	ldd	r27, Z+3	; 0x03
     1ef4:	0e 94 1a 11 	call	0x2234	; 0x2234 <write_var>
-    1ef8:	81 e9       	ldi	r24, 0x91	; 145
+    1ef8:	8b e9       	ldi	r24, 0x9B	; 155
     1efa:	91 e0       	ldi	r25, 0x01	; 1
     1efc:	0e 94 f6 10 	call	0x21ec	; 0x21ec <write_string>
     1f00:	e4 e6       	ldi	r30, 0x64	; 100
@@ -4565,7 +4563,7 @@ int main(void)
     1f08:	a2 81       	ldd	r26, Z+2	; 0x02
     1f0a:	b3 81       	ldd	r27, Z+3	; 0x03
     1f0c:	0e 94 1a 11 	call	0x2234	; 0x2234 <write_var>
-    1f10:	81 e9       	ldi	r24, 0x91	; 145
+    1f10:	8b e9       	ldi	r24, 0x9B	; 155
     1f12:	91 e0       	ldi	r25, 0x01	; 1
     1f14:	0e 94 f6 10 	call	0x21ec	; 0x21ec <write_string>
 					write_var(ctrl_out[elevator]);write_string(";");write_var(ctrl_out[rudder]);write_string(";");
@@ -4576,7 +4574,7 @@ int main(void)
     1f20:	a2 81       	ldd	r26, Z+2	; 0x02
     1f22:	b3 81       	ldd	r27, Z+3	; 0x03
     1f24:	0e 94 1a 11 	call	0x2234	; 0x2234 <write_var>
-    1f28:	81 e9       	ldi	r24, 0x91	; 145
+    1f28:	8b e9       	ldi	r24, 0x9B	; 155
     1f2a:	91 e0       	ldi	r25, 0x01	; 1
     1f2c:	0e 94 f6 10 	call	0x21ec	; 0x21ec <write_string>
     1f30:	ec e6       	ldi	r30, 0x6C	; 108
@@ -4586,7 +4584,7 @@ int main(void)
     1f38:	a2 81       	ldd	r26, Z+2	; 0x02
     1f3a:	b3 81       	ldd	r27, Z+3	; 0x03
     1f3c:	0e 94 1a 11 	call	0x2234	; 0x2234 <write_var>
-    1f40:	81 e9       	ldi	r24, 0x91	; 145
+    1f40:	8b e9       	ldi	r24, 0x9B	; 155
     1f42:	91 e0       	ldi	r25, 0x01	; 1
     1f44:	0e 94 f6 10 	call	0x21ec	; 0x21ec <write_string>
 					write_var(ctrl_out[flap]);write_string(";");
@@ -4597,7 +4595,7 @@ int main(void)
     1f50:	a2 81       	ldd	r26, Z+2	; 0x02
     1f52:	b3 81       	ldd	r27, Z+3	; 0x03
     1f54:	0e 94 1a 11 	call	0x2234	; 0x2234 <write_var>
-    1f58:	81 e9       	ldi	r24, 0x91	; 145
+    1f58:	8b e9       	ldi	r24, 0x9B	; 155
     1f5a:	91 e0       	ldi	r25, 0x01	; 1
     1f5c:	0e 94 f6 10 	call	0x21ec	; 0x21ec <write_string>
 					write_var(Phi);write_string(";");
@@ -4612,7 +4610,7 @@ int main(void)
     1f70:	0e 94 89 12 	call	0x2512	; 0x2512 <__fixsfsi>
     1f74:	cb 01       	movw	r24, r22
     1f76:	0e 94 1a 11 	call	0x2234	; 0x2234 <write_var>
-    1f7a:	81 e9       	ldi	r24, 0x91	; 145
+    1f7a:	8b e9       	ldi	r24, 0x9B	; 155
     1f7c:	91 e0       	ldi	r25, 0x01	; 1
     1f7e:	0e 94 f6 10 	call	0x21ec	; 0x21ec <write_string>
 					write_var(Theta);write_string(";");
@@ -4627,7 +4625,7 @@ int main(void)
     1f92:	0e 94 89 12 	call	0x2512	; 0x2512 <__fixsfsi>
     1f96:	cb 01       	movw	r24, r22
     1f98:	0e 94 1a 11 	call	0x2234	; 0x2234 <write_var>
-    1f9c:	81 e9       	ldi	r24, 0x91	; 145
+    1f9c:	8b e9       	ldi	r24, 0x9B	; 155
     1f9e:	91 e0       	ldi	r25, 0x01	; 1
     1fa0:	0e 94 f6 10 	call	0x21ec	; 0x21ec <write_string>
 					write_var(altitude_filt);write_string(";");write_var(speed_filt);write_string(";");
@@ -4636,7 +4634,7 @@ int main(void)
     1fa8:	9f ad       	ldd	r25, Y+63	; 0x3f
     1faa:	2f 97       	sbiw	r28, 0x0f	; 15
     1fac:	0e 94 1a 11 	call	0x2234	; 0x2234 <write_var>
-    1fb0:	81 e9       	ldi	r24, 0x91	; 145
+    1fb0:	8b e9       	ldi	r24, 0x9B	; 155
     1fb2:	91 e0       	ldi	r25, 0x01	; 1
     1fb4:	0e 94 f6 10 	call	0x21ec	; 0x21ec <write_string>
     1fb8:	61 96       	adiw	r28, 0x11	; 17
@@ -4644,14 +4642,14 @@ int main(void)
     1fbc:	9f ad       	ldd	r25, Y+63	; 0x3f
     1fbe:	61 97       	sbiw	r28, 0x11	; 17
     1fc0:	0e 94 1a 11 	call	0x2234	; 0x2234 <write_var>
-    1fc4:	81 e9       	ldi	r24, 0x91	; 145
+    1fc4:	8b e9       	ldi	r24, 0x9B	; 155
     1fc6:	91 e0       	ldi	r25, 0x01	; 1
     1fc8:	0e 94 f6 10 	call	0x21ec	; 0x21ec <write_string>
 					write_var(alt_error);write_string(";");write_var(Phi_error);write_string(";");
     1fcc:	80 e0       	ldi	r24, 0x00	; 0
     1fce:	90 e0       	ldi	r25, 0x00	; 0
     1fd0:	0e 94 1a 11 	call	0x2234	; 0x2234 <write_var>
-    1fd4:	81 e9       	ldi	r24, 0x91	; 145
+    1fd4:	8b e9       	ldi	r24, 0x9B	; 155
     1fd6:	91 e0       	ldi	r25, 0x01	; 1
     1fd8:	0e 94 f6 10 	call	0x21ec	; 0x21ec <write_string>
     1fdc:	2a 96       	adiw	r28, 0x0a	; 10
@@ -4673,14 +4671,14 @@ int main(void)
     1ffc:	0e 94 89 12 	call	0x2512	; 0x2512 <__fixsfsi>
     2000:	cb 01       	movw	r24, r22
     2002:	0e 94 1a 11 	call	0x2234	; 0x2234 <write_var>
-    2006:	81 e9       	ldi	r24, 0x91	; 145
+    2006:	8b e9       	ldi	r24, 0x9B	; 155
     2008:	91 e0       	ldi	r25, 0x01	; 1
     200a:	0e 94 f6 10 	call	0x21ec	; 0x21ec <write_string>
 					write_var(control_gain);
     200e:	80 91 74 00 	lds	r24, 0x0074
     2012:	90 e0       	ldi	r25, 0x00	; 0
     2014:	0e 94 1a 11 	call	0x2234	; 0x2234 <write_var>
-					
+					// In case at least once a GPS Signal has been received, the GPS Info will also be printed
 					if(strcmp(GPS_RMC[GPS_RMC_MODE],"")!=0 || strcmp(GPS_GGA[GPS_GGA_MODE],"")!=0) 
     2018:	80 91 09 02 	lds	r24, 0x0209
     201c:	81 11       	cpse	r24, r1
@@ -4690,7 +4688,7 @@ int main(void)
     2026:	81 f0       	breq	.+32     	; 0x2048 <main+0x11ea>
 					{
 						write_string(";");
-    2028:	81 e9       	ldi	r24, 0x91	; 145
+    2028:	8b e9       	ldi	r24, 0x9B	; 155
     202a:	91 e0       	ldi	r25, 0x01	; 1
     202c:	0e 94 f6 10 	call	0x21ec	; 0x21ec <write_string>
 						write_string(GPS_RMC[GPS_RMC_LONGITUDE]);
@@ -4698,7 +4696,7 @@ int main(void)
     2032:	92 e0       	ldi	r25, 0x02	; 2
     2034:	0e 94 f6 10 	call	0x21ec	; 0x21ec <write_string>
 						write_string(";");
-    2038:	81 e9       	ldi	r24, 0x91	; 145
+    2038:	8b e9       	ldi	r24, 0x9B	; 155
     203a:	91 e0       	ldi	r25, 0x01	; 1
     203c:	0e 94 f6 10 	call	0x21ec	; 0x21ec <write_string>
 						write_string(GPS_RMC[GPS_RMC_LATITUDE]);
@@ -4707,14 +4705,14 @@ int main(void)
     2044:	0e 94 f6 10 	call	0x21ec	; 0x21ec <write_string>
 					
 					}
-					
 					write_string_ln(";");
-    2048:	81 e9       	ldi	r24, 0x91	; 145
+    2048:	8b e9       	ldi	r24, 0x9B	; 155
     204a:	91 e0       	ldi	r25, 0x01	; 1
     204c:	0e 94 06 11 	call	0x220c	; 0x220c <write_string_ln>
+					
 				Ctrl_Mode_prev = Ctrl_Mode;		// Setting previous State
-    2050:	80 91 fc 01 	lds	r24, 0x01FC
-    2054:	80 93 fb 01 	sts	0x01FB, r24
+    2050:	80 91 06 02 	lds	r24, 0x0206
+    2054:	80 93 05 02 	sts	0x0205, r24
 				ctrl_out_prev[5] = ctrl_out;	// Setting previous controls
     2058:	6f 96       	adiw	r28, 0x1f	; 31
     205a:	8c ad       	ldd	r24, Y+60	; 0x3c
@@ -4729,7 +4727,7 @@ int main(void)
     206c:	a2 83       	std	Z+2, r26	; 0x02
     206e:	b3 83       	std	Z+3, r27	; 0x03
 				ctrl_in_prev[9] = ctrl_in;
-    2070:	e6 ee       	ldi	r30, 0xE6	; 230
+    2070:	e0 ef       	ldi	r30, 0xF0	; 240
     2072:	f1 e0       	ldi	r31, 0x01	; 1
     2074:	a9 ef       	ldi	r26, 0xF9	; 249
     2076:	b3 e0       	ldi	r27, 0x03	; 3
@@ -5091,7 +5089,7 @@ extern void write_string_ln(char *s)
 		s++;
 	}
 	write_string("\r\n");
-    2226:	83 e9       	ldi	r24, 0x93	; 147
+    2226:	8d e9       	ldi	r24, 0x9D	; 157
     2228:	91 e0       	ldi	r25, 0x01	; 1
     222a:	0e 94 f6 10 	call	0x21ec	; 0x21ec <write_string>
 }
@@ -5164,7 +5162,7 @@ extern void write_var_ln(int32_t num)
     2294:	01 96       	adiw	r24, 0x01	; 1
     2296:	0e 94 f6 10 	call	0x21ec	; 0x21ec <write_string>
 		write_string("\r\n");
-    229a:	83 e9       	ldi	r24, 0x93	; 147
+    229a:	8d e9       	ldi	r24, 0x9D	; 157
     229c:	91 e0       	ldi	r25, 0x01	; 1
     229e:	0e 94 f6 10 	call	0x21ec	; 0x21ec <write_string>
 }
