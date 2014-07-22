@@ -508,6 +508,11 @@ int main(void)
 						
 						Theta_error = Theta_hold - Theta; // 
 						Theta_error_sum += Theta_error;
+						// including the speed as parameter to reduce the control Gains
+						Kp_Theta = (Kp_Theta-speed_filt > 0)?(Kp_Theta-speed_filt):1;	// if (K-speed > 0) then take (K-speed) else take (1)
+						Ki_Theta = (Ki_Theta-speed_filt > 0)?(Ki_Theta-speed_filt):1;	// if (K-speed > 0) then take (K-speed) else take (1)
+						Kd_Theta = (Kd_Theta-speed_filt > 0)?(Kd_Theta-speed_filt):1;	// if (K-speed > 0) then take (K-speed) else take (1)
+						
 						ctrl_out[elevator] = (trimmed_elevator - control_gain * (Kp_Theta*-Theta_error + Ki_Theta*Theta_error_sum*sample_time + Kd_Theta*(Theta_error_prev - Theta_error)/sample_time));
 						if(ctrl_out[elevator] > RIGHT) ctrl_out[elevator] = RIGHT;
 						else if (ctrl_out[elevator] < LEFT) ctrl_out[elevator] = LEFT;
@@ -525,6 +530,11 @@ int main(void)
 						
 						Phi_error = Phi - Phi_hold;		// Positive Error shall give negative control (Aileron roll left)
 						Phi_error_sum += Phi_error;
+						// including the speed as parameter to reduce the control Gains
+						Kp_Phi = (Kp_Phi-speed_filt > 0)?(Kp_Phi-speed_filt):1;	// if (K-speed > 0) then take (K-speed) else take (1)
+						Ki_Phi = (Ki_Phi-speed_filt > 0)?(Ki_Phi-speed_filt):1;	// if (K-speed > 0) then take (K-speed) else take (1)
+						Kd_Phi = (Kd_Phi-speed_filt > 0)?(Kd_Phi-speed_filt):1;	// if (K-speed > 0) then take (K-speed) else take (1)
+						
 						ctrl_out[aileron] = (trimmed_aileron - control_gain * (Kp_Phi*Phi_error + Ki_Phi*Phi_error_sum*sample_time + Kd_Phi*(Phi_error_prev - Phi_error)/sample_time));
 						Phi_error_prev = Phi_error;
 						if(ctrl_out[aileron] > RIGHT) ctrl_out[aileron] = RIGHT;
