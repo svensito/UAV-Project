@@ -554,8 +554,7 @@ int main(void)
 					write_var(Phi);write_string(";");
 					write_var(Theta);write_string(";");
 					write_var(altitude_filt);write_string(";");write_var(speed_filt);write_string(";");
-					write_var(alt_error);write_string(";");write_var(Phi_error);write_string(";");
-					write_var(control_gain);
+					write_var(mag);write_string(";");
 					// In case at least once a GPS Signal has been received, the GPS Info will also be printed
 					if(strcmp(GPS_RMC[GPS_RMC_MODE],"")!=0 || strcmp(GPS_GGA[GPS_GGA_MODE],"")!=0) 
 					{
