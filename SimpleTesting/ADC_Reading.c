@@ -1,5 +1,5 @@
 /*
- * DifferentialPressure.c
+ * ADC_Reading.c
  *
  * Created: 18.06.2013 15:43:52
  *  Author: SNFU
@@ -16,7 +16,7 @@
 #include <string.h>
 #include "GeneralSettings.h"
 #include "uart.h"
-#include "DifferentialPressure.h"
+#include "ADC_Reading.h"
 
 //##############################
 // variables
@@ -39,10 +39,18 @@ int16_t adc_offset = 0;
 void ADC_start(void)
 {
 						// first the direction of the Port needs to be set to input:
-	DDRA = 0x00;
+						
+	// At port A we also have the camera servo inputs, so not the whole Port A can be set to input!
+	DDRA = (0 << DDA3)|(0 << DDA4)|(0 << DDA5);
 
 						//DDRA = (0 << DDA0);	// this is implicitly defining Pin AO as an input
 
+	
+										
+						// The REFS0 needs to be set to 1, otherwise there will be terrible noise and not useable data!
+	ADMUX = (0 << REFS1)|(1 << REFS0);
+													
+	ADCSRA = (1 << ADEN)|(1 << ADPS2)|(1 << ADPS1)|(1 << ADPS0)|(0 << ADATE)|(0 << ADIF)|(0 << ADIE);
 						// Datasheet ATMEGA page 216 / 217
 						// Register: ADCSRA Register -> ADC Control Status Register A
 						// Bit 7: ADEN	-> ADC Enable (enabling the ADC)
@@ -59,14 +67,6 @@ void ADC_start(void)
 						// Division factor max = F_CPU / 50 kHz
 						// with our CPU clock of 12MHz we will end up with: min 60	, max 240
 						// we choose a prescaler of: 128 ( as per datasheet page 217 -> setting all three bits)
-						
-						// Within the ADMUX Register we need to set which Input is actually needed.
-						// We connected the Diff Pressure to PA3 (???)
-						
-						// The REFS0 needs to be set to 1, otherwise there will be terrible noise and not useable data!
-	ADMUX = (0 << REFS1)|(1 << REFS0)|(0 << MUX4)|(0 << MUX3)|(0 << MUX2)|(1 << MUX1)|(1 << MUX0);
-													
-	ADCSRA = (1 << ADEN)|(1 << ADPS2)|(1 << ADPS1)|(1 << ADPS0)|(0 << ADATE)|(0 << ADIF)|(0 << ADIE);
 	
 	write_string_ln("ADC ok");
 }
@@ -81,9 +81,29 @@ void ADC_start(void)
 						// if ADLAR = 0 (as default) the result is right adjusted -> 10 bits with LSB at the very right
 						// need to combine both registers to get the value!
 
-						// setting the Start conversion bit
-int16_t ADC_read_voltage(void)
-{						
+	
+// To change the ADC Channel the ADMUX register needs to be changed!
+// See ATMEGA 32 Datasheet page 215	
+
+/* ADMUX Channels
+	Mux4..0		Input
+	00000		ADC0
+	00001		ADC1
+	00010		ADC2
+	00011		ADC3
+	00100		ADC4
+	00101		ADC5
+	00110		ADC6
+	00111		ADC7
+*/
+			
+//**********************************************************************************
+// Speed Reading						
+int16_t ADC_read_speed(void)
+{				
+	// Setting ADMUX Bits to 00011 = ADC3	-> Speed Sensor at ADC 3 connected
+	ADMUX = (0 << MUX4)|(0 << MUX3)|(0 << MUX2)|(1 << MUX1)|(1 << MUX0);	
+	// setting the Start conversion bit	
 	ADCSRA |=	(1<<ADSC);
 	
 	// maybe we check for the interrupt flag?
@@ -101,7 +121,10 @@ int16_t ADC_read_voltage(void)
 	// the datasheet says the pressure range is +-2 kPa = 2000 Pa = 0,02 bar
 	// 1 Pa = 1N/m^2
 	// means that 2000/511 Pa per bit = 3,914 Pa
-
+	
+	// p = rho/2 * v²
+	// v = SQRT(2*p/rho)
+	// [p] = N/m² = Pa
 	
 	//speed = v_raw;	// we will use the ADC value to run autopilot functions...(more precise)
 	delta_p = (v_raw -510)*(2000/510);
@@ -114,17 +137,59 @@ int16_t ADC_read_voltage(void)
 	return v_raw;
 }
 
-void ADC_calibration()
+// Calibration of speed sensor
+void ADC_speed_cal()
 {
 	int cal_count = 0;
 	
 	while(cal_count < 50)
 	{
-		adc_offset += ADC_read_voltage();
+		adc_offset += ADC_read_speed();
 		cal_count++;
 	}
 	adc_offset = adc_offset / cal_count;
 	write_string("ADC_offset: ");write_var_ln(adc_offset);
 	ADC_cal_flag = TRUE;
 	_delay_ms(500);
+}
+
+// Speed Reading End
+//**********************************************************************************
+
+
+//**********************************************************************************
+// RSSI Reading Function
+int16_t ADC_read_RSSI()
+{
+	// Setting ADMUX Bits to 00100 = ADC4	-> RSSI connected at ADC 4
+	ADMUX = (0 << MUX4)|(0 << MUX3)|(1 << MUX2)|(0 << MUX1)|(0 << MUX0);
+	// setting the Start conversion bit
+	ADCSRA |=	(1<<ADSC);
+	
+	// maybe we check for the interrupt flag?
+	while((ADCSRA & (1 << ADSC)));		// while the Start Bit is not reset, wait
+	
+	v_raw = (ADCL);
+	v_raw = (ADCH << 8) | v_raw;		// it was mentioned to read out Lower Bytes before
+	
+	return v_raw;
+}
+
+//**********************************************************************************
+// Ultrasound Reading
+int16_t ADC_read_ultrasound()
+{
+		// Setting ADMUX Bits to 00101 = ADC5	-> Ultrasound connected at ADC 5
+		ADMUX = (0 << MUX4)|(0 << MUX3)|(1 << MUX2)|(0 << MUX1)|(0 << MUX0);
+		// setting the Start conversion bit
+		ADCSRA |=	(1<<ADSC);
+		
+		// maybe we check for the interrupt flag?
+		while((ADCSRA & (1 << ADSC)));		// while the Start Bit is not reset, wait
+		
+		v_raw = (ADCL);
+		v_raw = (ADCH << 8) | v_raw;		// it was mentioned to read out Lower Bytes before
+		
+		return v_raw;
+	
 }

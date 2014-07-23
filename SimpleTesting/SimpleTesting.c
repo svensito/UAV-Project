@@ -165,7 +165,7 @@ int main(void)
 	if(task_speed == TRUE)	
 	{
 		ADC_start();
-		ADC_calibration();
+		ADC_speed_cal();
 	}		
 	
 	//_delay_ms(2000);
@@ -328,7 +328,7 @@ int main(void)
 				if(task_mag == TRUE)	mag = mag_read();
 				if(task_speed == TRUE)
 				{
-					speed_raw = ADC_read_voltage();
+					speed_raw = ADC_read_speed();
 					// low pass filter on the speed reading
 					speed_filt = speed_raw*(1-alpha_speed) + (alpha_speed*speed_filt);
 				}
@@ -445,6 +445,10 @@ int main(void)
 						 if(ctrl_out[flap] < flap_target)		ctrl_out[flap]+= flap_delta;
 						 else if(ctrl_out[flap] > flap_target)	ctrl_out[flap]-= flap_delta;
 						 else ctrl_out[flap] = flap_target;
+						 
+						 // camera gimbal servo
+						 ctrl_out[camera_y] = NEUTRAL;
+						 ctrl_out[camera_z] = NEUTRAL;
 						 
 					break;
 					

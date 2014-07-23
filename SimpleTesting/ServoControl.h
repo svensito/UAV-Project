@@ -14,7 +14,7 @@
 #define NEUTRAL			2250	//
 #define RIGHT			3000	// Min Limit
 #define LEFT			1000
-#define PULSE_WIDTH		6000	// This value value will give 4ms of pulswidth
+#define PULSE_WIDTH		4000	// This value value will give 2,66ms of pulswidth	(with 20ms of total period, we will achieve 7 channels instead of 5 only)
 
 // FLAP SERVO LIMITS
 #define FLAP_FULL		2300	// Extension Flap Servo Limit
@@ -52,8 +52,8 @@ volatile int ctrl_in[9];
 volatile int ctrl_in_offset[9];
 volatile int ctrl_in_prev[9];
 
-volatile long ctrl_out[5];
-volatile long ctrl_out_prev[5];
+volatile long ctrl_out[7];
+volatile long ctrl_out_prev[7];
 
 typedef enum
 	{
@@ -61,7 +61,9 @@ typedef enum
 	aileron,
 	elevator,
 	rudder,
-	flap
+	flap,
+	camera_y,
+	camera_z
 	} controls_out;
 	
 typedef enum

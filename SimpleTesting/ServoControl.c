@@ -19,9 +19,10 @@ volatile long POSITION3 = NEUTRAL;
 volatile long POSITION4 = NEUTRAL;
 volatile long POSITION5 = FLAP_UP; // This is the FLAP Servo with particular neutral setting...
 
-volatile long ctrl_out[5]={NEUTRAL,NEUTRAL,NEUTRAL,NEUTRAL,FLAP_UP};
+						// motor	aileron elevator rudder flap	camerax cameray
+volatile long ctrl_out[7]={NEUTRAL,NEUTRAL,NEUTRAL,NEUTRAL,FLAP_UP,NEUTRAL,NEUTRAL};
 
-int8_t ctrl = 0;	// valid are 0 to 2*servo channels (5) => 10
+int8_t ctrl = 0;	// valid are 0 to 2*servo channels (7) => 14 (count from 0 to 13)
 // used for reading the remote control
 uint8_t channel = 0;				// variable for the channels
 int first_pulse = FALSE;			// variable to tag the first pulse
@@ -37,9 +38,11 @@ void servo_init()
 	// Remark: here we do it globally in the Simple Testing Init
 	
 	// Defining the Output Ports
-	DDRB |= (1<<PB0) | (1<<PB1) | (1<<PB2) | (1<<PB3) | (1<<PB4);
+	DDRB |= (1<<PB0) | (1<<PB1) | (1<<PB2) | (1<<PB3) | (1<<PB4);	// 5 servos
+	DDRA |= (1<<PA0) | (1<<PA1);									// 2 servos
 	
 	PORTB &= ~((1<<PB0)|(1<<PB1)|(1<<PB2)|(1<<PB3)|(1<<PB4));		// All servo signals are pulled down initially
+	PORTA &= ~((1<<PA0)|(1<<PA1));									// All servo signals are pulled down initially
 	
 	// Using Timer 1 (16 bit Timer)
 	// Prescaler = 8	(CS Bits)
@@ -157,9 +160,38 @@ ISR(TIMER1_COMPA_vect)
 			//cli();
 			PORTB &= ~(1<<PB4);
 			OCR1A = PULSE_WIDTH - ctrl_out[flap];
-			ctrl= 0;	// reset the ctrl pointer
+			ctrl++;
 			//sei();
 		break;
+		
+		case 10:
+			//Pull Up Channel 6	// Camera Servo around Y Axis
+			PORTA |= (1<<PA0);
+			OCR1A = ctrl_out[camera_y];
+			ctrl++;
+		break;
+		
+		case 11:
+			//Pull Dn Channel 6
+			PORTA &= ~(1<<PA0);
+			OCR1A = PULSE_WIDTH - ctrl_out[camera_y];
+			ctrl++;
+		break;
+		
+		case 12:
+			//Pull Up Channel 7 // Camera Servo Z Axis
+			PORTA |= (1<<PA1);
+			OCR1A = ctrl_out[camera_z];	
+			ctrl++;
+		break;
+				
+		case 13:
+			//Pull Dn Channel 7
+			PORTA &= ~(1<<PA1);
+			OCR1A = PULSE_WIDTH - ctrl_out[camera_z];
+			ctrl = 0;	//resetting the ctrl channel
+		break;
+						
 	}
 	
 }
