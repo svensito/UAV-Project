@@ -19,8 +19,8 @@ volatile long POSITION3 = NEUTRAL;
 volatile long POSITION4 = NEUTRAL;
 volatile long POSITION5 = FLAP_UP; // This is the FLAP Servo with particular neutral setting...
 
-						// motor	aileron elevator rudder flap	camerax cameray
-volatile long ctrl_out[7]={NEUTRAL,NEUTRAL,NEUTRAL,NEUTRAL,FLAP_UP,NEUTRAL,NEUTRAL};
+						// motor	aileron elevator rudder flap	camerax cameraZ
+volatile long ctrl_out[7]={NEUTRAL,NEUTRAL,NEUTRAL,NEUTRAL,FLAP_UP,NEUTRAL,SERVO_GIMB_Z_STOP};
 
 int8_t ctrl = 0;	// valid are 0 to 2*servo channels (7) => 14 (count from 0 to 13)
 // used for reading the remote control

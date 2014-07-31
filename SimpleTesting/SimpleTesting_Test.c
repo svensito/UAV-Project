@@ -34,12 +34,12 @@
 // Local declarations and variables
 
 // These are the task flags, set them to activate / deactivate task
-int task_gyro	= TRUE;
-int task_acc	= TRUE;
-int task_mag	= TRUE;
+int task_gyro	= FALSE;
+int task_acc	= FALSE;
+int task_mag	= FALSE;
 int task_temp	= FALSE;
-int task_baro	= TRUE;
-int task_speed	= TRUE;
+int task_baro	= FALSE;
+int task_speed	= FALSE;
 
 // Control Mode
 uint8_t Ctrl_Mode = DIRECT_CTRL;		// First Test with Direct Law Only: DIRECT_LAW or NORMAL_LAW possible
@@ -204,12 +204,7 @@ int main(void)
 	float alpha_speed = 0.8; // alpha element [0;1] -> alpha 0: only raw input (noise free)
 												// -> alpha 1: only filtered input (only noise)
 	float speed = 0;
-	float speed_hold, speed_error, speed_error_sum, speed_errror_prev = 0;
-	int8_t Kp_speed = 15;	
-	//int8_t Kd_speed = 1;	// No differential part as signal too noisy
-	int8_t Ki_speed = 15;
-	long trimmed_motor = 0;
-	
+	float speed_hold = 0;
 	// Euler Angles Data
 	float Theta, Theta_hold, Theta_error, Theta_error_sum, Theta_error_prev = 0;
 	int8_t Kp_Theta = 30;
@@ -226,7 +221,6 @@ int main(void)
 	int8_t Ki_Phi = 30;
 	
 	long trimmed_aileron = 0;
-	long trimmed_rudder = 0;
 	// Acceleration data
 	int16_t acc_x_raw, acc_y_raw, acc_z_raw,acc_x_filt, acc_y_filt, acc_z_filt,acc_x_filt_prev, acc_y_filt_prev, acc_z_filt_prev = 0;
 	float alpha_acc = 0.3;
@@ -254,14 +248,15 @@ int main(void)
 	int16_t mag = 0;
 	int16_t mag_hold = 0;
 	//struct three_values test;
-	int8_t bla_cnt = 0;
-	int8_t send_cnt = 0;
 	int8_t tune_cnt = 0;
+	int16_t bla_cnt = 0;
+	int8_t send_cnt = 0;
 	
 	
+		_delay_ms(1000);
 	// Turn On the Watchdog
 	WDT_on();
-	
+
 	while(1)
     {
 			// Program Code (infinite loop)
@@ -286,7 +281,7 @@ int main(void)
 				UART_READY_FLAG = FALSE;
 			}
 			
-			if(task_flag == 1)
+			if(task_flag == 2)
 			{
 				// Resetting the task call:
 				task_flag = 0;
@@ -407,9 +402,9 @@ int main(void)
 				P_11_Psi -= K_1_Psi * P_01_Psi;
 				*/
 				// changing from knob to normal switch for mode control
-				if(ctrl_in[5]>144) Ctrl_Mode = HOLD_CTRL;								// Dn Position
-				else if (ctrl_in[5] > 139 && ctrl_in[5] < 144) Ctrl_Mode = TUNE_CTRL;	// Middle Position
-				else Ctrl_Mode = DIRECT_CTRL;											// Up Position
+				if(ctrl_in[5]>144) Ctrl_Mode = HOLD_CTRL;
+				else if (ctrl_in[5] > 139 && ctrl_in[5] < 144) Ctrl_Mode = DIRECT_CTRL;
+				else Ctrl_Mode = DIRECT_CTRL;				
 										
 				if(Ctrl_Mode_prev != Ctrl_Mode)
 				{
@@ -421,9 +416,6 @@ int main(void)
 					// Otherwise no state change
 					state_change = FALSE;
 				}
-										
-				// use this flag to switch between long / lat tuning mode
-				uint8_t mode = 1;
 				
 				switch(Ctrl_Mode)
 				{
@@ -467,172 +459,8 @@ int main(void)
 						 
 					break;
 					
-					case TUNE_CTRL:
-						// Tuning control mode
+					case NORMAL_CTRL:
 							
-
-						
-						//###########################################
-						// Tuning Longitudinal Mode Open Loop Tuning
-						if (mode == 1)
-						{
-							
-							// Make a step change and check the response
-							if(state_change == TRUE)
-							{
-								write_string_ln("*TUNING LONG STEP*");
-								trimmed_motor = ctrl_out[motor];
-								trimmed_aileron = ctrl_out[aileron];
-								trimmed_elevator = ctrl_out[elevator];
-								trimmed_rudder = ctrl_out[rudder];
-								ctrl_out[elevator] = trimmed_elevator;
-								ctrl_out[motor] = trimmed_motor;
-								ctrl_out[aileron] = trimmed_aileron;
-								ctrl_out[rudder] = trimmed_rudder;
-							}
-
-							if(tune_cnt < 40) tune_cnt++;
-							if(tune_cnt == 40)	// after 2 seconds it will make a step input to the elevator
-							{
-								write_string_ln("Step Ele");
-								ctrl_out[elevator] +=  200;
-								tune_cnt += 1;
-							}
-						}
-						
-						//###########################################
-						// Tuning Lateral Mode Open Loop Tuning
-						if (mode == 2)
-						{
-							
-							// Make a step change and check the response
-							if(state_change == TRUE)
-							{
-								write_string_ln("*TUNING LAT STEP*");
-								trimmed_motor = ctrl_out[motor];
-								trimmed_aileron = ctrl_out[aileron];
-								trimmed_elevator = ctrl_out[elevator];
-								trimmed_rudder = ctrl_out[rudder];
-								ctrl_out[elevator] = trimmed_elevator;
-								ctrl_out[motor] = trimmed_motor;
-								ctrl_out[aileron] = trimmed_aileron;
-								ctrl_out[rudder] = trimmed_rudder;
-							}
-
-							if(tune_cnt < 40) tune_cnt++;
-							if(tune_cnt == 40)	// after 2 seconds it will make a step input to the elevator
-							{
-								write_string_ln("Step Ail");
-								ctrl_out[aileron] +=  200;
-								tune_cnt += 1;
-							}
-						}
-						
-						//###########################################
-						// Tuning Longitudinal Mode Closed Loop Tuning
-						if (mode == 3)
-							{
-						
-							if(state_change == TRUE)
-							{
-								write_string_ln("*TUNING LONG CLOSED*");
-								trimmed_motor = ctrl_out[motor];
-								trimmed_aileron = ctrl_out[aileron];
-								trimmed_elevator = ctrl_out[elevator];
-								Phi_hold = Phi;
-								Phi_error = 0;
-								Phi_error_prev = 0;
-								Phi_error_sum = 0;
-								Theta_error = 0;
-								Theta_hold = Theta;
-								Kp_Theta = 0;	// locally declaring Theta as 0, so it does start the process with 0
-							}
-							// Tuning of PID Parameters
-							// Tuning the Longitudinal Mode
-						
-							ctrl_out[motor] = trimmed_motor;	// lets assume the motor setting will keep the speed more or less
-						
-							// bank angle control with aileron (Position 2)						
-							Phi_error = Phi - Phi_hold;		// Positive Error (too hard bank right)shall give negative control (Aileron roll left)
-							Phi_error_sum += Phi_error;
-							// including the speed as parameter to reduce the control Gains
-							Kp_Phi = (Kp_Phi-speed_filt > 0)?(Kp_Phi-speed_filt):1;	// if (K-speed > 0) then take (K-speed) else take (1)
-							Ki_Phi = (Ki_Phi-speed_filt > 0)?(Ki_Phi-speed_filt):1;	// if (K-speed > 0) then take (K-speed) else take (1)
-							Kd_Phi = (Kd_Phi-speed_filt > 0)?(Kd_Phi-speed_filt):1;	// if (K-speed > 0) then take (K-speed) else take (1)
-												
-							ctrl_out[aileron] = (trimmed_aileron - (Kp_Phi*Phi_error + Ki_Phi*Phi_error_sum*sample_time + Kd_Phi*(Phi_error_prev - Phi_error)/sample_time));
-							Phi_error_prev = Phi_error;
-							if(ctrl_out[aileron] > RIGHT) ctrl_out[aileron] = RIGHT;
-							else if (ctrl_out[aileron] < LEFT) ctrl_out[aileron] = LEFT;
-							
-							// Damping of yaw
-							int8_t yaw_damping = 2;	// needs to be checked
-							if(speed_filt>20) yaw_damping /= 2;
-							ctrl_out[rudder] = trimmed_rudder + (r_filt*yaw_damping);
-						
-							// Tuning the K_p of the Elevator P closed loop
-							Kp_Theta += ctrl_in[stick_r_up_down]-SERVO_TRIM_ELEVATOR;
-							if (Kp_Theta < 0) Kp_Theta = 0;
-							if (Kp_Theta > 254) Kp_Theta = 255;
-																		
-							Theta_error = Theta_hold - Theta; // Positive Error (theta too flat) shall give negative control (elevator up)
-							ctrl_out[elevator] = trimmed_elevator + (Kp_Theta*Theta_error);
-						}
-				
-						//###########################################
-						// Tuning the Lateral Mode Closed loop tuning
-						if (mode == 4)
-						{
-							
-							if(state_change == TRUE)
-							{
-								write_string_ln("TUNING LAT");
-								trimmed_motor = ctrl_out[motor];
-								trimmed_aileron = ctrl_out[aileron];
-								trimmed_elevator = ctrl_out[elevator];
-								
-								Phi_hold = Phi;
-								Phi_error = 0;
-								Phi_error_prev = 0;
-								Phi_error_sum = 0;
-								Kp_Phi = 0;
-								
-								Theta_hold = Theta;
-								Theta_error = 0;
-								Theta_error_prev = 0;
-								Theta_error_sum = 0;
-								
-							}
-							// Tuning of PID Parameters
-							// Tuning the Longitudinal Mode
-							
-							ctrl_out[motor] = trimmed_motor;	// lets assume the motor setting will keep the speed more or less
-							
-							// Theta control with elevator
-													
-							Theta_error = Theta_hold - Theta; // Positive Error (theta too flat) shall give positive value control output (elevator up)
-							Theta_error_sum += Theta_error;
-							// including the speed as parameter to reduce the control Gains
-							Kp_Theta = (Kp_Theta-speed_filt > 0)?(Kp_Theta-speed_filt):1;	// if (K-speed > 0) then take (K-speed) else take (1)
-							Ki_Theta = (Ki_Theta-speed_filt > 0)?(Ki_Theta-speed_filt):1;	// if (K-speed > 0) then take (K-speed) else take (1)
-							Kd_Theta = (Kd_Theta-speed_filt > 0)?(Kd_Theta-speed_filt):1;	// if (K-speed > 0) then take (K-speed) else take (1)
-													
-							
-							// ctrl_out[elevator] = (trimmed_elevator - (Kp_Theta*-Theta_error + Ki_Theta*Theta_error_sum*sample_time + Kd_Theta*(Theta_error_prev - Theta_error)/sample_time));
-							ctrl_out[elevator] = (trimmed_elevator + (Kp_Theta*Theta_error + Ki_Theta*Theta_error_sum*sample_time + Kd_Theta*(Theta_error_prev - Theta_error)/sample_time));
-							if(ctrl_out[elevator] > RIGHT) ctrl_out[elevator] = RIGHT;
-							else if (ctrl_out[elevator] < LEFT) ctrl_out[elevator] = LEFT;
-							Theta_error_prev = Theta_error;
-							
-							// Tuning the K_p of the Aileron P closed loop
-							Kp_Phi += ctrl_in[stick_r_up_down]-SERVO_TRIM_AILERON;
-							if (Kp_Phi < 0) Kp_Phi = 0;
-							if (Kp_Phi	 > 254) Kp_Phi = 255;
-							
-							Phi_error = Phi - Phi_hold;
-							ctrl_out[aileron] = trimmed_aileron - (Kp_Phi*Phi_error_sum);
-						}
-										
 					break;
 					
 					case DAMPED_CTRL:
@@ -644,11 +472,6 @@ int main(void)
 						// Hold Psi / r
 						// correct with rudder
 						// reach target speed -> pull up
-						
-						// Camera Mode
-									
-
-						
 					break;
 					
 					case HOLD_CTRL:
@@ -661,12 +484,10 @@ int main(void)
 							Phi_hold = Phi;
 							Theta_hold = Theta;
 							mag_hold = mag;
-							speed_hold = speed;							
+							speed_hold = speed;
 							// Setting current input as "trimmed input"
 							trimmed_elevator = ctrl_out[elevator]; 
 							trimmed_aileron = ctrl_out[aileron];
-							trimmed_motor = ctrl_out[motor];
-							trimmed_rudder = ctrl_out[rudder];
 							//resetting the errors
 							alt_error = 0;
 							Theta_error = 0;
@@ -677,8 +498,8 @@ int main(void)
 							Theta_error_prev = 0;
 							Phi_error_sum = 0;
 							Phi_error_prev = 0;
-							write_string("Trim El - Ail - Motor: ");write_var(trimmed_elevator);write_string(" - ");write_var(trimmed_aileron);write_string(" - ");write_var_ln(trimmed_motor);
-							write_string("Target Alt - Bank - Speed: ");write_var(Theta_hold);write_string(" - ");write_var(Phi_hold);write_string(" - ");write_var_ln(speed_hold);
+							write_string("Trim El / Ail: ");write_var(trimmed_elevator);write_string(" - ");write_var_ln(trimmed_aileron);
+							write_string("Target Alt / Bank: ");write_var(Theta_hold);write_string(" - ");write_var_ln(Phi_hold);
 						}
 						
 						// Other controls as usual
@@ -686,37 +507,35 @@ int main(void)
 						//POSITION2 = NEUTRAL+((ctrl_in[1]-SERVO_TRIM_AILERON)*SERVO_GAIN_AILERON);		// Aileron	right:		POSITION++	left: POSITION--
 						//POSITION3 = NEUTRAL+((ctrl_in[2]-SERVO_TRIM_ELEVATOR)*SERVO_GAIN_ELEVATOR);	// Elevator	up:			POSITION++	down: POSITION--
 						//POSITION4 = NEUTRAL+((ctrl_in[3]-SERVO_TRIM_RUDDER)*SERVO_GAIN_RUDDER);		// Rudder
-						//ctrl_out[motor] = NEUTRAL+((ctrl_in[stick_l_up_down]-SERVO_TRIM_MOTOR)*SERVO_GAIN_MOTOR);
+						ctrl_out[motor] = NEUTRAL+((ctrl_in[stick_l_up_down]-SERVO_TRIM_MOTOR)*SERVO_GAIN_MOTOR);
 						//ctrl_out[aileron] = NEUTRAL+((ctrl_in[stick_r_left_right]-SERVO_TRIM_AILERON)*SERVO_GAIN_AILERON);
 						//ctrl_out[elevator] = NEUTRAL+((ctrl_in[stick_r_up_down]-SERVO_TRIM_ELEVATOR)*SERVO_GAIN_ELEVATOR);
-						//ctrl_out[rudder] = NEUTRAL+((ctrl_in[stick_l_left_right]-SERVO_TRIM_RUDDER)*SERVO_GAIN_RUDDER);
+						ctrl_out[rudder] = NEUTRAL+((ctrl_in[stick_l_left_right]-SERVO_TRIM_RUDDER)*SERVO_GAIN_RUDDER);
 						
 						// Flying without Flaps only!
 						// We use the knob to increase gain of the control
 						if(ctrl_in[rotary_knob]<135 && ctrl_in[rotary_knob]>120) 
 						{
-							//control_gain = 1;
+							control_gain = 1;
 						}
 						else if(ctrl_in[rotary_knob]<150 && ctrl_in[rotary_knob]>135) 
 						{
-							//control_gain = 2;
+							control_gain = 2;
 						}
 						else if(ctrl_in[rotary_knob]<160 && ctrl_in[rotary_knob]>150) 
 						{
-							//control_gain = 3;
+							control_gain = 3;
 						}
 						// Theta control with elevator
 						
-						Theta_error = Theta_hold - Theta; // Positive Error (theta too flat) shall give positive value control output (elevator up)
+						Theta_error = Theta_hold - Theta; // 
 						Theta_error_sum += Theta_error;
 						// including the speed as parameter to reduce the control Gains
 						Kp_Theta = (Kp_Theta-speed_filt > 0)?(Kp_Theta-speed_filt):1;	// if (K-speed > 0) then take (K-speed) else take (1)
 						Ki_Theta = (Ki_Theta-speed_filt > 0)?(Ki_Theta-speed_filt):1;	// if (K-speed > 0) then take (K-speed) else take (1)
 						Kd_Theta = (Kd_Theta-speed_filt > 0)?(Kd_Theta-speed_filt):1;	// if (K-speed > 0) then take (K-speed) else take (1)
 						
-						// formula looks wrong!!! corrected below
-						// ctrl_out[elevator] = (trimmed_elevator - (Kp_Theta*-Theta_error + Ki_Theta*Theta_error_sum*sample_time + Kd_Theta*(Theta_error_prev - Theta_error)/sample_time));
-						ctrl_out[elevator] = (trimmed_elevator + (Kp_Theta*Theta_error + Ki_Theta*Theta_error_sum*sample_time + Kd_Theta*(Theta_error_prev - Theta_error)/sample_time));
+						ctrl_out[elevator] = (trimmed_elevator - control_gain * (Kp_Theta*-Theta_error + Ki_Theta*Theta_error_sum*sample_time + Kd_Theta*(Theta_error_prev - Theta_error)/sample_time));
 						if(ctrl_out[elevator] > RIGHT) ctrl_out[elevator] = RIGHT;
 						else if (ctrl_out[elevator] < LEFT) ctrl_out[elevator] = LEFT;
 						Theta_error_prev = Theta_error;
@@ -731,44 +550,20 @@ int main(void)
 							
 						// bank angle control with aileron (Position 2)
 						
-						Phi_error = Phi - Phi_hold;		// Positive Error (too hard bank right)shall give negative control (Aileron roll left)
+						Phi_error = Phi - Phi_hold;		// Positive Error shall give negative control (Aileron roll left)
 						Phi_error_sum += Phi_error;
 						// including the speed as parameter to reduce the control Gains
 						Kp_Phi = (Kp_Phi-speed_filt > 0)?(Kp_Phi-speed_filt):1;	// if (K-speed > 0) then take (K-speed) else take (1)
 						Ki_Phi = (Ki_Phi-speed_filt > 0)?(Ki_Phi-speed_filt):1;	// if (K-speed > 0) then take (K-speed) else take (1)
 						Kd_Phi = (Kd_Phi-speed_filt > 0)?(Kd_Phi-speed_filt):1;	// if (K-speed > 0) then take (K-speed) else take (1)
 						
-						ctrl_out[aileron] = (trimmed_aileron - (Kp_Phi*Phi_error + Ki_Phi*Phi_error_sum*sample_time + Kd_Phi*(Phi_error_prev - Phi_error)/sample_time));
+						ctrl_out[aileron] = (trimmed_aileron - control_gain * (Kp_Phi*Phi_error + Ki_Phi*Phi_error_sum*sample_time + Kd_Phi*(Phi_error_prev - Phi_error)/sample_time));
 						Phi_error_prev = Phi_error;
 						if(ctrl_out[aileron] > RIGHT) ctrl_out[aileron] = RIGHT;
 						else if (ctrl_out[aileron] < LEFT) ctrl_out[aileron] = LEFT;	
 			
-						// Speed control (PI only -> noisy signal) with motor
-						speed_error = speed_hold - speed; // Positive Error (too slow) shall give positive input (motor increase)
-						speed_error_sum += speed_error;	
-						// when too slow (bracket turns positive) the motor gets increased
-						ctrl_out[motor] = trimmed_motor + (Kp_speed*speed_error + Ki_speed * speed_error_sum * sample_time);
-						if(ctrl_out[motor] > RIGHT) ctrl_out[motor] = RIGHT;
-						else if (ctrl_out[motor] < LEFT) ctrl_out[motor] = LEFT;
-						speed_errror_prev = speed_error;
 						
-						// Damping of yaw
-						int8_t yaw_damping = 2;	// needs to be checked
-						if(speed_filt>20) yaw_damping /= 2;
-						ctrl_out[rudder] = trimmed_rudder + (r_filt*yaw_damping);
-						
-						
-						
-						// camera gimbal servo
-						ctrl_out[camera_y] = NEUTRAL_GIMB_Y + ((ctrl_in[stick_r_up_down]-SERVO_TRIM_GIMB_Y)*SERVO_GAIN_GIMB_Y);//+((ctrl_in[stick_r_up_down]-SERVO_TRIM_GIMB_Y)*SERVO_GAIN_ELEVATOR);
-						if (ctrl_out[camera_y] < MAX_GIMB_Y_UP) ctrl_out[camera_y] = MAX_GIMB_Y_UP;
-						if (ctrl_out[camera_y] > MAX_GIMB_Y_DN) ctrl_out[camera_y] = MAX_GIMB_Y_DN;
-									
-						ctrl_out[camera_z] = SERVO_GIMB_Z_STOP-((ctrl_in[stick_r_left_right]-141)*10);
-						// the z axis Servo is a hacked 360 deg Servo without position information
-						// There is no feedback from the servo on its position.
-						// For leaving and reaching a new position, only time integration would work...
-						
+
 					break;
 												
 					
@@ -781,7 +576,7 @@ int main(void)
 					write_var(Phi);write_string(";");
 					write_var(Theta);write_string(";");
 					write_var(mag);write_string(";");write_var(altitude_filt);write_string(";");
-					write_var(speed_filt);write_string(";");//write_var(Kp_Theta);write_string(";");write_var(Kp_Phi);
+					write_var(speed_filt);
 					// In case at least once a GPS Signal has been received, the GPS Info will also be printed
 					if(strcmp(GPS_RMC[GPS_RMC_MODE],"")!=0 || strcmp(GPS_GGA[GPS_GGA_MODE],"")!=0) 
 					{
@@ -797,8 +592,89 @@ int main(void)
 				ctrl_out_prev[5] = ctrl_out;	// Setting previous controls
 				ctrl_in_prev[9] = ctrl_in;
 				//GPS_string_prev[GPS_LONGITUDE][] = GPS_string[GPS_LONGITUDE];
-			}		
+			}
 			
+			
+			if (task_flag == 1)
+			{
+				task_flag = 0;
+				
+				if(strcmp(GPS_RMC[GPS_RMC_LONGITUDE],"")!=0)
+				{
+					Ctrl_Mode = TUNE_CTRL;
+				}
+				
+				if(Ctrl_Mode_prev != Ctrl_Mode)
+				{
+					// If a state change happens
+					state_change = TRUE;
+				}
+				else
+				{
+					// Otherwise no state change
+					state_change = FALSE;
+				}
+				
+				switch (Ctrl_Mode)
+				{
+					case DIRECT_CTRL:
+							write_string_ln("Direct");
+					break;
+					
+					case TUNE_CTRL:
+							// Make a step change and check the response
+							if(state_change == TRUE)
+							{
+								state_change = FALSE;
+								write_string_ln("*TUNING LONG STEP*");
+								//trimmed_motor = ctrl_out[motor];
+								trimmed_aileron = ctrl_out[aileron];
+								trimmed_elevator = ctrl_out[elevator];
+								ctrl_out[elevator] = trimmed_elevator;
+								//ctrl_out[motor] = trimmed_motor;
+								ctrl_out[aileron] = trimmed_aileron;
+								Phi_hold = Phi;
+								Phi_error = 0;
+								Phi_error_prev = 0;
+								Phi_error_sum = 0;
+								Theta_error = 0;
+								Theta_hold = Theta;
+								Kp_Theta = 0;
+							}
+
+									
+							if(tune_cnt < 40) tune_cnt++;
+							if(tune_cnt == 40)	// after 2 seconds it will make a step input to the elevator
+							{
+								write_string_ln("Step");
+								ctrl_out[elevator] +=  200;
+								tune_cnt += 1;
+							}
+							write_var_ln(ctrl_out[elevator]);
+					
+					break;
+					
+				}
+				
+				Ctrl_Mode_prev = Ctrl_Mode;
+			}
+			// camera gimbal servo
+			/*
+			ctrl_out[camera_y] = NEUTRAL_GIMB_Y + ((ctrl_in[stick_r_up_down]-SERVO_TRIM_GIMB_Y)*SERVO_GAIN_GIMB_Y);//+((ctrl_in[stick_r_up_down]-SERVO_TRIM_GIMB_Y)*SERVO_GAIN_ELEVATOR);
+			if (ctrl_out[camera_y] < MAX_GIMB_Y_UP) ctrl_out[camera_y] = MAX_GIMB_Y_UP;
+			if (ctrl_out[camera_y] > MAX_GIMB_Y_DN) ctrl_out[camera_y] = MAX_GIMB_Y_DN;
+						
+			ctrl_out[camera_z] = SERVO_GIMB_Z_STOP-((ctrl_in[stick_r_left_right]-141)*10);
+			*/
+			// the z axis Servo is a hacked 360 deg Servo without position information
+			// There is no feedback from the servo on its position.
+			// For leaving and reaching a new position, only time integration would work...
+			
+			/*
+			if(strcmp(uart_word,"left")==1) ctrl_out[camera_z] = SERVO_GIMB_Z_LEFT;
+			if(strcmp(uart_word,"stop")==1) ctrl_out[camera_z] = SERVO_GIMB_Z_STOP;
+			if(strcmp(uart_word,"right")==1) ctrl_out[camera_z] = SERVO_GIMB_Z_RIGHT;
+			*/			
 			// Toggling the Watchdog (Reset)
 			wdt_reset();
     }

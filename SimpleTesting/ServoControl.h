@@ -19,8 +19,21 @@
 // FLAP SERVO LIMITS
 #define FLAP_FULL		2300	// Extension Flap Servo Limit
 #define FLAP_1			1900
-#define FLAP_UP			1510	// Slightly different Neutral Position	
+#define FLAP_UP			1510	// Slightly different Neutral Position
 
+// GIMBAL Z Axis Servo Limits	// Hacked Servo = 360Deg Servo
+#define SERVO_GIMB_Z_STOP		645	// no rotation
+#define SERVO_GIMB_Z_RIGHT		790	// middle speed right rotation
+#define SERVO_GIMB_Z_LEFT		500 // middle speed left rotation
+
+// GIMBAL Y Axis Servo Limits
+#define NEUTRAL_GIMB_Y			900
+#define SERVO_TRIM_GIMB_Y		TRIM_NEUTRAL //looking straight to the front
+#define MAX_GIMB_Y_DN			2200 //looking 90° down
+#define MAX_GIMB_Y_UP			800 //looking 10° up
+#define SERVO_GAIN_GIMB_Y		20
+	
+// TRIM Value of the neutral TCNT 2
 #define TRIM_NEUTRAL	140		// is the counter value of TCNT2 for neutral position of control
 
 #define SERVO_GAIN_MOTOR	14	// Normal GAIN would be 31 (full resolution for Servos)

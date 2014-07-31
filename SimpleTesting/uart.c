@@ -95,7 +95,7 @@ ISR (USART_RXC_vect)
 	{
 		if ((uart_reading != '\r'))	/*as we are using the Carriage Return, the terminal program needs to end a transmission with CR to be detected */
 		{
-			//UART_READY_FLAG = FALSE;
+			UART_READY_FLAG = FALSE;
 			// write the reading into the string array on the position of the counter
 			uart_word[uart_counter] = uart_reading;
 			// increase the counter (position of the string)
@@ -108,7 +108,7 @@ ISR (USART_RXC_vect)
 			// reset the counter
 			uart_counter = 0;
 			// show the main program that a string is available
-			//UART_READY_FLAG = TRUE;
+			UART_READY_FLAG = TRUE;
 			// check the reading
 			//write_string(uart_word);
 		}

@@ -92,8 +92,14 @@ void mag_read(void)
 	
 	// Calculating the heading with the calibrated data
 	
-	// Calculating the heading
-		
+	// Calculating the heading with atan2 function by math.h
+	heading = atan2(mag_y,mag_x)*(180/PI);
+	
+	/*
+	Do we need to add Z-axis for mag reading?
+	*/ 
+	
+	/*	
 	if((mag_x >= 0) && (mag_y >= 0))
 	{
 		heading = round((atan((float)mag_y/(float)mag_x))*(180/PI));
@@ -114,7 +120,7 @@ void mag_read(void)
 		heading = round((atan((float)mag_y/(float)mag_x))*(180/PI));
 		heading = 180 - heading;
 	}
-	
+	*/
 	
 	//write_var_ln(heading);
 }

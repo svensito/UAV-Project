@@ -24,7 +24,8 @@
 typedef enum{	DIRECT_CTRL = 0,
 				NORMAL_CTRL,
 				DAMPED_CTRL,
-				HOLD_CTRL}
+				HOLD_CTRL,
+				TUNE_CTRL}
 	CTRL_LAWS_e;
 
 typedef enum {
