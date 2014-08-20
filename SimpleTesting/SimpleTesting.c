@@ -252,7 +252,11 @@ int main(void)
 	
 	// Mag Data
 	int16_t heading = 0;
-	int16_t mag_hold = 0;
+	int16_t heading_hold, heading_error, heading_error_prev, heading_error_sum  = 0;
+	int8_t Kp_head = 1;
+	int8_t Kd_head = 0;
+	int8_t Ki_head = 1;
+		
 	//struct three_values test;
 	int8_t bla_cnt = 0;
 	int8_t send_cnt = 0;
@@ -662,7 +666,7 @@ int main(void)
 							alt_hold = altitude_filt; 
 							Phi_hold = Phi;
 							Theta_hold = Theta;
-							mag_hold = heading;
+							heading_hold = heading;
 							speed_hold = speed;							
 							// Setting current input as "trimmed input"
 							trimmed_elevator = ctrl_out[elevator]; 
@@ -693,21 +697,10 @@ int main(void)
 						//ctrl_out[elevator] = NEUTRAL+((ctrl_in[stick_r_up_down]-SERVO_TRIM_ELEVATOR)*SERVO_GAIN_ELEVATOR);
 						//ctrl_out[rudder] = NEUTRAL+((ctrl_in[stick_l_left_right]-SERVO_TRIM_RUDDER)*SERVO_GAIN_RUDDER);
 						
-						// Flying without Flaps only!
-						// We use the knob to increase gain of the control
-						if(ctrl_in[rotary_knob]<135 && ctrl_in[rotary_knob]>120) 
-						{
-							//control_gain = 1;
-						}
-						else if(ctrl_in[rotary_knob]<150 && ctrl_in[rotary_knob]>135) 
-						{
-							//control_gain = 2;
-						}
-						else if(ctrl_in[rotary_knob]<160 && ctrl_in[rotary_knob]>150) 
-						{
-							//control_gain = 3;
-						}
+						
+						//*******************************************
 						// Theta control with elevator
+						// Problem with altitude control is the poor resolution of 1 Hz.
 						
 						Theta_error = Theta_hold - Theta; // Positive Error (theta too flat) shall give positive value control output (elevator up)
 						Theta_error_sum += Theta_error;
@@ -731,7 +724,48 @@ int main(void)
 						alt_error_prev = alt_error;
 						*/
 							
-						// bank angle control with aileron (Position 2)
+						//**********************************************	
+						// Heading hold control	
+						// input: current heading, heading_com
+						// control: Phi	
+						// controller: PI control	(heading reading is very noisy...diff part gives too noisy outputs)
+						// when Phi positive we do a right turn, when Phi negative, we do a left turn
+						
+						// Using Rotary knob for heading control (testing)
+						if(ctrl_in[rotary_knob]<135 && ctrl_in[rotary_knob]>120)
+						{
+							//heading_hold += 90;
+						}
+						else if(ctrl_in[rotary_knob]<150 && ctrl_in[rotary_knob]>135)
+						{
+							// normal position
+						}
+						else if(ctrl_in[rotary_knob]<160 && ctrl_in[rotary_knob]>150)
+						{
+							//heading_hold -= 90;
+						}
+						
+						// calculating the heading error
+						heading_error = heading_hold - heading;
+						// to identify which way to go we calculate (do not travel 270 deg left, when shortest is 90 deg right)
+						int16_t heading_ctrl = 360 + heading_error;
+						if (heading_ctrl < 180)
+						{
+							heading_error = heading_ctrl;
+						}
+						// error sum for I control
+						heading_error_sum += heading_error;
+						// controller formula
+						Phi_hold += Kp_head*heading_error + Ki_head*heading_error_sum*sample_time;
+						
+						// Limiting the Bank Angle command to +- 20 maximum
+						int8_t bank_limit = 20;
+						if (Phi_hold < -bank_limit) Phi_hold = -bank_limit;
+						else if (Phi_hold > bank_limit) Phi_hold = bank_limit;
+												
+						
+						// *********************************************	
+						// Bank angle control with aileron
 						
 						Phi_error = Phi - Phi_hold;		// Positive Error (too hard bank right)shall give negative control (Aileron roll left)
 						Phi_error_sum += Phi_error;
@@ -784,7 +818,7 @@ int main(void)
 					write_var(ctrl_out[flap]);write_string(";");
 					write_var(Phi);write_string(";");
 					write_var(Theta);write_string(";");
-					write_var(heading);write_string(";");
+					write_var(heading);	write_string(";");
 					write_var(altitude_filt);write_string(";");
 					write_var(speed_filt);
 					// In case at least once a GPS Signal has been received, the GPS Info will also be printed

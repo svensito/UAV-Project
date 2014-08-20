@@ -93,8 +93,14 @@ int16_t mag_read(void)
 	// Calculating the heading with the calibrated data
 	
 	// Calculating the heading with atan2 function by math.h
-	mag_heading = atan2(mag_y,mag_x)*(180/PI);
-	if(mag_heading < 0) mag_heading += 360;
+	mag_heading = -atan2(mag_y,mag_x)*(180/PI);
+	// for a reading in between 0 - 360 deg:
+	if (mag_heading < 0) 
+	{
+		mag_heading += 360;
+	}
+	
+	//if(mag_heading < 0) mag_heading += 360;
 	
 	return mag_heading;
 	/*
