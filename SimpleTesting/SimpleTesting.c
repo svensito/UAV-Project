@@ -251,7 +251,7 @@ int main(void)
 	float Psi_temp, S_Psi, K_0_Psi, K_1_Psi = 0;
 	
 	// Mag Data
-	int16_t mag = 0;
+	int16_t heading = 0;
 	int16_t mag_hold = 0;
 	//struct three_values test;
 	int8_t bla_cnt = 0;
@@ -307,14 +307,12 @@ int main(void)
 					q_filt = q_raw * (1-alpha_turn) + (alpha_turn*q_filt);
 					r_filt = r_raw * (1-alpha_turn) + (alpha_turn*r_filt);
 					
-					/*
-					Theta += (q_filt_prev+ (q_filt - q_filt_prev)/2) * 0.02;	// 20 ms sample Time
-					Phi += (p_filt_prev+ (p_filt - p_filt_prev)/2) * 0.02;
-					Phi += (r_filt_prev+ (r_filt - r_filt_prev)/2) * 0.02;
-					*/
 					q_filt_prev = q_filt;
 					p_filt_prev = p_filt;
 					r_filt_prev = r_filt;
+					
+					
+					
 				}
 				struct acc_readings_obj acc_val;
 				if(task_acc == TRUE)	
@@ -326,6 +324,7 @@ int main(void)
 					Theta_acc = atan2(acc_x_raw,-acc_z_raw)*180/Pi;
 					Phi_acc = atan2(-acc_y_raw,-acc_z_raw)*180/Pi;
 					//write_string("acc: "); write_var_ln(acc_reading());
+					
 				}
 				if(task_baro == TRUE)// && (bla_cnt==100))	
 				{
@@ -335,7 +334,7 @@ int main(void)
 					//bla_cnt = 0;
 				}
 						
-				if(task_mag == TRUE)	mag = mag_read();
+				if(task_mag == TRUE)	heading = mag_read();
 				if(task_speed == TRUE)
 				{
 					speed_raw = ADC_read_speed();
@@ -352,10 +351,12 @@ int main(void)
 				
 				// Calculating the attitude by using Kalman Filtering
 				Theta += sample_time * (q_filt-q_bias);
+				
 				P_00_Theta +=  - sample_time * ((P_10_Theta + P_01_Theta) - Q_angle);
 				P_01_Theta +=  - sample_time * P_11_Theta;
 				P_10_Theta = P_01_Theta;
 				P_11_Theta +=  + Q_gyro * sample_time;
+				
 				
 				Phi += sample_time * (p_filt-p_bias);
 				P_00_Phi +=  - sample_time * ((P_10_Phi + P_01_Phi) - Q_angle);
@@ -363,6 +364,7 @@ int main(void)
 				P_10_Phi = P_01_Phi;
 				P_11_Phi +=  + Q_gyro * sample_time;
 				
+			
 				/*
 				Psi += sample_time * (r_filt-r_bias);
 				P_00_Psi +=  - sample_time * (P_10_Psi + P_01_Psi) + Q_angle * sample_time;
@@ -660,7 +662,7 @@ int main(void)
 							alt_hold = altitude_filt; 
 							Phi_hold = Phi;
 							Theta_hold = Theta;
-							mag_hold = mag;
+							mag_hold = heading;
 							speed_hold = speed;							
 							// Setting current input as "trimmed input"
 							trimmed_elevator = ctrl_out[elevator]; 
@@ -775,22 +777,34 @@ int main(void)
 				}
 					// writing all data to serial port
 					
-					write_var(ctrl_out[motor]);write_string(";");write_var(ctrl_out[aileron]);write_string(";");
-					write_var(ctrl_out[elevator]);write_string(";");write_var(ctrl_out[rudder]);write_string(";");
+					write_var(ctrl_out[motor]);write_string(";");
+					write_var(ctrl_out[aileron]);write_string(";");
+					write_var(ctrl_out[elevator]);write_string(";");
+					write_var(ctrl_out[rudder]);write_string(";");
 					write_var(ctrl_out[flap]);write_string(";");
 					write_var(Phi);write_string(";");
 					write_var(Theta);write_string(";");
-					write_var(mag);write_string(";");write_var(altitude_filt);write_string(";");
-					write_var(speed_filt);write_string(";");//write_var(Kp_Theta);write_string(";");write_var(Kp_Phi);
+					write_var(heading);write_string(";");
+					write_var(altitude_filt);write_string(";");
+					write_var(speed_filt);
 					// In case at least once a GPS Signal has been received, the GPS Info will also be printed
-					if(strcmp(GPS_RMC[GPS_RMC_MODE],"")!=0 || strcmp(GPS_GGA[GPS_GGA_MODE],"")!=0) 
+					
+					if(strcmp(GPS_RMC[GPS_RMC_LONGITUDE],"")!=0)
 					{
+						write_string(";");
+						write_string(GPS_RMC[GPS_RMC_TIME]);
 						write_string(";");
 						write_string(GPS_RMC[GPS_RMC_LONGITUDE]);
 						write_string(";");
 						write_string(GPS_RMC[GPS_RMC_LATITUDE]);
-					
+						write_string(";");
+						write_string(GPS_RMC[GPS_RMC_GROUNDSPEED]);
+						write_string(";");
+						//write_string(GPS_RMC[GPS_RMC_PATH]);
+						//write_string(";");
+						write_string(GPS_GGA[GPS_GGA_ALTMSL]);
 					}
+					
 					write_string_ln(";");
 					
 				Ctrl_Mode_prev = Ctrl_Mode;		// Setting previous State

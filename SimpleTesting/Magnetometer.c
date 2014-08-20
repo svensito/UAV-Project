@@ -39,7 +39,7 @@ int16_t	mag_z_deg	= 0;
 int16_t mag_z_max	= +500;		// used for calibration
 int16_t mag_z_min	= -500;		// used for calibration
 
-int16_t heading	= 0;
+int16_t mag_heading	= 0;
 int16_t alpha_int = 0;
 //##################################
 // functions
@@ -71,7 +71,7 @@ void mag_start(void)
 }
 
 // read data from magnetometer
-void mag_read(void)
+int16_t mag_read(void)
 {
 	i2c_start();
 	i2c_send_address_write(LSM303_MAG_ADDRESS_WRITE);
@@ -93,8 +93,10 @@ void mag_read(void)
 	// Calculating the heading with the calibrated data
 	
 	// Calculating the heading with atan2 function by math.h
-	heading = atan2(mag_y,mag_x)*(180/PI);
+	mag_heading = atan2(mag_y,mag_x)*(180/PI);
+	if(mag_heading < 0) mag_heading += 360;
 	
+	return mag_heading;
 	/*
 	Do we need to add Z-axis for mag reading?
 	*/ 
