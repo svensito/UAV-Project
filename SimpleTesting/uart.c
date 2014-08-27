@@ -19,6 +19,7 @@
 int8_t GPS_char, GPS_param = 0;
 volatile uint8_t UART_READY_FLAG = FALSE;
 
+
 // UART initialization
 void init_uart()
 {
@@ -28,11 +29,11 @@ void init_uart()
 	UCSRB = (0<<UCSZ2)|(1<<TXEN)|(1<<RXEN)|(1<<RXCIE);//|(1<<UDRIE);
 	UCSRC = (1<<URSEL)|(1<<UCSZ1)|(1<<UCSZ0);
 	// Need to be in line with the baudrate!
-	// Baudrate: 2400 12 MHZ prozessor
-	uint16_t baudrate = 38400; // achtung: bei geringen baudraten müsste evtl das URRH auch noch beschrieben werden...
+	// Baudrate: 12 MHZ prozessor
+	uint16_t baudrate = 57600; // achtung: bei geringen baudraten müsste evtl das URRH auch noch beschrieben werden...
 	int8_t baud_calc = (F_CPU/(baudrate*16))-1;
 	UBRRH = 0x00;
-	UBRRL = 0x12;
+	UBRRL = 0x0C;
 	
 	sei();	//that is needed essentially (turn on interrupts globally)
 	// das UDR auslesen, falls daten drin sind und verwerfen
@@ -41,7 +42,7 @@ void init_uart()
         UDR;
     }
     while (UCSRA & (1 << RXC));	//solange das receive bit gesetzt ist
-
+	
 }
 
 
@@ -73,6 +74,10 @@ ISR (USART_RXC_vect)
 			GPS_char = 0;
 			// increase row = parameter
 			GPS_param++;
+		}
+		else if ((uart_reading == '.'))	/*the decimal point will have problems to be converted*/
+		{
+			// skip the decimal point as it will give problems when converting to integer
 		}
 		else if ((uart_reading == '\n'))	/*GPS is sending CR LF anyways so we can use the line feed to detect transmitted data */
 		{
@@ -149,17 +154,17 @@ extern void write_string_ln(char *s)
 }
 
 // UART write signed Integer 16bit	//-> 16 bits will leave us with numbers up to 65536 !! and what happens with higher numbers?
-extern void write_var(int16_t num)
+extern void write_var(int32_t num)
 {
-	char k[15];			// define two byte
-	itoa(num, k, 10);	// convert integer to asci -> decimal system
-	write_string(k);	// send the byte
+		char k[31];			// define four bytes
+		ltoa(num, k, 10);	// convert long to asci -> decimal system
+		write_string(k);	// send the byte
 }
 
 extern void write_var_ln(int32_t num)
 {
 		char k[31];			// define four bytes
-		ltoa(num, k, 10);	// convert integer to asci -> decimal system
+		ltoa(num, k, 10);	// convert long to asci -> decimal system
 		write_string(k);	// send the byte
 		write_string("\r\n");
 }

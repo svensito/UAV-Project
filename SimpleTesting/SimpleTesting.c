@@ -64,6 +64,10 @@ uint8_t control_gain = 1;
 volatile uint8_t task_flag = 0;		// this flag will be set every 20ms and reset in the application
 uint8_t comp_count = 0;
 
+// Timer Sample time
+float sample_time = 0;
+
+
 //------------------------------------------------------
 // Task Timer for the tasks
 void Task_Timer(void)
@@ -85,14 +89,18 @@ void Task_Timer(void)
 	
 	// Corrected: Using the ISR to count up. Therefore multiples of the timer OCR value are possible
 	// with OCR0 as 195 => 16,6ms count up time => if counter = 3 then 50ms task time to be realised
-	OCR0 = 195;//0x75;
+	
+	// Update: want to achieve 20ms to get better resolution...Using 10 ms time and counter to count 2 times...
+	// 10 ms -> 117 count value, in the interrupt count til 2!
+	OCR0 = 117;//0x75;
+	sample_time = 0.03;	// ALWAYS change when changing the task time!
 	write_string_ln("TaskTimerStarted");
 }	
 
 ISR(TIMER0_COMP_vect)
 {
 	comp_count++;
-	if (comp_count >= 3)
+	if (comp_count >= 3)	// This gives multiple of 10ms	-> Change sample time accordingly
 	{
 		// Setting the task flag
 		task_flag = 1;
@@ -126,6 +134,23 @@ void WDT_off(void)
 	WDTCR = 0x00;
 	write_string_ln("WdogEnabl");
 }
+//-----------------------------------
+
+
+// Ascii to integer
+uint32_t atol_new(const char* str) {
+	uint32_t num = 0;
+	char digit;
+	while ((digit = *str++) != '\0') {
+		if (digit < '0' || digit > '9') {
+			return num;  /* No valid conversion possible */
+		}
+		num *= 10;
+		num += digit - '0';
+	}
+	return num;
+}
+
 //-----------------------------------
 
 
@@ -178,8 +203,7 @@ int main(void)
 	TIMSK  = (0<<TICIE1)|(1<<OCIE1A)|(0<<OCIE1B)|(0<<TOIE1)|(1<<OCIE0)|(1<<TOIE2);
 	sei();	//enable interrupts
 	
-	// Timer Sample time
-	float sample_time = 0.05;
+	
 	
 	// Circle Number Pi
 	float Pi =  3.1415926535;
@@ -252,11 +276,18 @@ int main(void)
 	
 	// Mag Data
 	int16_t heading = 0;
+	int16_t heading_target = 0;
 	int16_t heading_hold, heading_error, heading_error_prev, heading_error_sum  = 0;
 	int8_t Kp_head = 1;
 	int8_t Kd_head = 0;
 	int8_t Ki_head = 1;
-		
+	
+	// GPS navigation data
+	int32_t GPS_POS_CURRENT_X, GPS_POS_CURRENT_Y, GPS_POS_TARGET_X, GPS_POS_TARGET_Y, GPS_POS_DIF_X, GPS_POS_DIF_Y = 0;
+	int8_t GPS_POS_LAT_DEG, GPS_POS_LAT_MIN = 0;
+	int32_t GPS_POS_LAT_SEC = 0;
+	int32_t GPS_DIS_TO_TARGET = 0;
+			
 	//struct three_values test;
 	int8_t bla_cnt = 0;
 	int8_t send_cnt = 0;
@@ -412,6 +443,12 @@ int main(void)
 				P_10_Psi -= K_1_Psi * P_00_Psi;
 				P_11_Psi -= K_1_Psi * P_01_Psi;
 				*/
+				
+				/*
+				write_var(Phi);write_string(";");
+				write_var(Theta);write_string_ln(";");
+				*/
+				
 				// changing from knob to normal switch for mode control
 				if(ctrl_in[5]>144) Ctrl_Mode = HOLD_CTRL;								// Dn Position
 				else if (ctrl_in[5] > 139 && ctrl_in[5] < 144) Ctrl_Mode = TUNE_CTRL;	// Middle Position
@@ -427,7 +464,42 @@ int main(void)
 					// Otherwise no state change
 					state_change = FALSE;
 				}
-										
+				
+				//******************************************
+				// Detecting current position and required heading
+				
+				
+				//GPS_POS_CURRENT_Y = "123456";
+				// Target coordinates: Berlin
+				GPS_POS_TARGET_X = 132400290;	// 10 Latitude digits
+				GPS_POS_TARGET_Y = 523138036;	// 10 Longitude digits
+								
+				GPS_POS_CURRENT_X = atol_new(GPS_RMC[GPS_RMC_LONGITUDE]);
+				GPS_POS_CURRENT_Y = atol_new(GPS_RMC[GPS_RMC_LATITUDE]);
+				//write_var(GPS_POS_CURRENT_X);write_string(";");write_var(GPS_POS_CURRENT_Y);write_string(";");
+				GPS_POS_DIF_X = GPS_POS_TARGET_X - GPS_POS_CURRENT_X;	// define errors in such way that the course is correct!
+				GPS_POS_DIF_Y = GPS_POS_TARGET_Y - GPS_POS_CURRENT_Y;	
+				//write_var(GPS_POS_DIF_X);write_string(";");write_var(GPS_POS_DIF_Y);write_string_ln(";");
+				//heading_target = atan2(GPS_POS_DIF_Y,GPS_POS_DIF_X)*(180/PI);
+				heading_target = atan2((GPS_POS_DIF_X),(GPS_POS_DIF_Y))*(180/PI);
+				if (heading_target < 0)
+				{
+					heading_target += 360;
+				}
+				// Distance to target:
+				// calculate the latitude difference. one degree latitude is 111km distance (wiki). divide by cos(angle).
+				// 1 deg = 111km
+				// 1 minute = 1,85km
+				// 1 second = 0,031km
+				GPS_POS_LAT_DEG = GPS_POS_DIF_Y/10000000;
+				GPS_POS_LAT_MIN = (GPS_POS_DIF_Y/100000)-(GPS_POS_LAT_DEG*100);
+				GPS_POS_LAT_SEC = (GPS_POS_DIF_Y)-((GPS_POS_LAT_DEG*10000000)+(GPS_POS_LAT_MIN*100000));
+				GPS_DIS_TO_TARGET = GPS_POS_LAT_DEG*111000 + GPS_POS_LAT_MIN*1850 + (((GPS_POS_LAT_SEC*60*31)/100000)*);///cos(heading_target);
+				write_var(GPS_DIS_TO_TARGET);write_string(";");write_var(heading_target);write_string_ln(";");//write_var(GPS_POS_LAT_MIN);write_string(";");write_var(GPS_POS_LAT_SEC);write_string_ln(";");
+				//write_var_ln(atol_new(GPS_RMC[GPS_RMC_LATITUDE][0])*10 + atol_new(GPS_RMC[GPS_RMC_LATITUDE][1]));
+				
+				
+				//******************************************						
 				// use this flag to switch between long / lat tuning mode
 				uint8_t mode = 1;
 				
@@ -810,42 +882,43 @@ int main(void)
 					
 				}
 					// writing all data to serial port
-					
-					write_var(ctrl_out[motor]);write_string(";");
-					write_var(ctrl_out[aileron]);write_string(";");
-					write_var(ctrl_out[elevator]);write_string(";");
-					write_var(ctrl_out[rudder]);write_string(";");
-					write_var(ctrl_out[flap]);write_string(";");
-					write_var(Phi);write_string(";");
-					write_var(Theta);write_string(";");
-					write_var(heading);	write_string(";");
-					write_var(altitude_filt);write_string(";");
-					write_var(speed_filt);
-					// In case at least once a GPS Signal has been received, the GPS Info will also be printed
-					
-					if(strcmp(GPS_RMC[GPS_RMC_LONGITUDE],"")!=0)
+					if(FALSE)	// set to TRUE if output wanted - FALSE if not wanted
 					{
-						write_string(";");
-						write_string(GPS_RMC[GPS_RMC_TIME]);
-						write_string(";");
-						write_string(GPS_RMC[GPS_RMC_LONGITUDE]);
-						write_string(";");
-						write_string(GPS_RMC[GPS_RMC_LATITUDE]);
-						write_string(";");
-						write_string(GPS_RMC[GPS_RMC_GROUNDSPEED]);
-						write_string(";");
-						//write_string(GPS_RMC[GPS_RMC_PATH]);
-						//write_string(";");
-						write_string(GPS_GGA[GPS_GGA_ALTMSL]);
+						write_var(ctrl_out[motor]);write_string(";");
+						write_var(ctrl_out[aileron]);write_string(";");
+						write_var(ctrl_out[elevator]);write_string(";");
+						write_var(ctrl_out[rudder]);write_string(";");
+						write_var(ctrl_out[flap]);write_string(";");
+						write_var(Phi);write_string(";");
+						write_var(Theta);write_string(";");
+						write_var(heading);	write_string(";");
+						write_var(altitude_filt);write_string(";");
+						write_var(speed_filt);
+					
+						// In case at least once a GPS Signal has been received, the GPS Info will also be printed
+					
+						if(strcmp(GPS_RMC[GPS_RMC_LONGITUDE],"")!=0)
+						{
+							write_string(";");
+							write_string(GPS_RMC[GPS_RMC_TIME]);
+							write_string(";");
+							write_string(GPS_RMC[GPS_RMC_LONGITUDE]);
+							write_string(";");
+							write_string(GPS_RMC[GPS_RMC_LATITUDE]);
+							//write_string(";");
+							//write_string(GPS_RMC[GPS_RMC_PATH]);
+							write_string(";");
+							write_string(GPS_GGA[GPS_GGA_ALTMSL]);
+						}
+					
+						write_string_ln(";");
 					}
-					
-					write_string_ln(";");
-					
 				Ctrl_Mode_prev = Ctrl_Mode;		// Setting previous State
 				ctrl_out_prev[5] = ctrl_out;	// Setting previous controls
 				ctrl_in_prev[9] = ctrl_in;
 				//GPS_string_prev[GPS_LONGITUDE][] = GPS_string[GPS_LONGITUDE];
 			}		
+			
 			
 			// Toggling the Watchdog (Reset)
 			wdt_reset();

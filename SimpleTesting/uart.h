@@ -4,7 +4,7 @@
 #define UART_WORD_LENGTH		40
 #define UART_COMPARE_SUCCESS	0
 #define GPS_Params				16
-#define GPS_chars				9
+#define GPS_chars				11
 
 //Init Uart Function
 void init_uart();
@@ -13,7 +13,7 @@ void init_uart();
 extern void write_char();
 extern void write_string();
 extern void write_string_ln();
-extern void write_var(int16_t num);
+extern void write_var(int32_t num);
 extern void write_var_ln(int32_t num);
 extern void write_ubyte_ln(uint8_t);
 extern void write_ubyte(uint8_t);
