@@ -132,7 +132,7 @@ void WDT_off(void)
 	WDTCR |= (1<<WDTOE) | (1<<WDE);
 	/* Turn off WDT */
 	WDTCR = 0x00;
-	write_string_ln("WdogEnabl");
+	write_string_ln("WdogDisabl");
 }
 //-----------------------------------
 
@@ -156,6 +156,13 @@ uint32_t atol_new(const char* str) {
 
 int main(void)
 {	
+	// Setting the LED port to output
+	//DDRC |= (1<<PC2);	// LED on PC2 pin as output
+	
+	//LED off
+	//PORTC &= ~(1<<PC2);
+	//LED on
+	//PORTC |= (1<<PC2);
 	
 	// Initializing
 	init_uart();
@@ -231,14 +238,14 @@ int main(void)
 	float speed_hold, speed_error, speed_error_sum, speed_errror_prev = 0;
 	int8_t Kp_speed = 15;	
 	//int8_t Kd_speed = 1;	// No differential part as signal too noisy
-	int8_t Ki_speed = 15;
+	int8_t Ki_speed = 5;
 	long trimmed_motor = 0;
 	
 	// Euler Angles Data
 	float Theta, Theta_hold, Theta_error, Theta_error_sum, Theta_error_prev = 0;
 	int8_t Kp_Theta = 30;
 	int8_t Kd_Theta = 1;
-	int8_t Ki_Theta = 30;
+	int8_t Ki_Theta = 10;
 	float Phi = 0;
 	float Psi = 0;
 	float Phi_hold = 0;
@@ -247,7 +254,7 @@ int main(void)
 	float Phi_error_prev = 0;
 	int8_t Kp_Phi = 30;
 	int8_t Kd_Phi = 1;
-	int8_t Ki_Phi = 30;
+	int8_t Ki_Phi = 10;
 	
 	long trimmed_aileron = 0;
 	long trimmed_rudder = 0;
@@ -292,7 +299,7 @@ int main(void)
 	int8_t bla_cnt = 0;
 	int8_t send_cnt = 0;
 	int8_t tune_cnt = 0;
-	
+	int8_t test_cnt = 0;
 	
 	// Turn On the Watchdog
 	WDT_on();
@@ -449,21 +456,7 @@ int main(void)
 				write_var(Theta);write_string_ln(";");
 				*/
 				
-				// changing from knob to normal switch for mode control
-				if(ctrl_in[5]>144) Ctrl_Mode = HOLD_CTRL;								// Dn Position
-				else if (ctrl_in[5] > 139 && ctrl_in[5] < 144) Ctrl_Mode = TUNE_CTRL;	// Middle Position
-				else Ctrl_Mode = DIRECT_CTRL;											// Up Position
-										
-				if(Ctrl_Mode_prev != Ctrl_Mode)
-				{
-					// If a state change happens
-					state_change = TRUE;
-				}
-				else
-				{
-					// Otherwise no state change
-					state_change = FALSE;
-				}
+
 				
 				//******************************************
 				// Detecting current position and required heading
@@ -494,10 +487,28 @@ int main(void)
 				GPS_POS_LAT_DEG = GPS_POS_DIF_Y/10000000;
 				GPS_POS_LAT_MIN = (GPS_POS_DIF_Y/100000)-(GPS_POS_LAT_DEG*100);
 				GPS_POS_LAT_SEC = (GPS_POS_DIF_Y)-((GPS_POS_LAT_DEG*10000000)+(GPS_POS_LAT_MIN*100000));
-				GPS_DIS_TO_TARGET = GPS_POS_LAT_DEG*111000 + GPS_POS_LAT_MIN*1850 + (((GPS_POS_LAT_SEC*60*31)/100000)*);///cos(heading_target);
-				write_var(GPS_DIS_TO_TARGET);write_string(";");write_var(heading_target);write_string_ln(";");//write_var(GPS_POS_LAT_MIN);write_string(";");write_var(GPS_POS_LAT_SEC);write_string_ln(";");
+				GPS_DIS_TO_TARGET = GPS_POS_LAT_DEG*111000 + GPS_POS_LAT_MIN*1850 + (((GPS_POS_LAT_SEC*60*31)/100000));///cos(heading_target);
+				//write_var(GPS_POS_LAT_MIN);write_string(";");write_var(GPS_POS_LAT_SEC);write_string_ln(";");
 				//write_var_ln(atol_new(GPS_RMC[GPS_RMC_LATITUDE][0])*10 + atol_new(GPS_RMC[GPS_RMC_LATITUDE][1]));
 				
+				
+				//*******************************************
+				// Control of Modes
+				// changing from knob to normal switch for mode control
+				if(ctrl_in[5]>144) Ctrl_Mode = HOLD_CTRL;								// Dn Position
+				else if (ctrl_in[5] > 139 && ctrl_in[5] < 144) Ctrl_Mode = DIRECT_CTRL;	// Middle Position
+				else Ctrl_Mode = DAMPED_CTRL;											// Up Position
+								
+				if(Ctrl_Mode_prev != Ctrl_Mode)
+				{
+					// If a state change happens
+					state_change = TRUE;
+				}
+				else
+				{
+					// Otherwise no state change
+					state_change = FALSE;
+				}
 				
 				//******************************************						
 				// use this flag to switch between long / lat tuning mode
@@ -523,7 +534,7 @@ int main(void)
 						 ctrl_out[rudder]	=	NEUTRAL+((ctrl_in[stick_l_left_right]-SERVO_TRIM_RUDDER)*SERVO_GAIN_RUDDER);
 						 
 						 // Flap Delay
-						 uint16_t flap_target = 0;	// defining the target flap position
+						 uint16_t flap_target = FLAP_UP;	// defining the target flap position
 						 uint8_t flap_delta = 10;	// giving the speed of flap extension 
 													// 10 will give around 2 seconds for movement in between two positions
 						 
@@ -567,6 +578,7 @@ int main(void)
 								ctrl_out[motor] = trimmed_motor;
 								ctrl_out[aileron] = trimmed_aileron;
 								ctrl_out[rudder] = trimmed_rudder;
+								tune_cnt = 0;
 							}
 
 							if(tune_cnt < 40) tune_cnt++;
@@ -574,7 +586,7 @@ int main(void)
 							{
 								write_string_ln("Step Ele");
 								ctrl_out[elevator] +=  200;
-								tune_cnt += 1;
+								tune_cnt += 1; // to leave the if clause
 							}
 						}
 						
@@ -595,6 +607,7 @@ int main(void)
 								ctrl_out[motor] = trimmed_motor;
 								ctrl_out[aileron] = trimmed_aileron;
 								ctrl_out[rudder] = trimmed_rudder;
+								tune_cnt = 0;
 							}
 
 							if(tune_cnt < 40) tune_cnt++;
@@ -714,18 +727,101 @@ int main(void)
 					break;
 					
 					case DAMPED_CTRL:
-						// Take Off Control
-						// Motor Max
-						// Hold Magnetic Heading
-						// Hold Theta
-						// Hold Phi
-						// Hold Psi / r
-						// correct with rudder
-						// reach target speed -> pull up
+					// Heading control test
+					// entry condition
+					
+					if(state_change == TRUE)
+					{
+						write_string_ln("DAMPED CONTROL");
+						// Fly 90 degrees to the right
+						heading_hold = heading;
+						Theta_hold = Theta;
+						Phi_hold = Phi;
+						// Setting current input as "trimmed input"
+						trimmed_elevator = ctrl_out[elevator];
+						trimmed_aileron = ctrl_out[aileron];
+						trimmed_motor = ctrl_out[motor];
+						trimmed_rudder = ctrl_out[rudder];
+						//resetting the errors
+						heading_error = 0;
+						heading_error_sum = 0;
+						speed_error = 0;
+						speed_error_sum = 0;
+						Theta_error = 0;
+						Theta_error_sum = 0;
+						Phi_error = 0;
+						Phi_error_sum = 0;
+						write_string("Heading hold - Trim Ail: ");write_var(heading_hold);write_string(" - ");write_var(trimmed_aileron);write_string_ln("");
+						// Delay timer
+						test_cnt = 0;
+					}
+					
+					if(test_cnt < 66) test_cnt++;
+					if(test_cnt == 66)	// after 2 seconds (base: sample time) it will make a step change in the heading command
+					{
+						heading_hold += 90;
+						write_string("Step heading + 90: ");write_var(heading_hold);write_string_ln("");
+						test_cnt++;
+					}
+					
+					// keep trimmed control for rudder and motor
+					ctrl_out[motor] = trimmed_motor;
+					ctrl_out[rudder] = trimmed_rudder;
+					
+					//********************************************
+					// Theta control with elevator
+					// Problem with altitude control is the poor resolution of 1 Hz.
+											
+					Theta_error = Theta_hold - Theta; // Positive Error (theta too flat) shall give positive value control output (elevator up)
+					Theta_error_sum += Theta_error;
+					// including the speed as parameter to reduce the P control Gain
+					Kp_Theta = (Kp_Theta-speed_filt > 0)?(Kp_Theta-speed_filt):1;	// if (K-speed > 0) then take (K-speed) else take (1)
+					// control formula
+					ctrl_out[elevator] = (trimmed_elevator + (Kp_Theta*Theta_error + Ki_Theta*Theta_error_sum*sample_time));
+					if(ctrl_out[elevator] > RIGHT) ctrl_out[elevator] = RIGHT;
+					else if (ctrl_out[elevator] < LEFT) ctrl_out[elevator] = LEFT;
+					
+					
+					//**********************************************	
+					// Heading hold control	
+					// input: current heading, heading_com
+					// control: Phi	
+					// controller: PI control	(heading reading is very noisy...diff part gives too noisy outputs)
+					// when Phi positive we do a right turn, when Phi negative, we do a left turn
 						
-						// Camera Mode
-									
-
+					// calculating the heading error
+					heading_error = heading_hold - heading;
+					// to identify which way to go we calculate (do not travel 270 deg left, when shortest is 90 deg right)
+					int16_t heading_ctrl_2 = 360 + heading_error;
+					if (heading_ctrl_2 < 180)
+					{
+						heading_error = heading_ctrl_2;
+					}
+					// error sum for I control
+					heading_error_sum += heading_error;
+					// controller formula
+					Phi_hold = Kp_head*heading_error + Ki_head*heading_error_sum*sample_time;
+						
+					// Limiting the Bank Angle command to +- 20 maximum
+					int8_t bank_limit_2 = 20;
+					if (Phi_hold < -bank_limit_2) Phi_hold = -bank_limit_2;
+					else if (Phi_hold > bank_limit_2) Phi_hold = bank_limit_2;
+												
+						
+					// *********************************************	
+					// Bank angle control with aileron
+					// input: Phi
+					// output: aileron command
+					
+					Phi_error = Phi - Phi_hold;		// Positive Error (too hard bank right)shall give negative control (Aileron roll left)
+					Phi_error_sum += Phi_error;
+					// including the speed as parameter to reduce the control Gains
+					Kp_Phi = (Kp_Phi-speed_filt > 0)?(Kp_Phi-speed_filt):1;	// if (K-speed > 0) then take (K-speed) else take (1)
+					// controller formula						
+					ctrl_out[aileron] = (trimmed_aileron - (Kp_Phi*Phi_error + Ki_Phi*Phi_error_sum*sample_time));// + Kd_Phi*(Phi_error_prev - Phi_error)/sample_time));
+					// limiting controls
+					if(ctrl_out[aileron] > RIGHT) ctrl_out[aileron] = RIGHT;
+					else if (ctrl_out[aileron] < LEFT) ctrl_out[aileron] = LEFT;
 						
 					break;
 					
@@ -738,7 +834,8 @@ int main(void)
 							alt_hold = altitude_filt; 
 							Phi_hold = Phi;
 							Theta_hold = Theta;
-							heading_hold = heading;
+							// Testing to fly to direction of berlin...
+							heading_hold = heading_target;
 							speed_hold = speed;							
 							// Setting current input as "trimmed input"
 							trimmed_elevator = ctrl_out[elevator]; 
@@ -747,6 +844,8 @@ int main(void)
 							trimmed_rudder = ctrl_out[rudder];
 							//resetting the errors
 							alt_error = 0;
+							speed_error_sum = 0;
+							speed_error = 0;
 							Theta_error = 0;
 							Phi_error = 0;
 							alt_error_sum = 0;
@@ -783,7 +882,7 @@ int main(void)
 						
 						// formula looks wrong!!! corrected below
 						// ctrl_out[elevator] = (trimmed_elevator - (Kp_Theta*-Theta_error + Ki_Theta*Theta_error_sum*sample_time + Kd_Theta*(Theta_error_prev - Theta_error)/sample_time));
-						ctrl_out[elevator] = (trimmed_elevator + (Kp_Theta*Theta_error + Ki_Theta*Theta_error_sum*sample_time + Kd_Theta*(Theta_error_prev - Theta_error)/sample_time));
+						ctrl_out[elevator] = (trimmed_elevator + (Kp_Theta*Theta_error + Ki_Theta*Theta_error_sum*sample_time));// + Kd_Theta*(Theta_error_prev - Theta_error)/sample_time));
 						if(ctrl_out[elevator] > RIGHT) ctrl_out[elevator] = RIGHT;
 						else if (ctrl_out[elevator] < LEFT) ctrl_out[elevator] = LEFT;
 						Theta_error_prev = Theta_error;
@@ -846,11 +945,12 @@ int main(void)
 						Ki_Phi = (Ki_Phi-speed_filt > 0)?(Ki_Phi-speed_filt):1;	// if (K-speed > 0) then take (K-speed) else take (1)
 						Kd_Phi = (Kd_Phi-speed_filt > 0)?(Kd_Phi-speed_filt):1;	// if (K-speed > 0) then take (K-speed) else take (1)
 						
-						ctrl_out[aileron] = (trimmed_aileron - (Kp_Phi*Phi_error + Ki_Phi*Phi_error_sum*sample_time + Kd_Phi*(Phi_error_prev - Phi_error)/sample_time));
+						ctrl_out[aileron] = (trimmed_aileron - (Kp_Phi*Phi_error + Ki_Phi*Phi_error_sum*sample_time));// + Kd_Phi*(Phi_error_prev - Phi_error)/sample_time));
 						Phi_error_prev = Phi_error;
 						if(ctrl_out[aileron] > RIGHT) ctrl_out[aileron] = RIGHT;
 						else if (ctrl_out[aileron] < LEFT) ctrl_out[aileron] = LEFT;	
-			
+						
+						//**********************************************
 						// Speed control (PI only -> noisy signal) with motor
 						speed_error = speed_hold - speed; // Positive Error (too slow) shall give positive input (motor increase)
 						speed_error_sum += speed_error;	
@@ -868,11 +968,11 @@ int main(void)
 						
 						
 						// camera gimbal servo
-						ctrl_out[camera_y] = NEUTRAL_GIMB_Y + ((ctrl_in[stick_r_up_down]-SERVO_TRIM_GIMB_Y)*SERVO_GAIN_GIMB_Y);//+((ctrl_in[stick_r_up_down]-SERVO_TRIM_GIMB_Y)*SERVO_GAIN_ELEVATOR);
-						if (ctrl_out[camera_y] < MAX_GIMB_Y_UP) ctrl_out[camera_y] = MAX_GIMB_Y_UP;
-						if (ctrl_out[camera_y] > MAX_GIMB_Y_DN) ctrl_out[camera_y] = MAX_GIMB_Y_DN;
-									
-						ctrl_out[camera_z] = SERVO_GIMB_Z_STOP-((ctrl_in[stick_r_left_right]-141)*10);
+// 						ctrl_out[camera_y] = NEUTRAL_GIMB_Y + ((ctrl_in[stick_r_up_down]-SERVO_TRIM_GIMB_Y)*SERVO_GAIN_GIMB_Y);//+((ctrl_in[stick_r_up_down]-SERVO_TRIM_GIMB_Y)*SERVO_GAIN_ELEVATOR);
+// 						if (ctrl_out[camera_y] < MAX_GIMB_Y_UP) ctrl_out[camera_y] = MAX_GIMB_Y_UP;
+// 						if (ctrl_out[camera_y] > MAX_GIMB_Y_DN) ctrl_out[camera_y] = MAX_GIMB_Y_DN;
+// 									
+// 						ctrl_out[camera_z] = SERVO_GIMB_Z_STOP-((ctrl_in[stick_r_left_right]-141)*10);
 						// the z axis Servo is a hacked 360 deg Servo without position information
 						// There is no feedback from the servo on its position.
 						// For leaving and reaching a new position, only time integration would work...
@@ -909,6 +1009,8 @@ int main(void)
 							//write_string(GPS_RMC[GPS_RMC_PATH]);
 							write_string(";");
 							write_string(GPS_GGA[GPS_GGA_ALTMSL]);
+							write_string(";");
+							write_var(heading_target);
 						}
 					
 						write_string_ln(";");
