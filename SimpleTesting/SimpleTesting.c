@@ -236,14 +236,14 @@ int main(void)
 												// -> alpha 1: only filtered input (only noise)
 	float speed = 0;
 	float speed_hold, speed_error, speed_error_sum, speed_errror_prev = 0;
-	int8_t Kp_speed = 15;	
+	int8_t Kp_speed = 10;	
 	//int8_t Kd_speed = 1;	// No differential part as signal too noisy
 	int8_t Ki_speed = 5;
 	long trimmed_motor = 0;
 	
 	// Euler Angles Data
 	float Theta, Theta_hold, Theta_error, Theta_error_sum, Theta_error_prev = 0;
-	int8_t Kp_Theta = 30;
+	int8_t Kp_Theta = 15;
 	int8_t Kd_Theta = 1;
 	int8_t Ki_Theta = 10;
 	float Phi = 0;
@@ -252,9 +252,9 @@ int main(void)
 	float Phi_error = 0;
 	float Phi_error_sum = 0;
 	float Phi_error_prev = 0;
-	int8_t Kp_Phi = 30;
+	int8_t Kp_Phi = 10;
 	int8_t Kd_Phi = 1;
-	int8_t Ki_Phi = 10;
+	int8_t Ki_Phi = 5;
 	
 	long trimmed_aileron = 0;
 	long trimmed_rudder = 0;
@@ -756,13 +756,13 @@ int main(void)
 						test_cnt = 0;
 					}
 					
-					if(test_cnt < 66) test_cnt++;
-					if(test_cnt == 66)	// after 2 seconds (base: sample time) it will make a step change in the heading command
-					{
-						heading_hold += 90;
-						write_string("Step heading + 90: ");write_var(heading_hold);write_string_ln("");
-						test_cnt++;
-					}
+// 					if(test_cnt < 66) test_cnt++;
+// 					if(test_cnt == 66)	// after 2 seconds (base: sample time) it will make a step change in the heading command
+// 					{
+// 						heading_hold += 90;
+// 						write_string("Step heading + 90: ");write_var(heading_hold);write_string_ln("");
+// 						test_cnt++;
+// 					}
 					
 					// keep trimmed control for rudder and motor
 					ctrl_out[motor] = trimmed_motor;
@@ -775,7 +775,7 @@ int main(void)
 					Theta_error = Theta_hold - Theta; // Positive Error (theta too flat) shall give positive value control output (elevator up)
 					Theta_error_sum += Theta_error;
 					// including the speed as parameter to reduce the P control Gain
-					Kp_Theta = (Kp_Theta-speed_filt > 0)?(Kp_Theta-speed_filt):1;	// if (K-speed > 0) then take (K-speed) else take (1)
+					//Kp_Theta = (Kp_Theta-speed_filt > 0)?(Kp_Theta-speed_filt):1;	// if (K-speed > 0) then take (K-speed) else take (1)
 					// control formula
 					ctrl_out[elevator] = (trimmed_elevator + (Kp_Theta*Theta_error + Ki_Theta*Theta_error_sum*sample_time));
 					if(ctrl_out[elevator] > RIGHT) ctrl_out[elevator] = RIGHT;
@@ -801,12 +801,12 @@ int main(void)
 					heading_error_sum += heading_error;
 					// controller formula
 					Phi_hold = Kp_head*heading_error + Ki_head*heading_error_sum*sample_time;
-						
+					
 					// Limiting the Bank Angle command to +- 20 maximum
 					int8_t bank_limit_2 = 20;
 					if (Phi_hold < -bank_limit_2) Phi_hold = -bank_limit_2;
 					else if (Phi_hold > bank_limit_2) Phi_hold = bank_limit_2;
-												
+					
 						
 					// *********************************************	
 					// Bank angle control with aileron
@@ -815,13 +815,17 @@ int main(void)
 					
 					Phi_error = Phi - Phi_hold;		// Positive Error (too hard bank right)shall give negative control (Aileron roll left)
 					Phi_error_sum += Phi_error;
+					
 					// including the speed as parameter to reduce the control Gains
-					Kp_Phi = (Kp_Phi-speed_filt > 0)?(Kp_Phi-speed_filt):1;	// if (K-speed > 0) then take (K-speed) else take (1)
+					//Kp_Phi = 5;	// if (K-speed > 0) then take (K-speed) else take (1)
+					
 					// controller formula						
 					ctrl_out[aileron] = (trimmed_aileron - (Kp_Phi*Phi_error + Ki_Phi*Phi_error_sum*sample_time));// + Kd_Phi*(Phi_error_prev - Phi_error)/sample_time));
 					// limiting controls
+					// limiting contr);
 					if(ctrl_out[aileron] > RIGHT) ctrl_out[aileron] = RIGHT;
 					else if (ctrl_out[aileron] < LEFT) ctrl_out[aileron] = LEFT;
+					
 						
 					break;
 					
@@ -876,9 +880,9 @@ int main(void)
 						Theta_error = Theta_hold - Theta; // Positive Error (theta too flat) shall give positive value control output (elevator up)
 						Theta_error_sum += Theta_error;
 						// including the speed as parameter to reduce the control Gains
-						Kp_Theta = (Kp_Theta-speed_filt > 0)?(Kp_Theta-speed_filt):1;	// if (K-speed > 0) then take (K-speed) else take (1)
-						Ki_Theta = (Ki_Theta-speed_filt > 0)?(Ki_Theta-speed_filt):1;	// if (K-speed > 0) then take (K-speed) else take (1)
-						Kd_Theta = (Kd_Theta-speed_filt > 0)?(Kd_Theta-speed_filt):1;	// if (K-speed > 0) then take (K-speed) else take (1)
+						//Kp_Theta = (Kp_Theta-speed_filt > 0)?(Kp_Theta-speed_filt):1;	// if (K-speed > 0) then take (K-speed) else take (1)
+						//Ki_Theta = (Ki_Theta-speed_filt > 0)?(Ki_Theta-speed_filt):1;	// if (K-speed > 0) then take (K-speed) else take (1)
+						//Kd_Theta = (Kd_Theta-speed_filt > 0)?(Kd_Theta-speed_filt):1;	// if (K-speed > 0) then take (K-speed) else take (1)
 						
 						// formula looks wrong!!! corrected below
 						// ctrl_out[elevator] = (trimmed_elevator - (Kp_Theta*-Theta_error + Ki_Theta*Theta_error_sum*sample_time + Kd_Theta*(Theta_error_prev - Theta_error)/sample_time));
@@ -941,9 +945,9 @@ int main(void)
 						Phi_error = Phi - Phi_hold;		// Positive Error (too hard bank right)shall give negative control (Aileron roll left)
 						Phi_error_sum += Phi_error;
 						// including the speed as parameter to reduce the control Gains
-						Kp_Phi = (Kp_Phi-speed_filt > 0)?(Kp_Phi-speed_filt):1;	// if (K-speed > 0) then take (K-speed) else take (1)
-						Ki_Phi = (Ki_Phi-speed_filt > 0)?(Ki_Phi-speed_filt):1;	// if (K-speed > 0) then take (K-speed) else take (1)
-						Kd_Phi = (Kd_Phi-speed_filt > 0)?(Kd_Phi-speed_filt):1;	// if (K-speed > 0) then take (K-speed) else take (1)
+						//Kp_Phi = (Kp_Phi-speed_filt > 0)?(Kp_Phi-speed_filt):1;	// if (K-speed > 0) then take (K-speed) else take (1)
+						//Ki_Phi = (Ki_Phi-speed_filt > 0)?(Ki_Phi-speed_filt):1;	// if (K-speed > 0) then take (K-speed) else take (1)
+						//Kd_Phi = (Kd_Phi-speed_filt > 0)?(Kd_Phi-speed_filt):1;	// if (K-speed > 0) then take (K-speed) else take (1)
 						
 						ctrl_out[aileron] = (trimmed_aileron - (Kp_Phi*Phi_error + Ki_Phi*Phi_error_sum*sample_time));// + Kd_Phi*(Phi_error_prev - Phi_error)/sample_time));
 						Phi_error_prev = Phi_error;
@@ -982,7 +986,7 @@ int main(void)
 					
 				}
 					// writing all data to serial port
-					if(FALSE)	// set to TRUE if output wanted - FALSE if not wanted
+					if(TRUE)	// set to TRUE if output wanted - FALSE if not wanted
 					{
 						write_var(ctrl_out[motor]);write_string(";");
 						write_var(ctrl_out[aileron]);write_string(";");
@@ -993,8 +997,10 @@ int main(void)
 						write_var(Theta);write_string(";");
 						write_var(heading);	write_string(";");
 						write_var(altitude_filt);write_string(";");
-						write_var(speed_filt);
-					
+						write_var(speed_filt);write_string(";");
+						write_var(Phi_error);write_string(";");
+						write_var(heading_error);
+						
 						// In case at least once a GPS Signal has been received, the GPS Info will also be printed
 					
 						if(strcmp(GPS_RMC[GPS_RMC_LONGITUDE],"")!=0)
