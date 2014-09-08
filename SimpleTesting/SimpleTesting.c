@@ -248,7 +248,7 @@ int main(void)
 	int8_t Ki_Theta = 10;
 	float Phi = 0;
 	float Psi = 0;
-	float Phi_hold = 0;
+	float Phi_hold, Phi_hold_0 = 0;
 	float Phi_error = 0;
 	float Phi_error_sum = 0;
 	float Phi_error_prev = 0;
@@ -736,7 +736,7 @@ int main(void)
 						// Fly 90 degrees to the right
 						heading_hold = heading;
 						Theta_hold = Theta;
-						Phi_hold = Phi;
+						Phi_hold_0 = Phi;	// This is introduced to have an outer loop trimmed Phi value
 						// Setting current input as "trimmed input"
 						trimmed_elevator = ctrl_out[elevator];
 						trimmed_aileron = ctrl_out[aileron];
@@ -800,7 +800,7 @@ int main(void)
 					// error sum for I control
 					heading_error_sum += heading_error;
 					// controller formula
-					Phi_hold = Kp_head*heading_error + Ki_head*heading_error_sum*sample_time;
+					Phi_hold = Phi_hold_0 + (Kp_head*heading_error + Ki_head*heading_error_sum*sample_time);
 					
 					// Limiting the Bank Angle command to +- 20 maximum
 					int8_t bank_limit_2 = 20;
