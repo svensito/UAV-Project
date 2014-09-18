@@ -121,7 +121,7 @@ int16_t ADC_read_speed(void)
 	// the datasheet says the pressure range is +-2 kPa = 2000 Pa = 0,02 bar
 	// 1 Pa = 1N/m^2
 	// means that 2000/511 Pa per bit = 3,914 Pa
-	
+	// rho ~ 1,2041
 	// p = rho/2 * v²
 	// v = SQRT(2*p/rho)
 	// [p] = N/m² = Pa

@@ -34,11 +34,11 @@
 // Local declarations and variables
 
 // These are the task flags, set them to activate / deactivate task
-int task_gyro	= TRUE;
-int task_acc	= TRUE;
-int task_mag	= TRUE;
+int task_gyro	= FALSE;
+int task_acc	= FALSE;
+int task_mag	= FALSE;
 int task_temp	= FALSE;
-int task_baro	= TRUE;
+int task_baro	= FALSE;
 int task_speed	= TRUE;
 
 // Control Mode
@@ -231,9 +231,12 @@ int main(void)
 	int8_t Kd_alt = 10;	
 	long trimmed_elevator = 0;				   
 	// Speed Data
-	int16_t speed_raw,speed_filt = 0;	// raw speed and filtered speed
-	float alpha_speed = 0.8; // alpha element [0;1] -> alpha 0: only raw input (noise free)
-												// -> alpha 1: only filtered input (only noise)
+	int16_t speed_raw,speed_filt, speed_filt_1, speed_filt_2, speed_filt_3, speed_filt_4, speed_filt_5 = 0;	// raw speed and filtered speed
+	float alpha_speed_1 = 0.3; // alpha element [0;1] -> alpha 0: only raw input (noise free)
+	float alpha_speed_2 = 0.3;											// -> alpha 1: only filtered input (only noise)
+	float alpha_speed_3 = 0.3;											
+	float alpha_speed_raw = 0.1;									
+												
 	float speed = 0;
 	float speed_hold, speed_error, speed_error_sum, speed_errror_prev = 0;
 	int8_t Kp_speed = 10;	
@@ -243,9 +246,9 @@ int main(void)
 	
 	// Euler Angles Data
 	float Theta, Theta_hold, Theta_error, Theta_error_sum, Theta_error_prev = 0;
-	int8_t Kp_Theta = 15;
-	int8_t Kd_Theta = 1;
-	int8_t Ki_Theta = 10;
+	int8_t Kp_Theta = 7;	// as per simulation in SCILAB this are very good gains for a wide range of speed...
+	int8_t Kd_Theta = 5;
+	int8_t Ki_Theta = 6;
 	float Phi = 0;
 	float Psi = 0;
 	float Phi_hold, Phi_hold_0 = 0;
@@ -286,8 +289,8 @@ int main(void)
 	int16_t heading_target = 0;
 	int16_t heading_hold, heading_error, heading_error_prev, heading_error_sum  = 0;
 	int8_t Kp_head = 1;
-	int8_t Kd_head = 0;
-	int8_t Ki_head = 1;
+	int8_t Kd_head = 1;
+	int8_t Ki_head = 0;		// simulation showed that PD is convenient for Heading Track
 	
 	// GPS navigation data
 	int32_t GPS_POS_CURRENT_X, GPS_POS_CURRENT_Y, GPS_POS_TARGET_X, GPS_POS_TARGET_Y, GPS_POS_DIF_X, GPS_POS_DIF_Y = 0;
@@ -379,9 +382,28 @@ int main(void)
 				if(task_mag == TRUE)	heading = mag_read();
 				if(task_speed == TRUE)
 				{
+					
+					if (bla_cnt == 8)		// to reduce the sampling time of the speed reading...
+					{
+					
 					speed_raw = ADC_read_speed();
 					// low pass filter on the speed reading
-					speed_filt = speed_raw*(1-alpha_speed) + (alpha_speed*speed_filt);
+								// current reading				// prev reading			//
+			
+					speed_filt = ((-3*speed_filt_1) + (12*speed_filt_2) + (17*speed_filt_3) + (12*speed_filt_4) + (-3*speed_filt_5))/35;// + (alpha_speed_2*speed_filt_2) + (alpha_speed_3*speed_filt_3);
+					speed_filt_5 = speed_filt_4;
+					speed_filt_4 = speed_filt_3;
+					speed_filt_3 = speed_filt_2;
+					speed_filt_2 = speed_filt_1;
+					speed_filt_1 = speed_raw;
+					
+					bla_cnt = 0;
+					}
+					
+					bla_cnt++;
+					write_var(speed_raw);write_string(";");write_var(speed_filt);write_string_ln(";");
+					
+					
 				}
 				
 				// Reading the input from the knob to change control modes
@@ -800,7 +822,9 @@ int main(void)
 					// error sum for I control
 					heading_error_sum += heading_error;
 					// controller formula
-					Phi_hold = Phi_hold_0 + (Kp_head*heading_error + Ki_head*heading_error_sum*sample_time);
+					Phi_hold = Phi_hold_0 + (Kp_head*heading_error + Kd_head*(heading_error-heading_error_prev)*sample_time);
+					// error previous for d control
+					heading_error_prev = heading_error;
 					
 					// Limiting the Bank Angle command to +- 20 maximum
 					int8_t bank_limit_2 = 20;
@@ -886,7 +910,7 @@ int main(void)
 						
 						// formula looks wrong!!! corrected below
 						// ctrl_out[elevator] = (trimmed_elevator - (Kp_Theta*-Theta_error + Ki_Theta*Theta_error_sum*sample_time + Kd_Theta*(Theta_error_prev - Theta_error)/sample_time));
-						ctrl_out[elevator] = (trimmed_elevator + (Kp_Theta*Theta_error + Ki_Theta*Theta_error_sum*sample_time));// + Kd_Theta*(Theta_error_prev - Theta_error)/sample_time));
+						ctrl_out[elevator] = (trimmed_elevator + (Kp_Theta*Theta_error + Ki_Theta*Theta_error_sum*sample_time + Kd_Theta*(Theta_error_prev - Theta_error)/sample_time));
 						if(ctrl_out[elevator] > RIGHT) ctrl_out[elevator] = RIGHT;
 						else if (ctrl_out[elevator] < LEFT) ctrl_out[elevator] = LEFT;
 						Theta_error_prev = Theta_error;
@@ -931,9 +955,11 @@ int main(void)
 						// error sum for I control
 						heading_error_sum += heading_error;
 						// controller formula
-						Phi_hold += Kp_head*heading_error + Ki_head*heading_error_sum*sample_time;
+						Phi_hold = Phi_hold_0 + (Kp_head*heading_error + Kd_head*(heading_error-heading_error_prev)*sample_time);
+						// error previous for d control
+						heading_error_prev = heading_error;
 						
-						// Limiting the Bank Angle command to +- 20 maximum
+						// Limiting the Bank Angle command to +- 20 maximum (= Saturation)
 						int8_t bank_limit = 20;
 						if (Phi_hold < -bank_limit) Phi_hold = -bank_limit;
 						else if (Phi_hold > bank_limit) Phi_hold = bank_limit;
@@ -986,7 +1012,7 @@ int main(void)
 					
 				}
 					// writing all data to serial port
-					if(TRUE)	// set to TRUE if output wanted - FALSE if not wanted
+					if(FALSE)	// set to TRUE if output wanted - FALSE if not wanted
 					{
 						write_var(ctrl_out[motor]);write_string(";");
 						write_var(ctrl_out[aileron]);write_string(";");
