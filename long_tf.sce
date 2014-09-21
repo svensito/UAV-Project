@@ -1,8 +1,10 @@
+
+
 // environmental data
 rho = 1.2682    // density [kg/m³]
 
 // speed of trimmed flight
-V_a = 25    // airspeed [m/s]
+V_a = 10    // airspeed [m/s]
 
 //airframe
 b = 1.4     // wingspan [m]
@@ -12,15 +14,15 @@ S = b*c     // wing surface
 // airframe data
 J_x = 0.1147        // Moment of Inertia x axis [kg*m²] -> estimated out of Table E.1 and E.2
 //J_y = 0.5760        // Moment of Inertia y axis [kg*m²] -> ZAGI approx weight of Fun Cub / Aerosonde same config
-J_y = 0.2860
-J_z = 0.2860        // Moment of Inertia z axis [kg*m²]
+J_y = 0.3135
+J_z = 0.1759        // Moment of Inertia z axis [kg*m²]
 J_xz = 0.015        // Moment of Inertia xz plane [kg*m²]    
 Gamma = J_x*J_z-(J_xz^2)    // as per formula 3.13
 
 // aerodynamic moments for longitudinal movement
-C_m_q = -3.6       // Moment along y axis due to q
+C_m_q = -1.4       // Moment along y axis due to q
 C_m_alpha = -0.4    // Moment along y axis due to alpha
-C_m_de = -0.003       // Moment along y axis due to elevator deflection
+C_m_de = -0.028       // Moment along y axis due to elevator deflection
 // one step elevator output is less than 1/10 of a degree!!!
 // therefore the value is so low
 
