@@ -33,13 +33,16 @@
 //------------------------------------------------------
 // Local declarations and variables
 
+//******************************************************************
 // These are the task flags, set them to activate / deactivate task
-int task_gyro	= TRUE;
-int task_acc	= TRUE;
-int task_mag	= TRUE;
-int task_temp	= FALSE;
-int task_baro	= TRUE;
-int task_speed	= TRUE;
+int task_gyro	= TRUE;		// reading gyro data enabled (TRUE) /disabled (FALSE)
+int task_acc	= TRUE;		// reading acc data enabled (TRUE) /disabled (FALSE)
+int task_mag	= TRUE;		// reading mag data enabled (TRUE) /disabled (FALSE)
+int task_temp	= FALSE;	// reading temp data enabled (TRUE) /disabled (FALSE)
+int task_baro	= TRUE;		// reading baro data enabled (TRUE) /disabled (FALSE)
+int task_speed	= TRUE;		// reading ADC speed data enabled (TRUE) /disabled (FALSE)
+int serial_log	= TRUE;		// serial output enabled (TRUE) /disabled (FALSE)
+//******************************************************************
 
 // Control Mode
 uint8_t Ctrl_Mode = DIRECT_CTRL;		// First Test with Direct Law Only: DIRECT_LAW or NORMAL_LAW possible
@@ -249,6 +252,7 @@ int main(void)
 	int8_t Kp_Theta = 10;	// as per simulation in SCILAB this are very good gains for a wide range of speed...
 	int8_t Kd_Theta = 0;
 	int8_t Ki_Theta = 10;
+	int8_t K_p_q = 9;
 	float Phi = 0;
 	float Psi = 0;
 	float Phi_hold, Phi_hold_0 = 0;
@@ -847,29 +851,40 @@ int main(void)
 						{
 							write_string_ln("HOLD CONTROL");
 							// Setting current values as control values
-							alt_hold = altitude_filt; 
-							Phi_hold = Phi;
-							Theta_hold = Theta;
-							// Testing to fly to direction of berlin...
-							heading_hold = heading_target;
+							// High level loops
+							alt_hold = altitude_filt;		// controlling barometric altitude
+							heading_hold = heading_target;	// controlling heading
+							
+							// middle loops (if required)
+							Phi_hold_0 = Phi;			// using current phi as phi_0
+							Theta_hold = Theta;			// using current theta as theta_0
 							speed_hold = speed;							
+							
 							// Setting current input as "trimmed input"
 							trimmed_elevator = ctrl_out[elevator]; 
 							trimmed_aileron = ctrl_out[aileron];
 							trimmed_motor = ctrl_out[motor];
 							trimmed_rudder = ctrl_out[rudder];
-							//resetting the errors
+							
+							//****************************
+							// Resetting the errors
+							// altitude
 							alt_error = 0;
-							speed_error_sum = 0;
-							speed_error = 0;
-							Theta_error = 0;
-							Phi_error = 0;
 							alt_error_sum = 0;
-							Theta_error_sum = 0;
 							alt_error_prev = 0;
+							// speed
+							speed_error = 0;
+							speed_error_sum = 0;
+							// Theta
+							Theta_error = 0;
+							Theta_error_sum = 0;
 							Theta_error_prev = 0;
+							// Phi
+							Phi_error = 0;
 							Phi_error_sum = 0;
 							Phi_error_prev = 0;
+							// *****************************
+							
 							write_string("Trim El - Ail - Motor: ");write_var(trimmed_elevator);write_string(" - ");write_var(trimmed_aileron);write_string(" - ");write_var_ln(trimmed_motor);
 							write_string("Target Alt - Bank - Speed: ");write_var(Theta_hold);write_string(" - ");write_var(Phi_hold);write_string(" - ");write_var_ln(speed_hold);
 						}
@@ -884,24 +899,50 @@ int main(void)
 						//ctrl_out[elevator] = NEUTRAL+((ctrl_in[stick_r_up_down]-SERVO_TRIM_ELEVATOR)*SERVO_GAIN_ELEVATOR);
 						//ctrl_out[rudder] = NEUTRAL+((ctrl_in[stick_l_left_right]-SERVO_TRIM_RUDDER)*SERVO_GAIN_RUDDER);
 						
+						//******************************************************
+						// Altitude hold
+						// Input: Altitude reading (poor 1Hz resolution of barometer)
+						// output: Theta_com (Pitch Angle command)
+						// Controller: P control (as per SCILAB the most efficient for Altitude hold outer loop)
+						alt_error = alt_hold - altitude_filt;
+						Theta_hold = Kp_alt*(alt_error);
+						// Limiting Theta Angle command to +20 -10 maximum (= Saturation)
+						int8_t pitch_limit = 20;
+						if (Theta_hold < -(pitch_limit/2)) Theta_hold = -(pitch_limit/2);
+						else if (Theta_hold > pitch_limit) Theta_hold = pitch_limit;
+						//******************************************************
 						
-						//*******************************************
+						//******************************************************
 						// Theta control with elevator
-						// Problem with altitude control is the poor resolution of 1 Hz.
-						
-						Theta_error = Theta_hold - Theta; // Positive Error (theta too flat) shall give positive value control output (elevator up)
+						// Input: Theta command from Altitude Hold loop
+						// Output: elevator command
+						// Controller: PID Controller
+						Theta_error = Theta - Theta_hold; // as per Simulation in SCILAB this convention is best
 						Theta_error_sum += Theta_error;
-						// including the speed as parameter to reduce the control Gains
-						//Kp_Theta = (Kp_Theta-speed_filt > 0)?(Kp_Theta-speed_filt):1;	// if (K-speed > 0) then take (K-speed) else take (1)
-						//Ki_Theta = (Ki_Theta-speed_filt > 0)?(Ki_Theta-speed_filt):1;	// if (K-speed > 0) then take (K-speed) else take (1)
-						//Kd_Theta = (Kd_Theta-speed_filt > 0)?(Kd_Theta-speed_filt):1;	// if (K-speed > 0) then take (K-speed) else take (1)
 						
-						// formula looks wrong!!! corrected below
+						// the minus is neccessary to compensate the error calculation above
+						//										 | |
+						//										  V
+						ctrl_out_PID[elevator] = trimmed_elevator - (Kp_Theta*Theta_error + Ki_Theta*Theta_error_sum*sample_time + Kd_Theta*(Theta_error_prev - Theta_error)/sample_time);
+
 						// ctrl_out[elevator] = (trimmed_elevator - (Kp_Theta*-Theta_error + Ki_Theta*Theta_error_sum*sample_time + Kd_Theta*(Theta_error_prev - Theta_error)/sample_time));
-						ctrl_out[elevator] = (trimmed_elevator + (Kp_Theta*Theta_error + Ki_Theta*Theta_error_sum*sample_time + Kd_Theta*(Theta_error_prev - Theta_error)/sample_time));
-						if(ctrl_out[elevator] > RIGHT) ctrl_out[elevator] = RIGHT;
-						else if (ctrl_out[elevator] < LEFT) ctrl_out[elevator] = LEFT;
+						//ctrl_out[elevator] = (trimmed_elevator + (Kp_Theta*Theta_error + Ki_Theta*Theta_error_sum*sample_time + Kd_Theta*(Theta_error_prev - Theta_error)/sample_time));
+						if(ctrl_out_PID[elevator] > RIGHT) ctrl_out_PID[elevator] = RIGHT;
+						else if (ctrl_out_PID[elevator] < LEFT) ctrl_out_PID[elevator] = LEFT;
 						Theta_error_prev = Theta_error;
+						//******************************************************
+						
+						//******************************************************
+						// Pitch damping
+						// Input: turn rate q
+						// Output: elevator command
+						ctrl_out_DAMP[elevator] = K_p_q * turn_rate.q;
+						//******************************************************
+						
+						//******************************************************
+						// Combining the calculated inputs elevator
+						ctrl_out[elevator] = ctrl_out_PID[elevator] + ctrl_out_DAMP[elevator];
+						//******************************************************
 						
 						// altitude control with elevator (Position 3)
 						/*
@@ -1000,8 +1041,8 @@ int main(void)
 												
 					
 				}
-					// writing all data to serial port
-					if(FALSE)	// set to TRUE if output wanted - FALSE if not wanted
+					// writing all data to serial port if enabled
+					if(serial_log == TRUE)	// set serial log variable to enable / disable output
 					{
 						write_var(ctrl_out[motor]);write_string(";");
 						write_var(ctrl_out[aileron]);write_string(";");
@@ -1037,7 +1078,7 @@ int main(void)
 						write_string_ln(";");
 					}
 				Ctrl_Mode_prev = Ctrl_Mode;		// Setting previous State
-				ctrl_out_prev[5] = ctrl_out;	// Setting previous controls
+				
 				ctrl_in_prev[9] = ctrl_in;
 				//GPS_string_prev[GPS_LONGITUDE][] = GPS_string[GPS_LONGITUDE];
 			}		

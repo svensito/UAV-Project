@@ -66,7 +66,8 @@ volatile int ctrl_in_offset[9];
 volatile int ctrl_in_prev[9];
 
 volatile long ctrl_out[7];
-volatile long ctrl_out_prev[7];
+volatile long ctrl_out_PID[7];
+volatile long ctrl_out_DAMP[7];
 
 typedef enum
 	{
