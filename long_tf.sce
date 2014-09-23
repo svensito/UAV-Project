@@ -29,7 +29,7 @@ m = 1.5             // weight in [kg] -> FUNCUB
 
 // estimation by log analysis and simulation tuning to fit log
 J_x = 0.1147            // Moment of Inertia x axis [kg*m²] -> FUNCUB (estimated)
-J_y = 0.5135            // Moment of Inertia y axis [kg*m²] -> FUNCUB (estimated)
+J_y = 0.2135            // Moment of Inertia y axis [kg*m²] -> FUNCUB (estimated)
 J_z = 0.359             // Moment of Inertia z axis [kg*m²] -> FUNCUB (estimated)
 J_xz = 0.015            // Moment of Inertia xz plane [kg*m²] -> FUNCUB (estimated)
 Gamma = J_x*J_z-(J_xz^2)    // as per formula 3.13
@@ -64,19 +64,16 @@ a_theta_3 = (rho*V_a^2*c*S/(2*J_y))*C_m_de
 
 s=%s
 
-// Time constant for Time delay of altitude function
-T_lag_alt = 2
-
 // Transfer Function for eta -> q
 AC_long_nom = a_theta_3 * s
 AC_long_denom = s^2 + a_theta_1 * s + a_theta_2
 
 // 'c' for continuous, 'd' for discrete
-h = syslin('d',nom_,denom_)
+//h = syslin('d',nom_,denom_)
 
 //evans(h,100)
 
-sys = tf2ss(nom_/denom_)
+//sys = tf2ss(nom_/denom_)
 
 // Step Response tested with 200 deflection
 

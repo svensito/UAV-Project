@@ -41,7 +41,7 @@ int task_mag	= TRUE;		// reading mag data enabled (TRUE) /disabled (FALSE)
 int task_temp	= FALSE;	// reading temp data enabled (TRUE) /disabled (FALSE)
 int task_baro	= TRUE;		// reading baro data enabled (TRUE) /disabled (FALSE)
 int task_speed	= TRUE;		// reading ADC speed data enabled (TRUE) /disabled (FALSE)
-int serial_log	= TRUE;		// serial output enabled (TRUE) /disabled (FALSE)
+int serial_log	= FALSE;		// serial output enabled (TRUE) /disabled (FALSE)
 //******************************************************************
 
 // Control Mode
@@ -223,15 +223,15 @@ int main(void)
 	int8_t p_raw,q_raw,r_raw,p_filt,q_filt,r_filt,p_filt_prev,q_filt_prev,r_filt_prev = 0; // raw turn rates, filtered turn rates,previous turn rates
 	float alpha_turn = 0.7;	
 	// Altitude Data
-	int16_t altitude_raw,altitude_filt,alt_hold = 0;	// raw altitude and filtered altitude
+	int16_t altitude_raw,altitude_filt,alt_hold, alt_hold_0 = 0;	// raw altitude and filtered altitude
 	int16_t alt_error = 0;
 	int16_t alt_error_sum = 0;
 	int16_t alt_error_prev = 0;
 	float alpha_alt = 0.3; // alpha element [0;1] -> alpha 0: only raw input (noise free)
 										   // -> alpha 1: only filtered input (only noise)
-	int8_t Kp_alt = 10;
+	int8_t Kp_alt = 1;
 	int8_t Ki_alt = 10;
-	int8_t Kd_alt = 10;	
+	int8_t Kd_alt = 10;
 	long trimmed_elevator = 0;				   
 	// Speed Data
 	int16_t speed_raw,speed_filt, speed_filt_1, speed_filt_2, speed_filt_3, speed_filt_4, speed_filt_5 = 0;	// raw speed and filtered speed
@@ -250,7 +250,7 @@ int main(void)
 	// Euler Angles Data
 	float Theta, Theta_hold, Theta_error, Theta_error_sum, Theta_error_prev = 0;
 	int8_t Kp_Theta = 10;	// as per simulation in SCILAB this are very good gains for a wide range of speed...
-	int8_t Kd_Theta = 0;
+	int8_t Kd_Theta = 5;
 	int8_t Ki_Theta = 10;
 	int8_t K_p_q = 9;
 	float Phi = 0;
@@ -302,11 +302,14 @@ int main(void)
 	int32_t GPS_POS_LAT_SEC = 0;
 	int32_t GPS_DIS_TO_TARGET = 0;
 			
-	//struct three_values test;
+	// random counter
 	int8_t bla_cnt = 0;
 	int8_t send_cnt = 0;
 	int8_t tune_cnt = 0;
 	int8_t test_cnt = 0;
+	
+	// random flags
+	int8_t knob_flag = 0;
 	
 	// Turn On the Watchdog
 	WDT_on();
@@ -521,7 +524,7 @@ int main(void)
 				//*******************************************
 				// Control of Modes
 				// changing from knob to normal switch for mode control
-				if(ctrl_in[5]>144) Ctrl_Mode = TUNE_CTRL;								// Dn Position
+				if(ctrl_in[5]>144) Ctrl_Mode = HOLD_CTRL;								// Dn Position
 				else if (ctrl_in[5] > 139 && ctrl_in[5] < 144) Ctrl_Mode = DIRECT_CTRL;	// Middle Position
 				else Ctrl_Mode = DAMPED_CTRL;											// Up Position
 								
@@ -852,7 +855,9 @@ int main(void)
 							write_string_ln("HOLD CONTROL");
 							// Setting current values as control values
 							// High level loops
-							alt_hold = altitude_filt;		// controlling barometric altitude
+							//alt_hold = altitude_filt;		// controlling barometric altitude
+							alt_hold = altitude_filt;
+							alt_hold_0 = alt_hold;			// used for finding previous altitude again
 							heading_hold = heading_target;	// controlling heading
 							
 							// middle loops (if required)
@@ -884,147 +889,151 @@ int main(void)
 							Phi_error_sum = 0;
 							Phi_error_prev = 0;
 							// *****************************
-							
-							write_string("Trim El - Ail - Motor: ");write_var(trimmed_elevator);write_string(" - ");write_var(trimmed_aileron);write_string(" - ");write_var_ln(trimmed_motor);
-							write_string("Target Alt - Bank - Speed: ");write_var(Theta_hold);write_string(" - ");write_var(Phi_hold);write_string(" - ");write_var_ln(speed_hold);
+							write_string("Target Alt - Heading - Speed: ");write_var(alt_hold);write_string(" - ");write_var(heading_hold);write_string(" - ");write_var_ln(speed_hold);
+						}
+						// speed control not yet established (keeping it as is)
+						ctrl_out[motor] = trimmed_motor ;
+						
+						// Using Rotary knob for altitude hold control (testing)
+						if(ctrl_in[rotary_knob]<135 && ctrl_in[rotary_knob]>120 && knob_flag == 1)	// NEUTRAL (Up Middle
+						{
+							// normal position -> taking alt as when state was entered
+							alt_hold = alt_hold_0;
+							knob_flag = 0;
+							write_string("ALT Hold ");write_var_ln(alt_hold);
+
+						}
+						else if(ctrl_in[rotary_knob]<160 && ctrl_in[rotary_knob]>150 && knob_flag == 0) // Left One Click
+						{
+							// when knob turned -> Altitude = actual + 10
+						 	alt_hold = alt_hold + 10;
+							knob_flag = 1; 
+							write_string(" Alt Hold ");write_var_ln(alt_hold);
 						}
 						
-						// Other controls as usual
-						//POSITION1 = NEUTRAL+((ctrl_in[0]-SERVO_TRIM_MOTOR)*SERVO_GAIN_MOTOR);		// Motor
-						//POSITION2 = NEUTRAL+((ctrl_in[1]-SERVO_TRIM_AILERON)*SERVO_GAIN_AILERON);		// Aileron	right:		POSITION++	left: POSITION--
-						//POSITION3 = NEUTRAL+((ctrl_in[2]-SERVO_TRIM_ELEVATOR)*SERVO_GAIN_ELEVATOR);	// Elevator	up:			POSITION++	down: POSITION--
-						//POSITION4 = NEUTRAL+((ctrl_in[3]-SERVO_TRIM_RUDDER)*SERVO_GAIN_RUDDER);		// Rudder
-						//ctrl_out[motor] = NEUTRAL+((ctrl_in[stick_l_up_down]-SERVO_TRIM_MOTOR)*SERVO_GAIN_MOTOR);
-						//ctrl_out[aileron] = NEUTRAL+((ctrl_in[stick_r_left_right]-SERVO_TRIM_AILERON)*SERVO_GAIN_AILERON);
-						//ctrl_out[elevator] = NEUTRAL+((ctrl_in[stick_r_up_down]-SERVO_TRIM_ELEVATOR)*SERVO_GAIN_ELEVATOR);
-						//ctrl_out[rudder] = NEUTRAL+((ctrl_in[stick_l_left_right]-SERVO_TRIM_RUDDER)*SERVO_GAIN_RUDDER);
+						//******************************
+						// LONGITUDINAL AUTOPILOT
 						
-						//******************************************************
-						// Altitude hold
-						// Input: Altitude reading (poor 1Hz resolution of barometer)
-						// output: Theta_com (Pitch Angle command)
-						// Controller: P control (as per SCILAB the most efficient for Altitude hold outer loop)
-						alt_error = alt_hold - altitude_filt;
-						Theta_hold = Kp_alt*(alt_error);
-						// Limiting Theta Angle command to +20 -10 maximum (= Saturation)
-						int8_t pitch_limit = 20;
-						if (Theta_hold < -(pitch_limit/2)) Theta_hold = -(pitch_limit/2);
-						else if (Theta_hold > pitch_limit) Theta_hold = pitch_limit;
-						//******************************************************
+ 						//******************************************************
+ 						// Altitude hold
+ 						// Input: Altitude reading (poor 1Hz resolution of barometer)
+ 						// output: Theta_com (Pitch Angle command)
+ 						// Controller: P control (as per SCILAB the most efficient for Altitude hold outer loop)
+ 						alt_error = alt_hold - altitude_filt;
+ 						Theta_hold = Kp_alt*(alt_error);
+ 						// Limiting Theta Angle command to +20 -10 maximum (= Saturation)
+ 						int8_t pitch_limit = 20;
+ 						if (Theta_hold < -(pitch_limit/2)) Theta_hold = -(pitch_limit/2); // only 10 deg neg due to speed gaining
+ 						else if (Theta_hold > pitch_limit) Theta_hold = pitch_limit;
 						
-						//******************************************************
-						// Theta control with elevator
-						// Input: Theta command from Altitude Hold loop
-						// Output: elevator command
-						// Controller: PID Controller
-						Theta_error = Theta - Theta_hold; // as per Simulation in SCILAB this convention is best
-						Theta_error_sum += Theta_error;
-						
-						// the minus is neccessary to compensate the error calculation above
-						//										 | |
-						//										  V
-						ctrl_out_PID[elevator] = trimmed_elevator - (Kp_Theta*Theta_error + Ki_Theta*Theta_error_sum*sample_time + Kd_Theta*(Theta_error_prev - Theta_error)/sample_time);
-
-						// ctrl_out[elevator] = (trimmed_elevator - (Kp_Theta*-Theta_error + Ki_Theta*Theta_error_sum*sample_time + Kd_Theta*(Theta_error_prev - Theta_error)/sample_time));
-						//ctrl_out[elevator] = (trimmed_elevator + (Kp_Theta*Theta_error + Ki_Theta*Theta_error_sum*sample_time + Kd_Theta*(Theta_error_prev - Theta_error)/sample_time));
-						if(ctrl_out_PID[elevator] > RIGHT) ctrl_out_PID[elevator] = RIGHT;
-						else if (ctrl_out_PID[elevator] < LEFT) ctrl_out_PID[elevator] = LEFT;
-						Theta_error_prev = Theta_error;
+ 						//******************************************************
+ 						
+ 						//******************************************************
+ 						// Theta control with elevator
+ 						// Input: Theta command from Altitude Hold loop
+ 						// Output: elevator command pid loop
+ 						// Controller: PID Controller
+						// Gains: K_p = 10 K_i = 10 K_d = 5
+ 						Theta_error = Theta - Theta_hold; // as per Simulation in SCILAB this convention is best
+ 						Theta_error_sum += Theta_error;
+ 						
+						 // controller formula for the necessary control change						 
+ 						ctrl_out_PID[elevator] = (Kp_Theta*Theta_error + Ki_Theta*Theta_error_sum*sample_time + Kd_Theta*(Theta_error_prev - Theta_error)/sample_time);
+ 
+ 						Theta_error_prev = Theta_error;
 						//******************************************************
 						
 						//******************************************************
 						// Pitch damping
 						// Input: turn rate q
-						// Output: elevator command
-						ctrl_out_DAMP[elevator] = K_p_q * turn_rate.q;
+						// Output: elevator command damping
+						// Gains: K_p_q = 9
+						ctrl_out_DAMP[elevator] = K_p_q * (q_filt);
 						//******************************************************
 						
 						//******************************************************
-						// Combining the calculated inputs elevator
-						ctrl_out[elevator] = ctrl_out_PID[elevator] + ctrl_out_DAMP[elevator];
+						// Combining the calculated inputs elevator and limiting elevator command
+						ctrl_out[elevator] = trimmed_elevator + ctrl_out_PID[elevator] - ctrl_out_DAMP[elevator];// + ctrl_out_DAMP[elevator]);
+						if(ctrl_out[elevator] > RIGHT) ctrl_out[elevator] = RIGHT;
+						else if (ctrl_out[elevator] < LEFT) ctrl_out[elevator] = LEFT;
 						//******************************************************
-						
-						// altitude control with elevator (Position 3)
-						/*
-						alt_error = altitude_filt - alt_hold; // Positive Error shall give negative control (Elevator down)
-						alt_error_sum += alt_error;
-						Theta_hold = (Theta_hold - control_gain * (Kp_alt*alt_error + Ki_alt*alt_error_sum*0.05 + Kd_alt*(alt_error_prev - alt_error)/0.05));
-						alt_error_prev = alt_error;
-						*/
-							
-						//**********************************************	
-						// Heading hold control	
-						// input: current heading, heading_com
-						// control: Phi	
-						// controller: PI control	(heading reading is very noisy...diff part gives too noisy outputs)
-						// when Phi positive we do a right turn, when Phi negative, we do a left turn
-						
-						// Using Rotary knob for heading control (testing)
-						if(ctrl_in[rotary_knob]<135 && ctrl_in[rotary_knob]>120)
-						{
-							//heading_hold += 90;
-							
-						}
-						else if(ctrl_in[rotary_knob]<150 && ctrl_in[rotary_knob]>135)
-						{
-							// normal position
-						}
-						else if(ctrl_in[rotary_knob]<160 && ctrl_in[rotary_knob]>150)
-						{
-							//heading_hold -= 90;
-						}
-						
-						// calculating the heading error
-						heading_error = heading_hold - heading;
-						// to identify which way to go we calculate (do not travel 270 deg left, when shortest is 90 deg right)
-						int16_t heading_ctrl = 360 + heading_error;
-						if (heading_ctrl < 180)
-						{
-							heading_error = heading_ctrl;
-						}
-						// error sum for I control
-						heading_error_sum += heading_error;
-						// controller formula
-						Phi_hold = Phi_hold_0 + (Kp_head*heading_error + Kd_head*(heading_error-heading_error_prev)*sample_time);
-						// error previous for d control
-						heading_error_prev = heading_error;
-						
-						// Limiting the Bank Angle command to +- 20 maximum (= Saturation)
-						int8_t bank_limit = 20;
-						if (Phi_hold < -bank_limit) Phi_hold = -bank_limit;
-						else if (Phi_hold > bank_limit) Phi_hold = bank_limit;
-												
-						
-						// *********************************************	
-						// Bank angle control with aileron
-						
-						Phi_error = Phi - Phi_hold;		// Positive Error (too hard bank right)shall give negative control (Aileron roll left)
-						Phi_error_sum += Phi_error;
-						// including the speed as parameter to reduce the control Gains
-						//Kp_Phi = (Kp_Phi-speed_filt > 0)?(Kp_Phi-speed_filt):1;	// if (K-speed > 0) then take (K-speed) else take (1)
-						//Ki_Phi = (Ki_Phi-speed_filt > 0)?(Ki_Phi-speed_filt):1;	// if (K-speed > 0) then take (K-speed) else take (1)
-						//Kd_Phi = (Kd_Phi-speed_filt > 0)?(Kd_Phi-speed_filt):1;	// if (K-speed > 0) then take (K-speed) else take (1)
-						
-						ctrl_out[aileron] = (trimmed_aileron - (Kp_Phi*Phi_error + Ki_Phi*Phi_error_sum*sample_time));// + Kd_Phi*(Phi_error_prev - Phi_error)/sample_time));
-						Phi_error_prev = Phi_error;
-						if(ctrl_out[aileron] > RIGHT) ctrl_out[aileron] = RIGHT;
-						else if (ctrl_out[aileron] < LEFT) ctrl_out[aileron] = LEFT;	
 						
 						//**********************************************
-						// Speed control (PI only -> noisy signal) with motor
-						speed_error = speed_hold - speed; // Positive Error (too slow) shall give positive input (motor increase)
-						speed_error_sum += speed_error;	
-						// when too slow (bracket turns positive) the motor gets increased
-						ctrl_out[motor] = trimmed_motor + (Kp_speed*speed_error + Ki_speed * speed_error_sum * sample_time);
-						if(ctrl_out[motor] > RIGHT) ctrl_out[motor] = RIGHT;
-						else if (ctrl_out[motor] < LEFT) ctrl_out[motor] = LEFT;
-						speed_errror_prev = speed_error;
-						
-						// Damping of yaw
-						int8_t yaw_damping = 2;	// needs to be checked
-						if(speed_filt>20) yaw_damping /= 2;
-						ctrl_out[rudder] = trimmed_rudder + (r_filt*yaw_damping);
-						
+// 						// LATERAL AUTOPILOT
+
+// 						//**********************************************	
+// 						// Heading hold control	
+// 						// input: current heading, heading_com
+// 						// control: Phi	
+// 						// controller: PI control	(heading reading is very noisy...diff part gives too noisy outputs)
+// 						// when Phi positive we do a right turn, when Phi negative, we do a left turn
+// 						
+// 						// Using Rotary knob for heading control (testing)
+// 						if(ctrl_in[rotary_knob]<135 && ctrl_in[rotary_knob]>120)
+// 						{
+// 							//heading_hold += 90;
+// 							
+// 						}
+// 						else if(ctrl_in[rotary_knob]<150 && ctrl_in[rotary_knob]>135)
+// 						{
+// 							// normal position
+// 						}
+// 						else if(ctrl_in[rotary_knob]<160 && ctrl_in[rotary_knob]>150)
+// 						{
+// 							//heading_hold -= 90;
+// 						}
+// 						
+// 						// calculating the heading error
+// 						heading_error = heading_hold - heading;
+// 						// to identify which way to go we calculate (do not travel 270 deg left, when shortest is 90 deg right)
+// 						int16_t heading_ctrl = 360 + heading_error;
+// 						if (heading_ctrl < 180)
+// 						{
+// 							heading_error = heading_ctrl;
+// 						}
+// 						// error sum for I control
+// 						heading_error_sum += heading_error;
+// 						// controller formula
+// 						Phi_hold = Phi_hold_0 + (Kp_head*heading_error + Kd_head*(heading_error-heading_error_prev)*sample_time);
+// 						// error previous for d control
+// 						heading_error_prev = heading_error;
+// 						
+// 						// Limiting the Bank Angle command to +- 20 maximum (= Saturation)
+// 						int8_t bank_limit = 20;
+// 						if (Phi_hold < -bank_limit) Phi_hold = -bank_limit;
+// 						else if (Phi_hold > bank_limit) Phi_hold = bank_limit;
+// 												
+// 						
+// 						// *********************************************	
+// 						// Bank angle control with aileron
+// 						
+// 						Phi_error = Phi - Phi_hold;		// Positive Error (too hard bank right)shall give negative control (Aileron roll left)
+// 						Phi_error_sum += Phi_error;
+// 						// including the speed as parameter to reduce the control Gains
+// 						//Kp_Phi = (Kp_Phi-speed_filt > 0)?(Kp_Phi-speed_filt):1;	// if (K-speed > 0) then take (K-speed) else take (1)
+// 						//Ki_Phi = (Ki_Phi-speed_filt > 0)?(Ki_Phi-speed_filt):1;	// if (K-speed > 0) then take (K-speed) else take (1)
+// 						//Kd_Phi = (Kd_Phi-speed_filt > 0)?(Kd_Phi-speed_filt):1;	// if (K-speed > 0) then take (K-speed) else take (1)
+// 						
+// 						ctrl_out[aileron] = (trimmed_aileron - (Kp_Phi*Phi_error + Ki_Phi*Phi_error_sum*sample_time));// + Kd_Phi*(Phi_error_prev - Phi_error)/sample_time));
+// 						Phi_error_prev = Phi_error;
+// 						if(ctrl_out[aileron] > RIGHT) ctrl_out[aileron] = RIGHT;
+// 						else if (ctrl_out[aileron] < LEFT) ctrl_out[aileron] = LEFT;	
+// 						
+// 						//**********************************************
+// 						// Speed control (PI only -> noisy signal) with motor
+// 						speed_error = speed_hold - speed; // Positive Error (too slow) shall give positive input (motor increase)
+// 						speed_error_sum += speed_error;	
+// 						// when too slow (bracket turns positive) the motor gets increased
+// 						ctrl_out[motor] = trimmed_motor + (Kp_speed*speed_error + Ki_speed * speed_error_sum * sample_time);
+// 						if(ctrl_out[motor] > RIGHT) ctrl_out[motor] = RIGHT;
+// 						else if (ctrl_out[motor] < LEFT) ctrl_out[motor] = LEFT;
+// 						speed_errror_prev = speed_error;
+// 						
+// 						// Damping of yaw
+// 						int8_t yaw_damping = 2;	// needs to be checked
+// 						if(speed_filt>20) yaw_damping /= 2;
+// 						ctrl_out[rudder] = trimmed_rudder + (r_filt*yaw_damping);
+// 						
 						
 						
 						// camera gimbal servo
@@ -1054,7 +1063,7 @@ int main(void)
 						write_var(heading);	write_string(";");
 						write_var(altitude_filt);write_string(";");
 						write_var(speed_filt);write_string(";");
-						write_var(Phi_error);write_string(";");
+						write_var(alt_error);write_string(";");
 						write_var(heading_error);
 						
 						// In case at least once a GPS Signal has been received, the GPS Info will also be printed
