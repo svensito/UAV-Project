@@ -14,15 +14,29 @@ V_a = 10    // airspeed [m/s]
 
 //airframe
 b = 1.4     // wingspan [m]
-c = 0.25    // mean chord [m]
-S = b*c     // wing surface
+l = 0.980  // length [m]
+c = 0.27    // mean chord [m]
+S = 0.38     // wing surface [m²]
 
 // airframe data
-J_x = 0.5847        // Moment of Inertia x axis [kg*m²] -> estimated out of Table E.1 and E.2
-//J_y = 0.5760        // Moment of Inertia y axis [kg*m²] -> ZAGI approx weight of Fun Cub / Aerosonde same config
-J_y = 0.2860
-J_z = 0.2860        // Moment of Inertia z axis [kg*m²]
-J_xz = 0.025        // Moment of Inertia xz plane [kg*m²]    
+// m_ZAGI = 1.56    // weight [kg] -> ZAGI
+// m_AERO = 13.5    // weight [kg] -> AEROSONDE
+m = 1.5             // weight in [kg] -> FUNCUB
+
+// J_x_ZAGI = 0.1147    //
+// J_x_AERO = 0.8244    // f
+// J_y_ZAGI = 0.05760   // Moment of Inertia y axis [kg*m²] -> ZAGI
+// J_y_AERO = 1.135     // Moment of Inertia y axis [kg*m²] -> AEROSONDE
+// J_z_ZAGI = 0.1712    // Moment of Inertia z axis [kg*m²] -> ZAGI
+// J_z_AERO = 1.1759    // Moment of Inertia z axis [kg*m²] -> AEROSONDE
+// J_xz_ZAGI = 0.0015    // Moment of Inertia xz plane [kg*m²] -> ZAGI
+// J_xz_AERO = 0.1204    // Moment of Inertia xz plane [kg*m²] -> AEROSONDE
+
+// estimation by log analysis and simulation tuning to fit log
+J_x = 0.5847            // Moment of Inertia x axis [kg*m²] -> FUNCUB (estimated)
+J_y = 0.2135            // Moment of Inertia y axis [kg*m²] -> FUNCUB (estimated)
+J_z = 0.359             // Moment of Inertia z axis [kg*m²] -> FUNCUB (estimated)
+J_xz = 0.015            // Moment of Inertia xz plane [kg*m²] -> FUNCUB (estimated)
 Gamma = J_x*J_z-(J_xz^2)    // as per formula 3.13
 
 // aerodynamic moments for latitudinal movement

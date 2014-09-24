@@ -28,7 +28,7 @@ m = 1.5             // weight in [kg] -> FUNCUB
 // J_xz_AERO = 0.1204    // Moment of Inertia xz plane [kg*m²] -> AEROSONDE
 
 // estimation by log analysis and simulation tuning to fit log
-J_x = 0.1147            // Moment of Inertia x axis [kg*m²] -> FUNCUB (estimated)
+J_x = 0.5847            // Moment of Inertia x axis [kg*m²] -> FUNCUB (estimated)
 J_y = 0.2135            // Moment of Inertia y axis [kg*m²] -> FUNCUB (estimated)
 J_z = 0.359             // Moment of Inertia z axis [kg*m²] -> FUNCUB (estimated)
 J_xz = 0.015            // Moment of Inertia xz plane [kg*m²] -> FUNCUB (estimated)
