@@ -15,6 +15,8 @@
 #define RIGHT			3000	// Min Limit
 #define LEFT			1000
 #define PULSE_WIDTH		4000	// This value value will give 2,66ms of pulswidth	(with 20ms of total period, we will achieve 7 channels instead of 5 only)
+#define MOTOR_LIM_LOW	1770
+#define MOTOR_LIM_HI	3000
 
 // FLAP SERVO LIMITS
 #define FLAP_FULL		2300	// Extension Flap Servo Limit

@@ -41,7 +41,7 @@ int task_mag	= TRUE;		// reading mag data enabled (TRUE) /disabled (FALSE)
 int task_temp	= FALSE;	// reading temp data enabled (TRUE) /disabled (FALSE)
 int task_baro	= TRUE;		// reading baro data enabled (TRUE) /disabled (FALSE)
 int task_speed	= TRUE;		// reading ADC speed data enabled (TRUE) /disabled (FALSE)
-int serial_log	= FALSE;		// serial output enabled (TRUE) /disabled (FALSE)
+int serial_log	= TRUE;		// serial output enabled (TRUE) /disabled (FALSE)
 //******************************************************************
 
 // Control Mode
@@ -241,16 +241,16 @@ int main(void)
 	float alpha_speed_raw = 0.1;									
 												
 	float speed = 0;
-	float speed_hold, speed_error, speed_error_sum, speed_errror_prev = 0;
-	int8_t Kp_speed = 10;	
+	float speed_hold, speed_error, speed_error_sum, speed_error_prev = 0;
+	int8_t Kp_speed = 1;	
 	//int8_t Kd_speed = 1;	// No differential part as signal too noisy
-	int8_t Ki_speed = 5;
+	int8_t Ki_speed = 1;
 	long trimmed_motor = 0;
 	
 	// Euler Angles Data
 	float Theta, Theta_hold, Theta_error, Theta_error_sum, Theta_error_prev = 0;
 	int8_t Kp_Theta = 10;	// as per simulation in SCILAB this are very good gains for a wide range of speed...
-	int8_t Kd_Theta = 5;
+	int8_t Kd_Theta = 1;
 	int8_t Ki_Theta = 10;
 	int8_t K_p_q = 9;
 	float Phi = 0;
@@ -682,7 +682,7 @@ int main(void)
 						ctrl_out[motor] = trimmed_motor + (Kp_speed*speed_error + Ki_speed * speed_error_sum * sample_time);
 						if(ctrl_out[motor] > RIGHT) ctrl_out[motor] = RIGHT;
 						else if (ctrl_out[motor] < LEFT) ctrl_out[motor] = LEFT;
-						speed_errror_prev = speed_error;
+						speed_error_prev = speed_error;
 						}
 				
 						//###########################################
@@ -752,13 +752,13 @@ int main(void)
 							//alt_hold = altitude_filt;		// controlling barometric altitude
 							alt_hold = altitude_filt;
 							alt_hold_0 = alt_hold;			// used for finding previous altitude again
-							heading_hold = heading_target;	// controlling heading
+							heading_hold = heading;	// controlling heading
 							
 							// middle loops (if required)
 							Phi_hold_0 = Phi;			// using current phi as phi_0
 							Phi_hold = Phi;				// using current phi as hold value
 							Theta_hold = Theta;			// using current theta as theta_0
-							speed_hold = speed;			// current speed reading for speed control				
+							speed_hold = speed_filt;	// current speed reading for speed control				
 							
 							// Setting current input as "trimmed input"
 							trimmed_elevator = ctrl_out[elevator]; 
@@ -787,34 +787,36 @@ int main(void)
 							write_string("Target Alt - Heading - Speed: ");write_var(alt_hold);write_string(" - ");write_var(heading_hold);write_string(" - ");write_var_ln(speed_hold);
 						}
 						
-						//**********************************************
-						// SPEED CONTROL AUTOPILOT
-						
-						//**********************************************
-						// speed control not yet established (keeping it as is)
-						//ctrl_out[motor] = trimmed_motor ;
-						
-						// Speed control (PI only -> noisy signal) with motor
- 						speed_error = speed_hold - speed_filt; // Positive Error (too slow) shall give positive input (motor increase)
- 						speed_error_sum += speed_error;	
- 						// when too slow (bracket turns positive) the motor gets increased
- 						ctrl_out[motor] = ctrl_out[motor] + Kp_speed*speed_error + (Ki_speed * speed_error_sum * sample_time);
- 						write_var(Ki_speed * speed_error_sum * sample_time);write_string(";");
-						 if(ctrl_out[motor] > RIGHT) 
+ 						//**********************************************
+ 						// SPEED CONTROL AUTOPILOT
+ 						
+ 						//**********************************************
+ 						// speed control not yet established (keeping it as is)
+ 						//ctrl_out[motor] = trimmed_motor ;
+ 						ctrl_out[aileron]	=	NEUTRAL+((ctrl_in[stick_r_left_right]-SERVO_TRIM_AILERON)*SERVO_GAIN_AILERON);
+ 						ctrl_out[elevator] =	NEUTRAL+((ctrl_in[stick_r_up_down]-SERVO_TRIM_ELEVATOR)*SERVO_GAIN_ELEVATOR);
+ 						ctrl_out[rudder]	=	NEUTRAL+((ctrl_in[stick_l_left_right]-SERVO_TRIM_RUDDER)*SERVO_GAIN_RUDDER);
+ 						// Speed control (PI only -> noisy signal) with motor
+  						speed_error = speed_hold - speed_filt; // Positive Error (too slow) shall give positive input (motor increase)
+  						speed_error_sum += speed_error;	
+  						// when too slow (bracket turns positive) the motor gets increased
+  						ctrl_out[motor] = trimmed_motor + Kp_speed*speed_error + (Ki_speed * speed_error_sum * sample_time);
+ 						//write_var(Ki_speed * speed_error_sum * sample_time);write_string(";");
+ 						 if(ctrl_out[motor] > MOTOR_LIM_HI) 
+ 						 {
+ 							 ctrl_out[motor] = MOTOR_LIM_HI;
+ 							 //speed_error_sum -= speed_error; // to stop 
+ 						 }
+  						else if (ctrl_out[motor] < MOTOR_LIM_LOW) 
 						 {
-							 ctrl_out[motor] = RIGHT;
-							 //speed_error_sum -= speed_error; // to stop 
-						 }
- 						else if (ctrl_out[motor] < LEFT) 
-						 {
-							 ctrl_out[motor] = LEFT;
-							 //speed_error_sum -= speed_error;
-						 }
- 						speed_errror_prev = speed_error;
-						write_var(speed_error_sum);write_string(";");write_var(speed_filt);write_string(";");write_var(ctrl_out[motor]);write_string_ln(";");
+ 							 ctrl_out[motor] = MOTOR_LIM_LOW;
+ 							 //speed_error_sum -= speed_error;
+ 						 }
+  						speed_error_prev = speed_error;
+ 						
 						//***********************************************
-						
-						
+ 						
+
 					break;
 					
 					case HOLD_CTRL:
@@ -827,7 +829,7 @@ int main(void)
 							//alt_hold = altitude_filt;		// controlling barometric altitude
 							alt_hold = altitude_filt;
 							alt_hold_0 = alt_hold;			// used for finding previous altitude again
-							heading_hold = heading_target;	// controlling heading
+							heading_hold = heading;	// controlling heading
 							
 							// middle loops (if required)
 							Phi_hold_0 = Phi;			// using current phi as phi_0
@@ -930,25 +932,27 @@ int main(void)
 						//******************************************************
  						// LATERAL AUTOPILOT
 
-						//**********************************************	
-						// Heading hold control	
-						// input: current heading, heading_command
-						// control: Phi	
-						// controller: PD control (as per Scilab the most efficient controller)
-						// when Phi positive we do a right turn, when Phi negative, we do a left turn
-						heading_error = heading - heading_hold;	// as per Simulation
-						// to identify which way to go we calculate commanded heading (do not travel 270 deg left, when shortest is 90 deg right)
-						int16_t heading_ctrl = 360 + heading_error;
-						if (heading_ctrl < 180) heading_error = heading_ctrl;
-						heading_error_sum += heading_error;
-						// The Phi_hold 0 does make sense when the sensor is not properly installed. 
-						// Otherwise it does not make sense!
-						Phi_hold = Phi_hold_0 + (Kp_head*heading_error + Kd_head*(heading_error-heading_error_prev)*sample_time);
-						heading_error_prev = heading_error;
-						// Limiting the Bank Angle command to +- 20 maximum (= Saturation)
-						int8_t bank_limit = 20;
-						if (Phi_hold < -bank_limit) Phi_hold = -bank_limit;
-						else if (Phi_hold > bank_limit) Phi_hold = bank_limit;
+						// Heading problem: Compass is giving faulty results when roll angle <> 0
+
+// 						//**********************************************	
+// 						// Heading hold control	
+// 						// input: current heading, heading_command
+// 						// control: Phi	
+// 						// controller: PD control (as per Scilab the most efficient controller)
+// 						// when Phi positive we do a right turn, when Phi negative, we do a left turn
+// 						heading_error = heading - heading_hold;	// as per Simulation
+// 						// to identify which way to go we calculate commanded heading (do not travel 270 deg left, when shortest is 90 deg right)
+// 						int16_t heading_ctrl = 360 + heading_error;
+// 						if (heading_ctrl < 180) heading_error = heading_ctrl;
+// 						heading_error_sum += heading_error;
+// 						// The Phi_hold 0 does make sense when the sensor is not properly installed. 
+// 						// Otherwise it does not make sense!
+// 						Phi_hold = -(Kp_head*heading_error + Kd_head*(heading_error-heading_error_prev)*sample_time);
+// 						heading_error_prev = heading_error;
+// 						// Limiting the Bank Angle command to +- 20 maximum (= Saturation)
+// 						int8_t bank_limit = 20;
+// 						if (Phi_hold < -bank_limit) Phi_hold = -bank_limit;
+// 						else if (Phi_hold > bank_limit) Phi_hold = bank_limit;
 						//**********************************************						
 						
 						// *********************************************	
@@ -962,9 +966,8 @@ int main(void)
 						if(ctrl_out[aileron] > RIGHT) ctrl_out[aileron] = RIGHT;
 						else if (ctrl_out[aileron] < LEFT) ctrl_out[aileron] = LEFT;	
 						//***********************************************
-
 						
-						//**********************************************
+						//*********************************************
 						// Damping of yaw	-> Yaw Damping is not needed
 						//int8_t yaw_damping = 2;	// needs to be checked
 						//if(speed_filt>20) yaw_damping /= 2;
@@ -976,17 +979,17 @@ int main(void)
 						// SPEED CONTROL AUTOPILOT
 						
 						//**********************************************
-						// speed control not yet established (keeping it as is)
-						ctrl_out[motor] = trimmed_motor ;
-						
+						// speed control not yet established (manual)
+						//ctrl_out[motor] = trimmed_motor ;
+						ctrl_out[motor]	=	NEUTRAL+((ctrl_in[stick_l_up_down]-SERVO_TRIM_MOTOR)*SERVO_GAIN_MOTOR);		
 						// Speed control (PI only -> noisy signal) with motor
- 						speed_error = speed_hold - speed; // Positive Error (too slow) shall give positive input (motor increase)
- 						speed_error_sum += speed_error;	
- 						// when too slow (bracket turns positive) the motor gets increased
- 						ctrl_out[motor] = trimmed_motor + (Kp_speed*speed_error + Ki_speed * speed_error_sum * sample_time);
- 						if(ctrl_out[motor] > RIGHT) ctrl_out[motor] = RIGHT;
- 						else if (ctrl_out[motor] < LEFT) ctrl_out[motor] = LEFT;
- 						speed_errror_prev = speed_error;
+//  						speed_error = speed_hold - speed; // Positive Error (too slow) shall give positive input (motor increase)
+//  						speed_error_sum += speed_error;	
+//  						// when too slow (bracket turns positive) the motor gets increased
+//  						ctrl_out[motor] = trimmed_motor + (Kp_speed*speed_error + Ki_speed * speed_error_sum * sample_time);
+//  						if(ctrl_out[motor] > RIGHT) ctrl_out[motor] = RIGHT;
+//  						else if (ctrl_out[motor] < LEFT) ctrl_out[motor] = LEFT;
+//  						speed_errror_prev = speed_error;
 						//***********************************************
 						
 						// camera gimbal servo
@@ -1016,8 +1019,10 @@ int main(void)
 						write_var(heading);	write_string(";");
 						write_var(altitude_filt);write_string(";");
 						write_var(speed_filt);write_string(";");
-						write_var(alt_error);write_string(";");
-						write_var(heading_error);
+						write_var(alt_hold);write_string(";");
+						write_var(Phi_hold);write_string(";");
+						write_var(Theta_hold);write_string(";");
+						write_var(speed_hold);
 						
 						// In case at least once a GPS Signal has been received, the GPS Info will also be printed
 					
@@ -1029,12 +1034,10 @@ int main(void)
 							write_string(GPS_RMC[GPS_RMC_LONGITUDE]);
 							write_string(";");
 							write_string(GPS_RMC[GPS_RMC_LATITUDE]);
-							//write_string(";");
-							//write_string(GPS_RMC[GPS_RMC_PATH]);
+							write_string(";");
+							write_string(GPS_RMC[GPS_RMC_PATH]);
 							write_string(";");
 							write_string(GPS_GGA[GPS_GGA_ALTMSL]);
-							write_string(";");
-							write_var(heading_target);
 						}
 					
 						write_string_ln(";");
