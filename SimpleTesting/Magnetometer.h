@@ -31,6 +31,6 @@
 // Function prototypes
 void write_mag_registry(char registry, char data);
 void mag_start(void);
-volatile int16_t mag_read(void);
+volatile int16_t mag_read(float Phi_In, float Theta_In);
 
 #endif /* MAGNETOMETER_H_ */

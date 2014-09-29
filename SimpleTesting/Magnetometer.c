@@ -18,26 +18,21 @@
 //################################
 // variables
 // mag reading
-int8_t	mag_x_h		= 0;
-uint8_t	mag_x_l		= 0;
-int16_t mag_x		= 0;
-int16_t	mag_x_deg	= 0;
-int16_t mag_x_max	= +540;		// used for calibration
-int16_t mag_x_min	= -640;		// used for calibration
+int8_t	mag_x_h		= 0;		// high bits of mag x reading
+uint8_t	mag_x_l		= 0;		// low bits of mag x reading
+int16_t mag_x_meas	= 0;		// the value read on the x axis of the magnetometer
+int16_t	mag_x_geo	= 0;		// the geodetic reference frame value of x
+int16_t	max_x_geo_z	= 0;		// the geodetic reference frame value of x determined by z axis value
 
-int8_t	mag_y_h		= 0;
-uint8_t	mag_y_l		= 0;
-int16_t mag_y		= 0;
-int16_t	mag_y_deg	= 0;
-int16_t mag_y_max	= +620;		// used for calibration
-int16_t mag_y_min	= -640;		// used for calibration
+int8_t	mag_y_h		= 0;		// high bits of mag y reading
+uint8_t	mag_y_l		= 0;		// low bits of mag y reading
+int16_t mag_y_meas	= 0;		// the value read on the y axis of the magnetometer
+int16_t	mag_y_geo	= 0;		// the geodetic reference frame value of y
+int16_t max_y_geo_z	= 0;		// the geodetic reference frame value of y determined by z axis value
 
-int8_t	mag_z_h		= 0;
-uint8_t	mag_z_l		= 0;
-int16_t mag_z		= 0;
-int16_t	mag_z_deg	= 0;
-int16_t mag_z_max	= +500;		// used for calibration
-int16_t mag_z_min	= -500;		// used for calibration
+int8_t	mag_z_h		= 0;		// high bits of mag z reading
+uint8_t	mag_z_l		= 0;		// low bits of mag z reading
+int16_t mag_z_meas	= 0;		// the value read on the z axis of the magnetometer
 
 int16_t mag_heading	= 0;
 int16_t alpha_int = 0;
@@ -71,7 +66,7 @@ void mag_start(void)
 }
 
 // read data from magnetometer
-int16_t mag_read(void)
+int16_t mag_read(float Phi_In, float Theta_In)
 {
 	i2c_start();
 	i2c_send_address_write(LSM303_MAG_ADDRESS_WRITE);
@@ -86,49 +81,27 @@ int16_t mag_read(void)
 	mag_y_l = i2c_read_data_nmak();
 	i2c_stop();
 	
-	mag_x = ((mag_x_h<<8)|(mag_x_l));
-	mag_y = ((mag_y_h<<8)|(mag_y_l));
-	mag_z = ((mag_z_h<<8)|(mag_z_l));
+	mag_x_meas = ((mag_x_h<<8)|(mag_x_l));
+	mag_y_meas = ((mag_y_h<<8)|(mag_y_l));
+	mag_z_meas = ((mag_z_h<<8)|(mag_z_l));
 	
-	// Calculating the heading with the calibrated data
+	// Calculating the heading
+	
+	// Heading needs to be compensated -> aircraft (measurement) frame is moving -> geodetic frame values needed
+	mag_x_geo = cos(Theta_In*(PI/180))*mag_x_meas;		// indefinite for 90 degree values!
+	mag_y_geo = cos(Phi_In*(PI/180))*mag_y_meas;		// indefinite for 90 degree value!
+	
+	max_x_geo_z = sin(Theta_In*(PI/180))*mag_x_meas;	// indefinite for 0 degree values!
+	max_y_geo_z = sin(Phi_In*(PI/180))*mag_y_meas;		// indefinite for 0 degree value!
 	
 	// Calculating the heading with atan2 function by math.h
-	mag_heading = -atan2(mag_y,mag_x)*(180/PI);
+	mag_heading = -atan2(mag_y_geo,mag_x_geo)*(180/PI);
 	// for a reading in between 0 - 360 deg:
 	if (mag_heading < 0) 
 	{
 		mag_heading += 360;
 	}
-	
-	//if(mag_heading < 0) mag_heading += 360;
-	
-	return mag_heading;
-	/*
-	Do we need to add Z-axis for mag reading?
-	*/ 
-	
-	/*	
-	if((mag_x >= 0) && (mag_y >= 0))
-	{
-		heading = round((atan((float)mag_y/(float)mag_x))*(180/PI));
-		heading = 360 - heading;
-	}
-	else if ((mag_x >= 0) && (mag_y < 0))
-	{
-		heading = -1*(round((atan((float)mag_y/(float)mag_x))*(180/PI)));
-	}
-	else if ((mag_x < 0) && (mag_y >= 0))
-	{
-		heading = round((atan((float)mag_y/(float)mag_x))*(180/PI));
-		heading = 180 - heading;
 		
-	}
-	else // if both are negative
-	{
-		heading = round((atan((float)mag_y/(float)mag_x))*(180/PI));
-		heading = 180 - heading;
-	}
-	*/
-	
-	//write_var_ln(heading);
+	return mag_heading;
+
 }

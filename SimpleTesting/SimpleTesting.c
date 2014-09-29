@@ -386,7 +386,7 @@ int main(void)
 					//bla_cnt = 0;
 				}
 						
-				if(task_mag == TRUE)	heading = mag_read();
+				if(task_mag == TRUE)	heading = mag_read(Phi,Theta);
 				if(task_speed == TRUE)
 				{
 					
