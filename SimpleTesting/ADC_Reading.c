@@ -26,7 +26,7 @@ int16_t speed_tx = 0;	// we will calculate a speed to have an understanding of h
 double delta_p = 0;		// delta pressure
 double density = 1.185;
 
-int ADC_cal_flag = FALSE;
+volatile uint8_t ADC_cal_flag = FALSE;
 int16_t adc_offset = 0;
 
 //##############################
@@ -127,11 +127,14 @@ int16_t ADC_read_speed(void)
 	// [p] = N/m² = Pa
 	
 	//speed = v_raw;	// we will use the ADC value to run autopilot functions...(more precise)
-	delta_p = (v_raw -510)*(2000/510);
-	if(ADC_cal_flag == TRUE)
-	{
-		return speed_tx = (v_raw-adc_offset);
-	}	
+	//delta_p = (v_raw - 510)*(2000/510);
+// 	if(ADC_cal_flag == TRUE)
+// 	{
+// 		write_var(v_raw);write_string(";");write_var(adc_offset);write_string(";");
+// 		speed_tx = (v_raw-adc_offset);
+// 		write_var_ln(speed_tx);
+// 		return speed_tx;
+// 	}	
 	// speed = SQRT((2*dp) / rho)
 	
 	return v_raw;
@@ -146,8 +149,18 @@ void ADC_speed_cal()
 	{
 		adc_offset += ADC_read_speed();
 		cal_count++;
+		_delay_ms(100);
 	}
-	adc_offset = adc_offset / cal_count;
+	adc_offset = 0;
+	while(cal_count < 75)
+	{
+		adc_offset += ADC_read_speed();
+		write_var_ln(ADC_read_speed());
+		cal_count++;
+		_delay_ms(100);
+	}	
+	
+	adc_offset = adc_offset/(25);
 	write_string("ADC_offset: ");write_var_ln(adc_offset);
 	ADC_cal_flag = TRUE;
 	_delay_ms(500);

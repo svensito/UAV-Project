@@ -88,14 +88,16 @@ int16_t mag_read(float Phi_In, float Theta_In)
 	// Calculating the heading
 	
 	// Heading needs to be compensated -> aircraft (measurement) frame is moving -> geodetic frame values needed
-	mag_x_geo = cos(Theta_In*(PI/180))*mag_x_meas;		// indefinite for 90 degree values!
-	mag_y_geo = cos(Phi_In*(PI/180))*mag_y_meas;		// indefinite for 90 degree value!
+	mag_x_geo = (cos(Theta_In*(PI/180))*1000*mag_x_meas)/1000;//+(sin(Theta_In*(PI/180))*sin(Phi_In*(PI/180))*100*mag_y_meas)+(sin(Phi_In*(PI/180))*sin(Theta_In*(PI/180))*100*mag_z_meas);		// indefinite for 90 degree values!
+	
+	mag_y_geo = (cos(Phi_In*(PI/180))*1000*mag_y_meas)/1000;//-(sin(Phi_In*(PI/180))*100*mag_z_meas);		// indefinite for 90 degree value!
 	
 	max_x_geo_z = sin(Theta_In*(PI/180))*mag_x_meas;	// indefinite for 0 degree values!
 	max_y_geo_z = sin(Phi_In*(PI/180))*mag_y_meas;		// indefinite for 0 degree value!
 	
 	// Calculating the heading with atan2 function by math.h
 	mag_heading = -atan2(mag_y_geo,mag_x_geo)*(180/PI);
+	//write_var(mag_heading);write_string(";");write_var(mag_x_geo);write_string(";");write_var(mag_y_geo);write_string_ln(";");
 	// for a reading in between 0 - 360 deg:
 	if (mag_heading < 0) 
 	{

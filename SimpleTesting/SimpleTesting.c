@@ -37,11 +37,11 @@
 // These are the task flags, set them to activate / deactivate task
 int task_gyro	= TRUE;		// reading gyro data enabled (TRUE) /disabled (FALSE)
 int task_acc	= TRUE;		// reading acc data enabled (TRUE) /disabled (FALSE)
-int task_mag	= TRUE;		// reading mag data enabled (TRUE) /disabled (FALSE)
+int task_mag	= FALSE;	// reading mag data enabled (TRUE) /disabled (FALSE) -> too unreliable for navigation
 int task_temp	= FALSE;	// reading temp data enabled (TRUE) /disabled (FALSE)
 int task_baro	= TRUE;		// reading baro data enabled (TRUE) /disabled (FALSE)
 int task_speed	= TRUE;		// reading ADC speed data enabled (TRUE) /disabled (FALSE)
-int serial_log	= TRUE;		// serial output enabled (TRUE) /disabled (FALSE)
+int serial_log	= FALSE;		// serial output enabled (TRUE) /disabled (FALSE)
 //******************************************************************
 
 // Control Mode
@@ -200,7 +200,8 @@ int main(void)
 	if(task_speed == TRUE)	
 	{
 		ADC_start();
-		ADC_speed_cal();
+		//_delay_ms(2500);
+		//ADC_speed_cal();
 	}		
 	
 	//_delay_ms(2000);
@@ -240,12 +241,13 @@ int main(void)
 	float alpha_speed_3 = 0.3;											
 	float alpha_speed_raw = 0.1;									
 												
-	float speed = 0;
+	float speed, speed_cal = 0;
 	float speed_hold, speed_error, speed_error_sum, speed_error_prev = 0;
 	int8_t Kp_speed = 1;	
 	//int8_t Kd_speed = 1;	// No differential part as signal too noisy
 	int8_t Ki_speed = 1;
 	long trimmed_motor = 0;
+	uint8_t speed_cnt = 0;	// needed for decreasing speed reading resolution
 	
 	// Euler Angles Data
 	float Theta, Theta_hold, Theta_error, Theta_error_sum, Theta_error_prev = 0;
@@ -259,9 +261,9 @@ int main(void)
 	float Phi_error = 0;
 	float Phi_error_sum = 0;
 	float Phi_error_prev = 0;
-	int8_t Kp_Phi = 15;	// as per simulation in scilab
-	int8_t Kd_Phi = 0;
-	int8_t Ki_Phi = 5;
+	int8_t Kp_Phi = 20;	// as per simulation in scilab
+	int8_t Kd_Phi = 3;
+	int8_t Ki_Phi = 10;
 	
 	long trimmed_aileron = 0;
 	long trimmed_rudder = 0;
@@ -289,24 +291,27 @@ int main(void)
 	float Psi_temp, S_Psi, K_0_Psi, K_1_Psi = 0;
 	
 	// Mag Data
-	int16_t heading = 0;
-	int16_t heading_target = 0;
+	int16_t heading, heading_GPS = 0;
+	int16_t heading_goal = 0;
 	int16_t heading_hold, heading_error, heading_error_prev, heading_error_sum  = 0;
 	int8_t Kp_head = 1;
 	int8_t Kd_head = 1;
 	int8_t Ki_head = 0;		// simulation showed that PD is convenient for Heading Track
 	
 	// GPS navigation data
-	int32_t GPS_POS_CURRENT_X, GPS_POS_CURRENT_Y, GPS_POS_TARGET_X, GPS_POS_TARGET_Y, GPS_POS_DIF_X, GPS_POS_DIF_Y = 0;
+	int32_t GPS_POS_CURRENT_X, GPS_POS_CURRENT_Y, GPS_POS_GOAL_X, GPS_POS_GOAL_Y,GPS_POS_HOME_X, GPS_POS_HOME_Y, GPS_POS_DIF_X, GPS_POS_DIF_Y = 0;
 	int8_t GPS_POS_LAT_DEG, GPS_POS_LAT_MIN = 0;
 	int32_t GPS_POS_LAT_SEC = 0;
-	int32_t GPS_DIS_TO_TARGET = 0;
+	int32_t GPS_DIS_TO_GOAL = 0;
+	uint8_t GPS_home_set = FALSE;
 			
+	
+	
 	// random counter
-	int8_t bla_cnt = 0;
 	int8_t send_cnt = 0;
 	int8_t tune_cnt = 0;
 	int8_t test_cnt = 0;
+	uint8_t cal_cnt = 0;
 	
 	// random flags
 	int8_t knob_flag = 0;
@@ -386,28 +391,33 @@ int main(void)
 					//bla_cnt = 0;
 				}
 						
-				if(task_mag == TRUE)	heading = mag_read(Phi,Theta);
+				if(task_mag == TRUE)	heading = mag_read(Phi,Theta); // heading is too unreliable for navigation
 				if(task_speed == TRUE)
 				{
 					
-					if (bla_cnt == 8)		// to reduce the sampling time of the speed reading...
+					if (speed_cnt == 8)		// to reduce the sampling time of the speed reading...
 					{
 					
 					speed_raw = ADC_read_speed();
+					//write_var_ln(speed_raw);
 					// low pass filter on the speed reading
 								// current reading				// prev reading			//
-			
-					speed_filt = ((-3*speed_filt_1) + (12*speed_filt_2) + (17*speed_filt_3) + (12*speed_filt_4) + (-3*speed_filt_5))/35;// + (alpha_speed_2*speed_filt_2) + (alpha_speed_3*speed_filt_3);
-					speed_filt_5 = speed_filt_4;
-					speed_filt_4 = speed_filt_3;
-					speed_filt_3 = speed_filt_2;
-					speed_filt_2 = speed_filt_1;
-					speed_filt_1 = speed_raw;
-					
-					bla_cnt = 0;
+					if (cal_cnt == 0)
+					{
+						while(cal_cnt < 10)
+						{
+							cal_cnt++;
+							speed_cal += ADC_read_speed();
+							
+						}
+						speed_cal /= 10;
 					}
-					
-					bla_cnt++;
+					speed_filt = (speed_raw-speed_cal)*0.1 + 0.9*speed_filt_1;
+					speed_filt_1 = speed_filt;
+					speed_cnt = 0;
+					}
+					//write_var(speed_raw);write_string(";");write_var_ln(speed_filt);
+					speed_cnt++;
 					//write_var(speed_raw);write_string(";");write_var(speed_filt);write_string_ln(";");
 					
 					
@@ -488,27 +498,21 @@ int main(void)
 
 				
 				//******************************************
-				// Detecting current position and required heading
+				// Detecting current position and current heading from GPS reading
 				
 				
 				//GPS_POS_CURRENT_Y = "123456";
-				// Target coordinates: Berlin
-				GPS_POS_TARGET_X = 132400290;	// 10 Latitude digits
-				GPS_POS_TARGET_Y = 523138036;	// 10 Longitude digits
+
 								
 				GPS_POS_CURRENT_X = atol_new(GPS_RMC[GPS_RMC_LONGITUDE]);
 				GPS_POS_CURRENT_Y = atol_new(GPS_RMC[GPS_RMC_LATITUDE]);
-				//write_var(GPS_POS_CURRENT_X);write_string(";");write_var(GPS_POS_CURRENT_Y);write_string(";");
-				GPS_POS_DIF_X = GPS_POS_TARGET_X - GPS_POS_CURRENT_X;	// define errors in such way that the course is correct!
-				GPS_POS_DIF_Y = GPS_POS_TARGET_Y - GPS_POS_CURRENT_Y;	
-				//write_var(GPS_POS_DIF_X);write_string(";");write_var(GPS_POS_DIF_Y);write_string_ln(";");
-				//heading_target = atan2(GPS_POS_DIF_Y,GPS_POS_DIF_X)*(180/PI);
-				heading_target = atan2((GPS_POS_DIF_X),(GPS_POS_DIF_Y))*(180/PI);
-				if (heading_target < 0)
-				{
-					heading_target += 360;
-				}
-				// Distance to target:
+				
+				heading_GPS = atol_new(GPS_RMC[GPS_RMC_PATH])/100;
+				
+				
+				
+				
+				// Distance to goal location:
 				// calculate the latitude difference. one degree latitude is 111km distance (wiki). divide by cos(angle).
 				// 1 deg = 111km
 				// 1 minute = 1,85km
@@ -516,10 +520,32 @@ int main(void)
 				GPS_POS_LAT_DEG = GPS_POS_DIF_Y/10000000;
 				GPS_POS_LAT_MIN = (GPS_POS_DIF_Y/100000)-(GPS_POS_LAT_DEG*100);
 				GPS_POS_LAT_SEC = (GPS_POS_DIF_Y)-((GPS_POS_LAT_DEG*10000000)+(GPS_POS_LAT_MIN*100000));
-				GPS_DIS_TO_TARGET = GPS_POS_LAT_DEG*111000 + GPS_POS_LAT_MIN*1850 + (((GPS_POS_LAT_SEC*60*31)/100000));///cos(heading_target);
+				GPS_DIS_TO_GOAL = GPS_POS_LAT_DEG*111000 + GPS_POS_LAT_MIN*1850 + (((GPS_POS_LAT_SEC*60*31)/100000));
 				//write_var(GPS_POS_LAT_MIN);write_string(";");write_var(GPS_POS_LAT_SEC);write_string_ln(";");
 				//write_var_ln(atol_new(GPS_RMC[GPS_RMC_LATITUDE][0])*10 + atol_new(GPS_RMC[GPS_RMC_LATITUDE][1]));
 				
+				// Setting the current location as "home position"
+				// left stick: left down
+				// right stick: right down
+				/* _______________			 _______________
+				   |			 |			 |			   |
+				   |			 |			 |			   |
+				   |	  '		 |			 |		'	   |
+				   |  0			 |			 |			 0 |
+				   |_____________|			 |_____________|
+				
+				*/
+				if ((ctrl_in[stick_l_up_down]    <	110) &&		// limit down left stick
+					(ctrl_in[stick_l_left_right] >	175) &&		// limit left left stick
+					(ctrl_in[stick_r_up_down]	>	170) &&		// limit down right stick
+					(ctrl_in[stick_r_left_right] >	170) &&		// limit right right stick
+					(GPS_home_set == FALSE))
+				{
+					GPS_home_set = TRUE;
+					GPS_POS_HOME_X = atol_new(GPS_RMC[GPS_RMC_LONGITUDE]);
+					GPS_POS_HOME_Y = atol_new(GPS_RMC[GPS_RMC_LATITUDE]);
+					write_string("Home Set Lat ");write_var(GPS_POS_HOME_Y);write_string(" Long ");write_var_ln(GPS_POS_HOME_X);
+				}
 				
 				//*******************************************
 				// Control of Modes
@@ -563,19 +589,19 @@ int main(void)
 						 ctrl_out[rudder]	=	NEUTRAL+((ctrl_in[stick_l_left_right]-SERVO_TRIM_RUDDER)*SERVO_GAIN_RUDDER);
 						 
 						 // Flap Delay
-						 uint16_t flap_target = FLAP_UP;	// defining the target flap position
+						 uint16_t flap_setpoint = FLAP_UP;	// defining the desired setpoint flap position
 						 uint8_t flap_delta = 10;	// giving the speed of flap extension 
 													// 10 will give around 2 seconds for movement in between two positions
 						 
 						 // Flap Control
-						 if(ctrl_in[rotary_knob]<135 && ctrl_in[rotary_knob]>120)		flap_target = FLAP_UP;
-						 else if(ctrl_in[rotary_knob]<150 && ctrl_in[rotary_knob]>135)	flap_target = FLAP_1;
-						 else if(ctrl_in[rotary_knob]<160 && ctrl_in[rotary_knob]>150)	flap_target = FLAP_FULL;
+						 if(ctrl_in[rotary_knob]<135 && ctrl_in[rotary_knob]>120)		flap_setpoint = FLAP_UP;
+						 else if(ctrl_in[rotary_knob]<150 && ctrl_in[rotary_knob]>135)	flap_setpoint = FLAP_1;
+						 else if(ctrl_in[rotary_knob]<160 && ctrl_in[rotary_knob]>150)	flap_setpoint = FLAP_FULL;
 						 
 						 // drive flap with sample_time steps delay 
-						 if(ctrl_out[flap] < flap_target)		ctrl_out[flap]+= flap_delta;
-						 else if(ctrl_out[flap] > flap_target)	ctrl_out[flap]-= flap_delta;
-						 else ctrl_out[flap] = flap_target;
+						 if(ctrl_out[flap] < flap_setpoint)		ctrl_out[flap]+= flap_delta;
+						 else if(ctrl_out[flap] > flap_setpoint)	ctrl_out[flap]-= flap_delta;
+						 else ctrl_out[flap] = flap_setpoint;
 						 
 						 // camera gimbal servo
 						 ctrl_out[camera_y] = NEUTRAL;
@@ -784,7 +810,7 @@ int main(void)
 							Phi_error_sum = 0;
 							Phi_error_prev = 0;
 							// *****************************
-							write_string("Target Alt - Heading - Speed: ");write_var(alt_hold);write_string(" - ");write_var(heading_hold);write_string(" - ");write_var_ln(speed_hold);
+							write_string("Goal Alt - Heading - Speed: ");write_var(alt_hold);write_string(" - ");write_var(heading_hold);write_string(" - ");write_var_ln(speed_hold);
 						}
 						
  						//**********************************************
@@ -829,7 +855,7 @@ int main(void)
 							//alt_hold = altitude_filt;		// controlling barometric altitude
 							alt_hold = altitude_filt;
 							alt_hold_0 = alt_hold;			// used for finding previous altitude again
-							heading_hold = heading;	// controlling heading
+							heading_hold = heading_GPS;	// controlling heading
 							
 							// middle loops (if required)
 							Phi_hold_0 = Phi;			// using current phi as phi_0
@@ -861,26 +887,20 @@ int main(void)
 							Phi_error_sum = 0;
 							Phi_error_prev = 0;
 							// *****************************
-							write_string("Target Alt - Heading - Speed: ");write_var(alt_hold);write_string(" - ");write_var(heading_hold);write_string(" - ");write_var_ln(speed_hold);
+							write_string("Goal Alt - Heading - Speed: ");write_var(alt_hold);write_string(" - ");write_var(heading_hold);write_string(" - ");write_var_ln(speed_hold);
 						}
-
 						
-						// Using Rotary knob for altitude hold control (testing)
-						if(ctrl_in[rotary_knob]<135 && ctrl_in[rotary_knob]>120 && knob_flag == 1)	// NEUTRAL (Up Middle
+						// Using Poti to change between two altitudes
+						// direct poti value might be too noisy for altitude values
+						if ((ctrl_in[poti]-155) < 30)
 						{
-							// normal position -> taking alt as when state was entered
 							alt_hold = alt_hold_0;
-							knob_flag = 0;
-							write_string("ALT Hold ");write_var_ln(alt_hold);
-
 						}
-						else if(ctrl_in[rotary_knob]<160 && ctrl_in[rotary_knob]>150 && knob_flag == 0) // Left One Click
+						else
 						{
-							// when knob turned -> Altitude = actual + 10
-						 	alt_hold = alt_hold + 10;
-							knob_flag = 1; 
-							write_string(" Alt Hold ");write_var_ln(alt_hold);
+							alt_hold = alt_hold_0 + 10;
 						}
+						
 						
 						//******************************************************
 						//******************************************************
@@ -933,35 +953,77 @@ int main(void)
  						// LATERAL AUTOPILOT
 
 						// Heading problem: Compass is giving faulty results when roll angle <> 0
+						// Heading solution: Using GPS heading information (GPS_RMC[GPS_RMC_PATH])
+						
+						//**********************************************
+						// GPS GOAL control
+						// Using Rotary knob for GPS and hold control (testing)
+						if(ctrl_in[rotary_knob]<135 && ctrl_in[rotary_knob]>120 && knob_flag == 1)	// NEUTRAL (Up Middle
+						{
+							knob_flag = 0;
+							// normal position -> normal hold control of actual course
+							heading_hold = heading_GPS;
 
-// 						//**********************************************	
-// 						// Heading hold control	
-// 						// input: current heading, heading_command
-// 						// control: Phi	
-// 						// controller: PD control (as per Scilab the most efficient controller)
-// 						// when Phi positive we do a right turn, when Phi negative, we do a left turn
-// 						heading_error = heading - heading_hold;	// as per Simulation
-// 						// to identify which way to go we calculate commanded heading (do not travel 270 deg left, when shortest is 90 deg right)
-// 						int16_t heading_ctrl = 360 + heading_error;
-// 						if (heading_ctrl < 180) heading_error = heading_ctrl;
-// 						heading_error_sum += heading_error;
-// 						// The Phi_hold 0 does make sense when the sensor is not properly installed. 
-// 						// Otherwise it does not make sense!
-// 						Phi_hold = -(Kp_head*heading_error + Kd_head*(heading_error-heading_error_prev)*sample_time);
-// 						heading_error_prev = heading_error;
-// 						// Limiting the Bank Angle command to +- 20 maximum (= Saturation)
-// 						int8_t bank_limit = 20;
-// 						if (Phi_hold < -bank_limit) Phi_hold = -bank_limit;
-// 						else if (Phi_hold > bank_limit) Phi_hold = bank_limit;
+							write_string("Heading Hold ");write_var_ln(heading_hold);
+
+						}
+						else if(ctrl_in[rotary_knob]<160 && ctrl_in[rotary_knob]>150 && knob_flag == 0) // Left One Click
+						{
+							knob_flag = 1;
+							// when knob turned -> GPS -> Return to home -> Home Position taken
+							GPS_POS_GOAL_X = GPS_POS_HOME_X;
+							GPS_POS_GOAL_Y = GPS_POS_HOME_Y;
+							
+							//write_var(GPS_POS_CURRENT_X);write_string(";");write_var(GPS_POS_CURRENT_Y);write_string(";");
+							GPS_POS_DIF_X = GPS_POS_GOAL_X - GPS_POS_CURRENT_X;	// define errors in such way that the course is correct!
+							GPS_POS_DIF_Y = GPS_POS_GOAL_Y - GPS_POS_CURRENT_Y;
+							//write_var(GPS_POS_DIF_X);write_string(";");write_var(GPS_POS_DIF_Y);write_string_ln(";");
+							//heading_goal = atan2(GPS_POS_DIF_Y,GPS_POS_DIF_X)*(180/PI);
+							
+							// Test Goal coordinates: Berlin
+							//GPS_POS_GOAL_X = 132400290;	// 10 Latitude digits
+							//GPS_POS_GOAL_Y = 523138036;	// 10 Longitude digits
+							
+							heading_goal = atan2((GPS_POS_DIF_X),(GPS_POS_DIF_Y))*(180/PI);
+							if (heading_goal < 0)
+							{
+								heading_goal += 360;
+							}
+							
+							heading_hold = heading_goal;
+
+							write_string("Return Home Head ");write_var_ln(heading_hold);
+						}
+											
+ 						//**********************************************	
+ 						// Heading hold control	
+ 						// input: current heading, heading_command
+ 						// control: Phi	
+ 						// controller: PD control (as per Scilab the most efficient controller)
+ 						// when Phi positive we do a right turn, when Phi negative, we do a left turn
+ 						heading_error = heading_GPS - heading_hold;	// as per Simulation
+ 						// to identify which way to go we calculate commanded heading (do not travel 270 deg left, when shortest is 90 deg right)
+ 						int16_t heading_ctrl = 360 + heading_error;
+						if (heading_ctrl < 180) heading_error = heading_ctrl;
+ 						heading_error_sum += heading_error;
+ 						// The Phi_hold 0 does make sense when the sensor is not properly installed. 
+ 						// Otherwise it does not make sense!
+ 						Phi_hold = -(Kp_head*heading_error + Kd_head*(heading_error-heading_error_prev)*sample_time);
+ 						heading_error_prev = heading_error;
+ 						// Limiting the Bank Angle command to +- 10 maximum (= Saturation)
+ 						int8_t bank_limit = 10;
+ 						if (Phi_hold < -bank_limit) Phi_hold = -bank_limit;
+ 						else if (Phi_hold > bank_limit) Phi_hold = bank_limit;
 						//**********************************************						
 						
 						// *********************************************	
 						// Bank angle control with aileron
 						// Input: Phi_hold = Phi_command
 						// Output: Aileron Command
+
 						Phi_error =  Phi_hold - Phi;		// as per Simulation in Scilab
 						Phi_error_sum += Phi_error;
-						ctrl_out[aileron] = (trimmed_aileron + (Kp_Phi*Phi_error + Ki_Phi*Phi_error_sum*sample_time));// + Kd_Phi*(Phi_error_prev - Phi_error)/sample_time));
+						ctrl_out[aileron] = (trimmed_aileron + (Kp_Phi*Phi_error + Ki_Phi*Phi_error_sum*sample_time) + Kd_Phi*(Phi_error_prev - Phi_error)/sample_time);
 						Phi_error_prev = Phi_error;
 						if(ctrl_out[aileron] > RIGHT) ctrl_out[aileron] = RIGHT;
 						else if (ctrl_out[aileron] < LEFT) ctrl_out[aileron] = LEFT;	
@@ -978,19 +1040,25 @@ int main(void)
 						//**********************************************
 						// SPEED CONTROL AUTOPILOT
 						
-						//**********************************************
-						// speed control not yet established (manual)
-						//ctrl_out[motor] = trimmed_motor ;
-						ctrl_out[motor]	=	NEUTRAL+((ctrl_in[stick_l_up_down]-SERVO_TRIM_MOTOR)*SERVO_GAIN_MOTOR);		
-						// Speed control (PI only -> noisy signal) with motor
-//  						speed_error = speed_hold - speed; // Positive Error (too slow) shall give positive input (motor increase)
-//  						speed_error_sum += speed_error;	
-//  						// when too slow (bracket turns positive) the motor gets increased
-//  						ctrl_out[motor] = trimmed_motor + (Kp_speed*speed_error + Ki_speed * speed_error_sum * sample_time);
-//  						if(ctrl_out[motor] > RIGHT) ctrl_out[motor] = RIGHT;
-//  						else if (ctrl_out[motor] < LEFT) ctrl_out[motor] = LEFT;
-//  						speed_errror_prev = speed_error;
-						//***********************************************
+ 						// Speed control (PI only -> noisy signal) with motor
+ 						speed_error = speed_hold - speed_filt; // Positive Error (too slow) shall give positive input (motor increase)
+ 						speed_error_sum += speed_error;
+ 						// when too slow (bracket turns positive) the motor gets increased
+ 						ctrl_out[motor] = trimmed_motor + Kp_speed*speed_error + (Ki_speed * speed_error_sum * sample_time);
+ 						//write_var(Ki_speed * speed_error_sum * sample_time);write_string(";");
+ 						if(ctrl_out[motor] > MOTOR_LIM_HI)
+ 						{
+	 						ctrl_out[motor] = MOTOR_LIM_HI;
+	 						//speed_error_sum -= speed_error; // to stop
+ 						}
+ 						else if (ctrl_out[motor] < MOTOR_LIM_LOW)
+ 						{
+	 						ctrl_out[motor] = MOTOR_LIM_LOW;
+	 						//speed_error_sum -= speed_error;
+ 						}
+ 						speed_error_prev = speed_error;
+ 						
+ 						//***********************************************
 						
 						// camera gimbal servo
 // 						ctrl_out[camera_y] = NEUTRAL_GIMB_Y + ((ctrl_in[stick_r_up_down]-SERVO_TRIM_GIMB_Y)*SERVO_GAIN_GIMB_Y);//+((ctrl_in[stick_r_up_down]-SERVO_TRIM_GIMB_Y)*SERVO_GAIN_ELEVATOR);
@@ -1009,6 +1077,7 @@ int main(void)
 					// writing all data to serial port if enabled
 					if(serial_log == TRUE)	// set serial log variable to enable / disable output
 					{
+						
 						write_var(ctrl_out[motor]);write_string(";");
 						write_var(ctrl_out[aileron]);write_string(";");
 						write_var(ctrl_out[elevator]);write_string(";");
@@ -1016,7 +1085,7 @@ int main(void)
 						write_var(ctrl_out[flap]);write_string(";");
 						write_var(Phi);write_string(";");
 						write_var(Theta);write_string(";");
-						write_var(heading);	write_string(";");
+						write_var(heading_GPS);	write_string(";");
 						write_var(altitude_filt);write_string(";");
 						write_var(speed_filt);write_string(";");
 						write_var(alt_hold);write_string(";");

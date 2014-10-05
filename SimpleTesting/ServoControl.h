@@ -90,7 +90,7 @@ typedef enum
 	stick_l_left_right,
 	rotary_knob,
 	three_way_switch,
-	spare	
+	poti	
 	} controls_in;
 
 #endif /* SERVOCONTROL_H_ */
