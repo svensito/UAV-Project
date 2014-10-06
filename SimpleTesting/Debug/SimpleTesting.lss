@@ -9,55 +9,77 @@ Idx Name          Size      VMA       LMA       File off  Algn
                   CONTENTS, ALLOC, LOAD, DATA
   2 .bss          0000030a  008001f4  008001f4  00003af4  2**0
                   ALLOC
-  3 .stab         000035dc  00000000  00000000  00003af4  2**2
+  3 .stab         000037c8  00000000  00000000  00003af4  2**2
                   CONTENTS, READONLY, DEBUGGING
-  4 .stabstr      00001002  00000000  00000000  000070d0  2**0
+  4 .stabstr      000010e5  00000000  00000000  000072bc  2**0
                   CONTENTS, READONLY, DEBUGGING
-  5 .comment      0000002f  00000000  00000000  000080d2  2**0
+  5 .comment      0000002f  00000000  00000000  000083a1  2**0
                   CONTENTS, READONLY
-  6 .debug_aranges 00000298  00000000  00000000  00008101  2**0
+  6 .debug_aranges 000002c8  00000000  00000000  000083d0  2**0
                   CONTENTS, READONLY, DEBUGGING
-  7 .debug_info   000048e9  00000000  00000000  00008399  2**0
+  7 .debug_info   00004edc  00000000  00000000  00008698  2**0
                   CONTENTS, READONLY, DEBUGGING
-  8 .debug_abbrev 00000df2  00000000  00000000  0000cc82  2**0
+  8 .debug_abbrev 00000fdf  00000000  00000000  0000d574  2**0
                   CONTENTS, READONLY, DEBUGGING
-  9 .debug_line   000011ab  00000000  00000000  0000da74  2**0
+  9 .debug_line   000013ad  00000000  00000000  0000e553  2**0
                   CONTENTS, READONLY, DEBUGGING
- 10 .debug_frame  0000067c  00000000  00000000  0000ec20  2**2
+ 10 .debug_frame  000006cc  00000000  00000000  0000f900  2**2
                   CONTENTS, READONLY, DEBUGGING
- 11 .debug_str    000011a1  00000000  00000000  0000f29c  2**0
+ 11 .debug_str    000011f8  00000000  00000000  0000ffcc  2**0
                   CONTENTS, READONLY, DEBUGGING
- 12 .debug_loc    00002e8f  00000000  00000000  0001043d  2**0
+ 12 .debug_loc    00002f76  00000000  00000000  000111c4  2**0
                   CONTENTS, READONLY, DEBUGGING
- 13 .debug_ranges 00000208  00000000  00000000  000132cc  2**0
+ 13 .debug_ranges 00000228  00000000  00000000  0001413a  2**0
                   CONTENTS, READONLY, DEBUGGING
 
 Disassembly of section .text:
 
 00000000 <__vectors>:
+
+volatile void OLED_init()
+{
+	// as per LCD.cpp file from MiniWii
+	// not clear about the start - repeated start options
+	OLED_write_val_to_reg(0xAE,OLED_cmd_registry);	// display off
        0:	0c 94 50 00 	jmp	0xa0	; 0xa0 <__ctors_end>
        4:	0c 94 0d 07 	jmp	0xe1a	; 0xe1a <__vector_1>
+	OLED_write_val_to_reg(0xA4,OLED_cmd_registry);	// all pixels off
        8:	0c 94 6d 00 	jmp	0xda	; 0xda <__bad_interrupt>
        c:	0c 94 6d 00 	jmp	0xda	; 0xda <__bad_interrupt>
+	OLED_write_val_to_reg(0x20,OLED_cmd_registry);	// set memory addressing mode
       10:	0c 94 6d 00 	jmp	0xda	; 0xda <__bad_interrupt>
       14:	0c 94 3c 07 	jmp	0xe78	; 0xe78 <__vector_5>
+	OLED_write_val_to_reg(0x02,OLED_cmd_registry);	// set memory addressing mode to page addressing mode
       18:	0c 94 6d 00 	jmp	0xda	; 0xda <__bad_interrupt>
       1c:	0c 94 bd 05 	jmp	0xb7a	; 0xb7a <__vector_7>
+	OLED_write_val_to_reg(0xA1,OLED_cmd_registry);	// column address 127 mapped to SEG0 (POR)
       20:	0c 94 6d 00 	jmp	0xda	; 0xda <__bad_interrupt>
       24:	0c 94 6d 00 	jmp	0xda	; 0xda <__bad_interrupt>
+	OLED_write_val_to_reg(0xC8,OLED_cmd_registry);	// Scan from left to right
       28:	0c 94 67 07 	jmp	0xece	; 0xece <__vector_10>
       2c:	0c 94 6d 00 	jmp	0xda	; 0xda <__bad_interrupt>
+	OLED_write_val_to_reg(0xA6,OLED_cmd_registry);	// Set WHITE chars on BLACK background
       30:	0c 94 6d 00 	jmp	0xda	; 0xda <__bad_interrupt>
       34:	0c 94 e6 17 	jmp	0x2fcc	; 0x2fcc <__vector_13>
+	OLED_write_val_to_reg(0x81,OLED_cmd_registry);	// Setup CONTRAST CONTROL, following byte is the contrast Value
       38:	0c 94 6d 00 	jmp	0xda	; 0xda <__bad_interrupt>
       3c:	0c 94 6d 00 	jmp	0xda	; 0xda <__bad_interrupt>
+	OLED_write_val_to_reg(0xAF,OLED_cmd_registry);	// contrast value between 1 ( == dull) to 256 ( == bright)
       40:	0c 94 6d 00 	jmp	0xda	; 0xda <__bad_interrupt>
       44:	0c 94 6d 00 	jmp	0xda	; 0xda <__bad_interrupt>
+	OLED_write_val_to_reg(0xD6,OLED_cmd_registry);	// Zoom
       48:	0c 94 6d 00 	jmp	0xda	; 0xda <__bad_interrupt>
       4c:	0c 94 6d 00 	jmp	0xda	; 0xda <__bad_interrupt>
+	OLED_write_val_to_reg(0x01,OLED_cmd_registry);	// Zoom on
       50:	0c 94 6d 00 	jmp	0xda	; 0xda <__bad_interrupt>
       54:	08 4a       	sbci	r16, 0xA8	; 168
       56:	d7 3b       	cpi	r29, 0xB7	; 183
+	#else
+		//round up by default
+		__ticks_dc = (uint32_t)(ceil(fabs(__tmp)));
+	#endif
+
+	__builtin_avr_delay_cycles(__ticks_dc);
       58:	3b ce       	rjmp	.-906    	; 0xfffffcd0 <__eeprom_end+0xff7efcd0>
       5a:	01 6e       	ori	r16, 0xE1	; 225
       5c:	84 bc       	out	0x24, r8	; 36
@@ -67,6 +89,8 @@ Disassembly of section .text:
       64:	74 31       	cpi	r23, 0x14	; 20
       66:	9a bd       	out	0x2a, r25	; 42
       68:	56 83       	std	Z+6, r21	; 0x06
+	_delay_ms(100);
+	OLED_write_val_to_reg(0xAF,OLED_cmd_registry);	// display on
       6a:	3d da       	rcall	.-2950   	; 0xfffff4e6 <__eeprom_end+0xff7ef4e6>
       6c:	3d 00       	.word	0x003d	; ????
       6e:	c7 7f       	andi	r28, 0xF7	; 247
@@ -1070,15 +1094,9 @@ void gyro_calibration(void)
      76e:	80 95       	com	r24
      770:	98 2f       	mov	r25, r24
      772:	0e 94 9e 18 	call	0x313c	; 0x313c <write_var_ln>
-	#else
-		//round up by default
-		__ticks_dc = (uint32_t)(ceil(fabs(__tmp)));
-	#endif
-
-	__builtin_avr_delay_cycles(__ticks_dc);
-     776:	2f e7       	ldi	r18, 0x7F	; 127
-     778:	8f e4       	ldi	r24, 0x4F	; 79
-     77a:	92 e1       	ldi	r25, 0x12	; 18
+     776:	2f e9       	ldi	r18, 0x9F	; 159
+     778:	86 e8       	ldi	r24, 0x86	; 134
+     77a:	91 e0       	ldi	r25, 0x01	; 1
      77c:	21 50       	subi	r18, 0x01	; 1
      77e:	80 40       	sbci	r24, 0x00	; 0
      780:	90 40       	sbci	r25, 0x00	; 0
@@ -1501,7 +1519,7 @@ void i2c_start()
      a94:	84 ea       	ldi	r24, 0xA4	; 164
      a96:	86 bf       	out	0x36, r24	; 54
 	// TWCR |= (1<<TWINT)|(1<<TWSTA)|(1<<TWEN);					// identical to 0xA4
-	while(!(TWCR & 0x80));                // wait for confirmation of transmit
+	while(!(TWCR & 0x80));										// wait for confirmation of transmit
      a98:	06 b6       	in	r0, 0x36	; 54
      a9a:	07 fe       	sbrs	r0, 7
      a9c:	fd cf       	rjmp	.-6      	; 0xa98 <i2c_start+0x4>
@@ -1523,7 +1541,7 @@ void i2c_repeated_start()
      aa8:	84 ea       	ldi	r24, 0xA4	; 164
      aaa:	86 bf       	out	0x36, r24	; 54
 	// TWCR |= (1<<TWINT)|(1<<TWSTA)|(1<<TWEN);					// identical to 0xA4
-	while(!(TWCR & 0x80)) ;                // wait for confirmation of transmit
+	while(!(TWCR & 0x80)) ;										// wait for confirmation of transmit
      aac:	06 b6       	in	r0, 0x36	; 54
      aae:	07 fe       	sbrs	r0, 7
      ab0:	fd cf       	rjmp	.-6      	; 0xaac <i2c_repeated_start+0x4>
@@ -1538,11 +1556,11 @@ void i2c_send_address_read(char address)
 	TWDR = address;												// load address of i2c device into data register
      ab4:	83 b9       	out	0x03, r24	; 3
 	//TWCR = 0x84;												// transmit
-	TWCR |= (1<<TWINT) | (1<<TWEN) | (1<<TWEA);				// as per Datasheet from ATMEGA32
+	TWCR |= (1<<TWINT) | (1<<TWEN) | (1<<TWEA);					// as per Datasheet from ATMEGA32
      ab6:	86 b7       	in	r24, 0x36	; 54
      ab8:	84 6c       	ori	r24, 0xC4	; 196
      aba:	86 bf       	out	0x36, r24	; 54
-	while(!(TWCR & 0x80));				    // wait for confirmation of transmit
+	while(!(TWCR & 0x80));										// wait for confirmation of transmit
      abc:	06 b6       	in	r0, 0x36	; 54
      abe:	07 fe       	sbrs	r0, 7
      ac0:	fd cf       	rjmp	.-6      	; 0xabc <i2c_send_address_read+0x8>
@@ -1567,7 +1585,7 @@ void i2c_send_address_write(char address)
      ace:	84 e8       	ldi	r24, 0x84	; 132
      ad0:	86 bf       	out	0x36, r24	; 54
 	// identical to TWCR = (1<<TWINT) | (1<<TWEN);				// as per Datasheet from ATMEGA32
-	while(!(TWCR & 0x80));				    // wait for confirmation of transmit
+	while(!(TWCR & 0x80));										// wait for confirmation of transmit
      ad2:	06 b6       	in	r0, 0x36	; 54
      ad4:	07 fe       	sbrs	r0, 7
      ad6:	fd cf       	rjmp	.-6      	; 0xad2 <i2c_send_address_write+0x6>
@@ -1590,7 +1608,7 @@ void i2c_send_registry(char reg)
 	TWCR = 0x84;                                                // transmit
      ae4:	84 e8       	ldi	r24, 0x84	; 132
      ae6:	86 bf       	out	0x36, r24	; 54
-	while(!(TWCR & 0x80));                 // wait for confirmation of transmit
+	while(!(TWCR & 0x80));										// wait for confirmation of transmit
      ae8:	06 b6       	in	r0, 0x36	; 54
      aea:	07 fe       	sbrs	r0, 7
      aec:	fd cf       	rjmp	.-6      	; 0xae8 <i2c_send_registry+0x6>
@@ -1611,7 +1629,7 @@ void i2c_send_data(char data)
 	TWCR = 0x84;                                                // transmit
      afa:	84 e8       	ldi	r24, 0x84	; 132
      afc:	86 bf       	out	0x36, r24	; 54
-	while(!(TWCR & 0x80));                 // wait for confirmation of transmit
+	while(!(TWCR & 0x80));										// wait for confirmation of transmit
      afe:	06 b6       	in	r0, 0x36	; 54
      b00:	07 fe       	sbrs	r0, 7
      b02:	fd cf       	rjmp	.-6      	; 0xafe <i2c_send_data+0x6>

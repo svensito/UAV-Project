@@ -128,6 +128,12 @@
     <Compile Include="Gyro.h">
       <SubType>compile</SubType>
     </Compile>
+    <Compile Include="OLED_display.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="OLED_display.h">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="Magnetometer.c">
       <SubType>compile</SubType>
     </Compile>

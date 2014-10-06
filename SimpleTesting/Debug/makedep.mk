@@ -10,6 +10,8 @@ ADC_Reading.c
 
 Gyro.c
 
+OLED_display.c
+
 Magnetometer.c
 
 port.c

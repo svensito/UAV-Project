@@ -28,6 +28,7 @@
 #include "Gyro.h"
 #include "Accelerometer.h"
 #include <avr/wdt.h>
+#include "OLED_display.h"
 //------------------------------------------------------
 
 //------------------------------------------------------

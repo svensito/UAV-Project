@@ -20,7 +20,7 @@ void i2c_start()
 {
 	TWCR = 0xA4;                                                // send a start bit on i2c bus
 	// TWCR |= (1<<TWINT)|(1<<TWSTA)|(1<<TWEN);					// identical to 0xA4
-	while(!(TWCR & 0x80));                // wait for confirmation of transmit
+	while(!(TWCR & 0x80));										// wait for confirmation of transmit
 	// while(!(TWCR & (1<<TWINT)));								// identical to above
 	while((TWSR & 0xF8) != 0x08);								// This comes out of ATMEGA Datasheet to check for the Status Register
 	
@@ -30,7 +30,7 @@ void i2c_repeated_start()
 {
 	TWCR = 0xA4;                                                // send a start bit on i2c bus
 	// TWCR |= (1<<TWINT)|(1<<TWSTA)|(1<<TWEN);					// identical to 0xA4
-	while(!(TWCR & 0x80)) ;                // wait for confirmation of transmit
+	while(!(TWCR & 0x80)) ;										// wait for confirmation of transmit
 	
 }
 
@@ -38,8 +38,8 @@ void i2c_send_address_read(char address)
 {
 	TWDR = address;												// load address of i2c device into data register
 	//TWCR = 0x84;												// transmit
-	TWCR |= (1<<TWINT) | (1<<TWEN) | (1<<TWEA);				// as per Datasheet from ATMEGA32
-	while(!(TWCR & 0x80));				    // wait for confirmation of transmit
+	TWCR |= (1<<TWINT) | (1<<TWEN) | (1<<TWEA);					// as per Datasheet from ATMEGA32
+	while(!(TWCR & 0x80));										// wait for confirmation of transmit
 	// while(!(TWCR & (1<<TWINT)));								// identical to above
 	while(((TWSR & 0xF8) != 0x40));
 	// 0x40 = Read mode agreed	0x18 = write mode agreed
@@ -51,7 +51,7 @@ void i2c_send_address_write(char address)
 	TWDR = address;												// load address of i2c device into data register
 	TWCR = 0x84;												// transmit
 	// identical to TWCR = (1<<TWINT) | (1<<TWEN);				// as per Datasheet from ATMEGA32
-	while(!(TWCR & 0x80));				    // wait for confirmation of transmit
+	while(!(TWCR & 0x80));										// wait for confirmation of transmit
 	// while(!(TWCR & (1<<TWINT)));								// identical to above
 	while(((TWSR & 0xF8) != 0x18)) ;
 	// 0x40 = Read mode agreed	0x18 = write mode agreed
@@ -61,7 +61,7 @@ void i2c_send_registry(char reg)
 {
 	TWDR = reg;													// load registry ID device into data register
 	TWCR = 0x84;                                                // transmit
-	while(!(TWCR & 0x80));                 // wait for confirmation of transmit
+	while(!(TWCR & 0x80));										// wait for confirmation of transmit
 	while(((TWSR & 0xF8) != 0x28));
 }
 
@@ -69,7 +69,7 @@ void i2c_send_data(char data)
 {
 	TWDR = data;												// load data into data register
 	TWCR = 0x84;                                                // transmit
-	while(!(TWCR & 0x80));                 // wait for confirmation of transmit
+	while(!(TWCR & 0x80));										// wait for confirmation of transmit
 	while(((TWSR & 0xF8) != 0x28)) ;
 }
 
