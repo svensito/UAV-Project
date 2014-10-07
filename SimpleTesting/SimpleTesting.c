@@ -41,7 +41,7 @@ int task_mag	= FALSE;		// reading mag data enabled (TRUE) /disabled (FALSE)
 int task_temp	= FALSE;	// reading temp data enabled (TRUE) /disabled (FALSE)
 int task_baro	= FALSE;		// reading baro data enabled (TRUE) /disabled (FALSE)
 int task_speed	= FALSE;		// reading ADC speed data enabled (TRUE) /disabled (FALSE)
-int serial_log	= TRUE;		// serial output enabled (TRUE) /disabled (FALSE)
+int serial_log	= FALSE;		// serial output enabled (TRUE) /disabled (FALSE)
 //******************************************************************
 
 // Control Mode
@@ -161,8 +161,16 @@ int main(void)
 {	
 	// Setting the LED port to output
 	DDRA |= (1<<PA6);	// LED on PA6 pin as output
+	DDRD |= (1<<PD7);	// LED on PA6 pin as output
+	DDRD |= (1<<PD6);	// LED on PA6 pin as output
+	DDRD |= (1<<PD5);	// LED on PA6 pin as output
+	DDRD |= (1<<PD4);
 	//LED off
 	PORTA &= ~(1<<PA6);
+	PORTD &= ~(1<<PD7);
+	PORTD &= ~(1<<PD6);
+	PORTD &= ~(1<<PD5);
+	PORTD &= ~(1<<PD4);
 	//LED off
 	//PORTC &= ~(1<<PC2);
 	//LED on
@@ -1127,23 +1135,37 @@ int main(void)
 				{
 					//LED on
 					PORTA |= (1<<PA6);
-									
+					PORTD |= (1<<PD7);	
+					PORTD |= (1<<PD6);				
+					PORTD |= (1<<PD5);
+					PORTD |= (1<<PD4);		
 				}
 				if (flash_count == (flash_value+2))
 				{
 					//LED off
 					PORTA &= ~(1<<PA6);
+					PORTD &= ~(1<<PD7);
+					PORTD &= ~(1<<PD6);
+					PORTD &= ~(1<<PD5);
+					PORTD &= ~(1<<PD4);
 				}
 				if (flash_count == flash_value+6)
 				{
 					//LED on
 					PORTA |= (1<<PA6);
-									
+					PORTD |= (1<<PD7);
+					PORTD |= (1<<PD6);
+					PORTD |= (1<<PD5);
+					PORTD |= (1<<PD4);	
 				}
 				if (flash_count == (flash_value+8))
 				{
 					//LED off
 					PORTA &= ~(1<<PA6);
+					PORTD &= ~(1<<PD7);
+					PORTD &= ~(1<<PD6);
+					PORTD &= ~(1<<PD5);
+					PORTD &= ~(1<<PD4);					
 					flash_count = 0;
 				}
 				//ctrl_in_prev[9] = ctrl_in;
