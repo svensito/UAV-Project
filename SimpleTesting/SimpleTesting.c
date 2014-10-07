@@ -35,12 +35,12 @@
 
 //******************************************************************
 // These are the task flags, set them to activate / deactivate task
-int task_gyro	= TRUE;		// reading gyro data enabled (TRUE) /disabled (FALSE)
-int task_acc	= TRUE;		// reading acc data enabled (TRUE) /disabled (FALSE)
-int task_mag	= TRUE;		// reading mag data enabled (TRUE) /disabled (FALSE)
+int task_gyro	= FALSE;		// reading gyro data enabled (TRUE) /disabled (FALSE)
+int task_acc	= FALSE;		// reading acc data enabled (TRUE) /disabled (FALSE)
+int task_mag	= FALSE;		// reading mag data enabled (TRUE) /disabled (FALSE)
 int task_temp	= FALSE;	// reading temp data enabled (TRUE) /disabled (FALSE)
-int task_baro	= TRUE;		// reading baro data enabled (TRUE) /disabled (FALSE)
-int task_speed	= TRUE;		// reading ADC speed data enabled (TRUE) /disabled (FALSE)
+int task_baro	= FALSE;		// reading baro data enabled (TRUE) /disabled (FALSE)
+int task_speed	= FALSE;		// reading ADC speed data enabled (TRUE) /disabled (FALSE)
 int serial_log	= TRUE;		// serial output enabled (TRUE) /disabled (FALSE)
 //******************************************************************
 
@@ -160,8 +160,9 @@ uint32_t atol_new(const char* str) {
 int main(void)
 {	
 	// Setting the LED port to output
-	//DDRC |= (1<<PC2);	// LED on PC2 pin as output
-	
+	DDRA |= (1<<PA6);	// LED on PA6 pin as output
+	//LED off
+	PORTA &= ~(1<<PA6);
 	//LED off
 	//PORTC &= ~(1<<PC2);
 	//LED on
@@ -303,7 +304,9 @@ int main(void)
 	int32_t GPS_DIS_TO_TARGET = 0;
 			
 	// random counter
-	int8_t bla_cnt = 0;
+	int16_t bla_cnt = 0;
+	uint8_t flash_count = 0;	// flash counter
+	uint8_t blink_count = 0;
 	int8_t send_cnt = 0;
 	int8_t tune_cnt = 0;
 	int8_t test_cnt = 0;
@@ -336,6 +339,76 @@ int main(void)
 				write_string_ln(GPS_GGA[GPS_GGA_ALTMSL]);
 				*/
 				UART_READY_FLAG = FALSE;
+			}
+			
+			if(task_flag == 2)
+			{
+				// Resetting the task call:
+				task_flag = 0;
+				//bla_cnt++;
+				write_string_ln("Test");
+				
+				uint8_t mode = 2;
+				uint16_t blink_period = 3000; // [ms]
+				
+				uint16_t flash_delay = 2000; // [ms] in between flash sequence
+				
+				bla_cnt++;
+				write_var(flash_count);write_string(" ");write_var_ln(bla_cnt);
+				switch(mode)
+				{
+					case 1:
+					// Blinking
+					if (bla_cnt	== (blink_period/30) )
+					{
+						//LED off
+						PORTA &= ~(1<<PA6);
+					}
+					if (bla_cnt	== 2*(blink_period/30) )
+					{
+						//LED on
+						PORTA |= (1<<PA6);
+						bla_cnt = 0;
+					}
+					//bla_cnt++;				
+						
+					break;
+					
+					case 2:
+					// Strobe Lights
+					flash_delay = (flash_delay / 30);
+					if (bla_cnt	== (flash_delay) )
+					{
+						//LED on
+						PORTA &= ~(1<<PA6);
+						flash_count = 0;
+					}
+					if (bla_cnt	== (flash_delay + 5) )
+					{
+						//LED off
+						PORTA |= (1<<PA6);
+						
+					}
+					if (bla_cnt	== (flash_delay + 10) )
+					{
+						//LED on
+						PORTA &= ~(1<<PA6);
+											
+					}
+					if (bla_cnt	== (flash_delay + 15))
+					{
+						//LED off
+						PORTA |= (1<<PA6);
+							bla_cnt = 0;				
+					}
+					
+					//flash_count++;
+					
+					break;
+					
+				}
+		
+				
 			}
 			
 			if(task_flag == 1)
@@ -1044,7 +1117,36 @@ int main(void)
 					}
 				Ctrl_Mode_prev = Ctrl_Mode;		// Setting previous State
 				
-				ctrl_in_prev[9] = ctrl_in;
+				// Navigation Lights
+				flash_count++;
+				uint8_t flash_value = 110;
+				
+				// Flash Lights:
+				// Must flash once about 0.6 Hz and 1.6 Hz
+				if (flash_count == flash_value)
+				{
+					//LED on
+					PORTA |= (1<<PA6);
+									
+				}
+				if (flash_count == (flash_value+2))
+				{
+					//LED off
+					PORTA &= ~(1<<PA6);
+				}
+				if (flash_count == flash_value+6)
+				{
+					//LED on
+					PORTA |= (1<<PA6);
+									
+				}
+				if (flash_count == (flash_value+8))
+				{
+					//LED off
+					PORTA &= ~(1<<PA6);
+					flash_count = 0;
+				}
+				//ctrl_in_prev[9] = ctrl_in;
 				//GPS_string_prev[GPS_LONGITUDE][] = GPS_string[GPS_LONGITUDE];
 			}		
 			
