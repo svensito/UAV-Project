@@ -73,6 +73,14 @@ long trimmed_aileron = 0;
 long trimmed_rudder = 0;
 
 /********************
+ Flap Controls
+ ********************/
+// Flap Delay
+uint16_t flap_setpoint = FLAP_UP;	// defining the desired setpoint flap position
+uint8_t flap_delta = 10;	// giving the speed of flap extension
+// 10 will give around 2 seconds for movement in between two positions
+
+/********************
  Altitude Data
  ********************/
 int16_t altitude_raw,altitude_filt,alt_hold, alt_hold_0 = 0;	// raw altitude and filtered altitude
@@ -175,13 +183,20 @@ int32_t GPS_DIS_TO_GOAL = 0;
 uint8_t GPS_home_set = FALSE;
 
 /********************
+ Navigation Lights
+ ********************/
+uint8_t lights_enabled = FALSE;			// Lights Enable Flag
+uint8_t lights_commanded	= FALSE;	// Flag to check if the lights have been commanded already
+uint8_t flash_count = 0;				// Strobe light counter
+
+/********************
  Counter
  ********************/
 int8_t send_cnt = 0;
 int8_t tune_cnt = 0;
 int8_t test_cnt = 0;
 uint8_t cal_cnt = 0;
-uint8_t flash_count = 0;	// Strobe light counter
+
 
 // Task Timer definitions
 volatile uint8_t task_flag = 0;		// this flag will be set every 20ms and reset in the application
@@ -280,14 +295,7 @@ uint32_t atol_new(const char* str) {
 
 int main(void)
 {	
-	// Setting the LED port to output
-	//DDRC |= (1<<PC2);	// LED on PC2 pin as output
-	
-	//LED off
-	//PORTC &= ~(1<<PC2);
-	//LED on
-	//PORTC |= (1<<PC2);
-	
+
 	// Initializing
 	init_uart();
 	
@@ -301,11 +309,9 @@ int main(void)
 	MCUCSR &= ~((1<<WDRF)|(1<<PORF)|(1<<BORF)|(1<<EXTRF));
 	_delay_ms(500);
 	
-	
+	// Initialize I2C communication
 	i2c_initialize();
-	
-	
-	
+		
 	if(task_gyro == TRUE)	
 	{
 		gyro_start();
@@ -321,23 +327,23 @@ int main(void)
 	if(task_speed == TRUE)	
 	{
 		ADC_start();
-		//_delay_ms(2500);
-		//ADC_speed_cal();
 	}		
 	
-	//_delay_ms(2000);
 	// Starting the Servo PWM signal setting
-	
 	cli();	// disable interrupts
 	Task_Timer();
 	servo_init();
 	// setting all needed timers to Interrupt mode
 	TIMSK  = (0<<TICIE1)|(1<<OCIE1A)|(0<<OCIE1B)|(0<<TOIE1)|(1<<OCIE0)|(1<<TOIE2);
 	sei();	//enable interrupts
-	
-	
+		
 	// Turn On the Watchdog
 	WDT_on();
+	
+	// Define Navigation Lights Output Port D
+	DDRD |= (1<<PD4)|(1<<PD5)|(1<<PD6)|(1<<PD7);
+	// Turn off LEDs at instance
+	PORTD &= ~((1<<PD4)|(1<<PD5)|(1<<PD6)|(1<<PD7));
 	
 	while(1)
     {
@@ -568,10 +574,79 @@ int main(void)
 				   - Flash Lights
 				   - Position Lights
 				   - Landing Light
+				   - Using Port D Pins 4,5,6,7 as Light controls
+				   - 4: Strobe Lights
+				   - 5: Nav Lights
+				   - 6: Landing Lights
 				*/
 				
 				// Enabling of lights
+				// left stick: left down
+				// right stick: right up
+				/* _______________			 _______________
+				   |			 |			 |			 0 |
+				   |			 |			 |			   |
+				   |	  '		 |			 |		'	   |
+				   |  0			 |			 |			   |
+				   |_____________|			 |_____________|
 				
+				*/
+				if ((ctrl_in[stick_l_up_down]    <	110) &&		// limit down left stick
+					(ctrl_in[stick_l_left_right] >	175) &&		// limit left left stick
+					(ctrl_in[stick_r_up_down]	<	90) &&		// limit up right stick
+					(ctrl_in[stick_r_left_right] >	170))		// limit right right stick
+					{
+						if (lights_enabled == FALSE && lights_commanded == FALSE)
+						{
+							lights_enabled = TRUE;
+						}
+						else if (lights_enabled == TRUE && lights_commanded == FALSE)
+						{
+							lights_enabled = FALSE;
+						}
+					}
+					else lights_commanded = FALSE;
+				
+				if (lights_enabled == TRUE)
+				{
+					// Strobe light flash value
+					uint8_t flash_value = 110;
+					// Lights output:
+					PORTD |= (1<<PD5);		// NAV LIGHTS ON
+					if ((flap_setpoint == FLAP_1)||(flap_setpoint == FLAP_FULL))
+					{
+						PORTD |= (1<<PD6);		// LANDING LIGHTS ON
+					}
+					
+					flash_count++;
+					if (flash_count == flash_value)
+					{
+						// Strobe On
+						PORTD |= (1<<PD4);
+					}
+					if (flash_count == (flash_value+2))
+					{
+						// Strobe off
+						PORTD &= ~(1<<PD4);
+					}
+					if (flash_count == flash_value+6)
+					{
+						//Strobe on
+						PORTD |= (1<<PD4);
+					}
+					if (flash_count == (flash_value+8))
+					{
+						//Strobe off
+						PORTD &= ~(1<<PD4);
+						flash_count = 0;
+					}
+					
+				}
+				else if(lights_enabled == FALSE)
+				{
+					// Keep all LEDS off
+					PORTD &= ~((1<<PD4)|(1<<PD5)|(1<<PD6)|(1<<PD7));
+				}
 				
 				//*******************************************
 				
@@ -616,11 +691,6 @@ int main(void)
 						 ctrl_out[aileron]	=	NEUTRAL+((ctrl_in[stick_r_left_right]-SERVO_TRIM_AILERON)*SERVO_GAIN_AILERON);
 						 ctrl_out[elevator] =	NEUTRAL+((ctrl_in[stick_r_up_down]-SERVO_TRIM_ELEVATOR)*SERVO_GAIN_ELEVATOR);
 						 ctrl_out[rudder]	=	NEUTRAL+((ctrl_in[stick_l_left_right]-SERVO_TRIM_RUDDER)*SERVO_GAIN_RUDDER);
-						 
-						 // Flap Delay
-						 uint16_t flap_setpoint = FLAP_UP;	// defining the desired setpoint flap position
-						 uint8_t flap_delta = 10;	// giving the speed of flap extension 
-													// 10 will give around 2 seconds for movement in between two positions
 						 
 						 // Flap Control
 						 if(ctrl_in[rotary_knob]<135 && ctrl_in[rotary_knob]>120)		flap_setpoint = FLAP_UP;
