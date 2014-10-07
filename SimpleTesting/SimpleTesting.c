@@ -45,7 +45,15 @@ int task_speed	= TRUE;		// reading ADC speed data enabled (TRUE) /disabled (FALS
 int serial_log	= FALSE;		// serial output enabled (TRUE) /disabled (FALSE)
 //******************************************************************
 
-// Control Mode
+/********************
+ General Variables
+ ********************/
+
+
+
+/********************
+ Control Modes
+ ********************/
 uint8_t Ctrl_Mode = DIRECT_CTRL;		// First Test with Direct Law Only: DIRECT_LAW or NORMAL_LAW possible
 uint8_t Ctrl_Mode_prev = DIRECT_CTRL;	// Initialize as the same Mode
 uint8_t state_change = FALSE;			// Needed as a flag for state change
@@ -54,23 +62,135 @@ uint8_t state_change = FALSE;			// Needed as a flag for state change
 uint8_t Knob_State = 0;
 uint8_t prev_Knob_State = 0;
 uint16_t Knob_Stepwidth = 400;
+int8_t knob_flag = 0;
 
-// Control Algorithm Variables
-uint8_t k_eta_q = 5;
-uint8_t control_gain = 1;
+/********************
+ Control surface trims
+ ********************/
+long trimmed_elevator = 0;
+long trimmed_motor = 0;
+long trimmed_aileron = 0;
+long trimmed_rudder = 0;
 
-//long test	= 0;
-//------------------------------------------------------
+/********************
+ Altitude Data
+ ********************/
+int16_t altitude_raw,altitude_filt,alt_hold, alt_hold_0 = 0;	// raw altitude and filtered altitude
+int16_t alt_error = 0;
+int16_t alt_error_sum = 0;
+int16_t alt_error_prev = 0;
+float alpha_alt = 0.3; // alpha element [0;1] -> alpha 0: only raw input (noise free)
+						// -> alpha 1: only filtered input (only noise)
+int8_t Kp_alt = 1;
+int8_t Ki_alt = 10;
+int8_t Kd_alt = 10;
 
 
-//------------------------------------------------------
+/********************
+ Speed Data
+ ********************/
+int16_t speed_raw,speed_filt, speed_filt_1, speed_filt_2, speed_filt_3, speed_filt_4, speed_filt_5 = 0;	// raw speed and filtered speed
+float alpha_speed_1 = 0.3; // alpha element [0;1] -> alpha 0: only raw input (noise free)
+float alpha_speed_2 = 0.3;											// -> alpha 1: only filtered input (only noise)
+float alpha_speed_3 = 0.3;
+float alpha_speed_raw = 0.1;
+float speed, speed_cal = 0;
+float speed_hold, speed_error, speed_error_sum, speed_error_prev = 0;
+int8_t Kp_speed = 1;
+//int8_t Kd_speed = 1;	// No differential part as signal too noisy
+int8_t Ki_speed = 1;
+uint8_t speed_cnt = 0;	// needed for decreasing speed reading resolution
+
+
+/********************
+ Euler Angles Data
+ ********************/
+// Turn rates Data
+int8_t p_raw,q_raw,r_raw,p_filt,q_filt,r_filt,p_filt_prev,q_filt_prev,r_filt_prev = 0; // raw turn rates, filtered turn rates,previous turn rates
+float alpha_turn = 0.7;
+// Pitch Angle Theta
+float Theta, Theta_hold, Theta_error, Theta_error_sum, Theta_error_prev = 0;
+int8_t Kp_Theta = 10;	// as per simulation in SCILAB this are very good gains for a wide range of speed...
+int8_t Kd_Theta = 1;
+int8_t Ki_Theta = 10;
+int8_t K_p_q = 9;
+// Roll Angle Phi
+float Phi = 0;
+float Phi_hold, Phi_hold_0 = 0;
+float Phi_error = 0;
+float Phi_error_sum = 0;
+float Phi_error_prev = 0;
+int8_t Kp_Phi = 20;	// as per simulation in scilab
+int8_t Kd_Phi = 3;
+int8_t Ki_Phi = 10;
+// Yaw Angle Psi
+float Psi = 0;
+
+/********************
+ Acceleration Data
+ ********************/
+// Acceleration data
+int16_t acc_x_raw, acc_y_raw, acc_z_raw,acc_x_filt, acc_y_filt, acc_z_filt,acc_x_filt_prev, acc_y_filt_prev, acc_z_filt_prev = 0;
+float alpha_acc = 0.3;
+float Theta_acc = 0;	// Theta based on the Accelerometer reading
+float Phi_acc = 0;		// Phi based on the Accelerometer reading
+
+/********************
+ Kalman Filter Data
+ ********************/
+// weighing matrices ???
+float Q_angle = 0.005;
+float Q_gyro = 0.005;
+float R_angle = 0.02;
+// Estimation of Theta (Kalman)
+float q_bias = 0;
+float P_00_Theta, P_01_Theta, P_10_Theta, P_11_Theta = 0;
+float Theta_temp, S_Theta, K_0_Theta, K_1_Theta = 0;
+// Estimation of Phi (Kalman)
+float p_bias = 0;
+float P_00_Phi, P_01_Phi, P_10_Phi, P_11_Phi = 0;
+float Phi_temp, S_Phi, K_0_Phi, K_1_Phi = 0;
+// Estimation of Psi (Kalman)
+float r_bias = 0;
+float P_00_Psi, P_01_Psi, P_10_Psi, P_11_Psi = 0;
+float Psi_temp, S_Psi, K_0_Psi, K_1_Psi = 0;
+
+/********************
+ Magnetometer Data
+ ********************/
+int16_t heading, heading_GPS = 0;
+int16_t heading_goal = 0;
+int16_t heading_hold, heading_error, heading_error_prev, heading_error_sum  = 0;
+int8_t Kp_head = 1;
+int8_t Kd_head = 1;
+int8_t Ki_head = 0;		// simulation showed that PD is convenient for Heading Track
+
+/********************
+ GPS Data
+ ********************/
+int32_t GPS_POS_CURRENT_X, GPS_POS_CURRENT_Y, GPS_POS_GOAL_X, GPS_POS_GOAL_Y,GPS_POS_HOME_X, GPS_POS_HOME_Y, GPS_POS_DIF_X, GPS_POS_DIF_Y = 0;
+int8_t GPS_POS_LAT_DEG, GPS_POS_LAT_MIN = 0;
+int32_t GPS_POS_LAT_SEC = 0;
+int32_t GPS_DIS_TO_GOAL = 0;
+uint8_t GPS_home_set = FALSE;
+
+/********************
+ Counter
+ ********************/
+int8_t send_cnt = 0;
+int8_t tune_cnt = 0;
+int8_t test_cnt = 0;
+uint8_t cal_cnt = 0;
+uint8_t flash_count = 0;	// Strobe light counter
+
 // Task Timer definitions
 volatile uint8_t task_flag = 0;		// this flag will be set every 20ms and reset in the application
 uint8_t comp_count = 0;
-
 // Timer Sample time
 float sample_time = 0;
 
+
+//------------------------------------------------------
 
 //------------------------------------------------------
 // Task Timer for the tasks
@@ -216,107 +336,6 @@ int main(void)
 	sei();	//enable interrupts
 	
 	
-	
-	// Circle Number Pi
-	float Pi =  3.1415926535;
-	
-	int testflag = 0;
-	// Turn rate Data
-	int8_t p_raw,q_raw,r_raw,p_filt,q_filt,r_filt,p_filt_prev,q_filt_prev,r_filt_prev = 0; // raw turn rates, filtered turn rates,previous turn rates
-	float alpha_turn = 0.7;	
-	// Altitude Data
-	int16_t altitude_raw,altitude_filt,alt_hold, alt_hold_0 = 0;	// raw altitude and filtered altitude
-	int16_t alt_error = 0;
-	int16_t alt_error_sum = 0;
-	int16_t alt_error_prev = 0;
-	float alpha_alt = 0.3; // alpha element [0;1] -> alpha 0: only raw input (noise free)
-										   // -> alpha 1: only filtered input (only noise)
-	int8_t Kp_alt = 1;
-	int8_t Ki_alt = 10;
-	int8_t Kd_alt = 10;
-	long trimmed_elevator = 0;				   
-	// Speed Data
-	int16_t speed_raw,speed_filt, speed_filt_1, speed_filt_2, speed_filt_3, speed_filt_4, speed_filt_5 = 0;	// raw speed and filtered speed
-	float alpha_speed_1 = 0.3; // alpha element [0;1] -> alpha 0: only raw input (noise free)
-	float alpha_speed_2 = 0.3;											// -> alpha 1: only filtered input (only noise)
-	float alpha_speed_3 = 0.3;											
-	float alpha_speed_raw = 0.1;									
-												
-	float speed, speed_cal = 0;
-	float speed_hold, speed_error, speed_error_sum, speed_error_prev = 0;
-	int8_t Kp_speed = 1;	
-	//int8_t Kd_speed = 1;	// No differential part as signal too noisy
-	int8_t Ki_speed = 1;
-	long trimmed_motor = 0;
-	uint8_t speed_cnt = 0;	// needed for decreasing speed reading resolution
-	
-	// Euler Angles Data
-	float Theta, Theta_hold, Theta_error, Theta_error_sum, Theta_error_prev = 0;
-	int8_t Kp_Theta = 10;	// as per simulation in SCILAB this are very good gains for a wide range of speed...
-	int8_t Kd_Theta = 1;
-	int8_t Ki_Theta = 10;
-	int8_t K_p_q = 9;
-	float Phi = 0;
-	float Psi = 0;
-	float Phi_hold, Phi_hold_0 = 0;
-	float Phi_error = 0;
-	float Phi_error_sum = 0;
-	float Phi_error_prev = 0;
-	int8_t Kp_Phi = 20;	// as per simulation in scilab
-	int8_t Kd_Phi = 3;
-	int8_t Ki_Phi = 10;
-	
-	long trimmed_aileron = 0;
-	long trimmed_rudder = 0;
-	// Acceleration data
-	int16_t acc_x_raw, acc_y_raw, acc_z_raw,acc_x_filt, acc_y_filt, acc_z_filt,acc_x_filt_prev, acc_y_filt_prev, acc_z_filt_prev = 0;
-	float alpha_acc = 0.3;
-	float Theta_acc = 0;	// Theta based on the Accelerometer reading
-	float Phi_acc = 0;		// Phi based on the Accelerometer reading
-	// Kalman Filter Data
-	// weighing matrices ???
-	float Q_angle = 0.005;
-	float Q_gyro = 0.005;
-	float R_angle = 0.02;
-	// Estimation of Theta (Kalman)
-	float q_bias = 0;
-	float P_00_Theta, P_01_Theta, P_10_Theta, P_11_Theta = 0;
-	float Theta_temp, S_Theta, K_0_Theta, K_1_Theta = 0;
-	// Estimation of Phi (Kalman)
-	float p_bias = 0;
-	float P_00_Phi, P_01_Phi, P_10_Phi, P_11_Phi = 0;
-	float Phi_temp, S_Phi, K_0_Phi, K_1_Phi = 0;
-	// Estimation of Psi (Kalman)
-	float r_bias = 0;
-	float P_00_Psi, P_01_Psi, P_10_Psi, P_11_Psi = 0;
-	float Psi_temp, S_Psi, K_0_Psi, K_1_Psi = 0;
-	
-	// Mag Data
-	int16_t heading, heading_GPS = 0;
-	int16_t heading_goal = 0;
-	int16_t heading_hold, heading_error, heading_error_prev, heading_error_sum  = 0;
-	int8_t Kp_head = 1;
-	int8_t Kd_head = 1;
-	int8_t Ki_head = 0;		// simulation showed that PD is convenient for Heading Track
-	
-	// GPS navigation data
-	int32_t GPS_POS_CURRENT_X, GPS_POS_CURRENT_Y, GPS_POS_GOAL_X, GPS_POS_GOAL_Y,GPS_POS_HOME_X, GPS_POS_HOME_Y, GPS_POS_DIF_X, GPS_POS_DIF_Y = 0;
-	int8_t GPS_POS_LAT_DEG, GPS_POS_LAT_MIN = 0;
-	int32_t GPS_POS_LAT_SEC = 0;
-	int32_t GPS_DIS_TO_GOAL = 0;
-	uint8_t GPS_home_set = FALSE;
-			
-	
-	
-	// random counter
-	int8_t send_cnt = 0;
-	int8_t tune_cnt = 0;
-	int8_t test_cnt = 0;
-	uint8_t cal_cnt = 0;
-	
-	// random flags
-	int8_t knob_flag = 0;
-	
 	// Turn On the Watchdog
 	WDT_on();
 	
@@ -379,8 +398,8 @@ int main(void)
 					acc_x_raw = acc_val.a_x;
 					acc_y_raw = acc_val.a_y;
 					acc_z_raw = acc_val.a_z;
-					Theta_acc = atan2(acc_x_raw,-acc_z_raw)*180/Pi;
-					Phi_acc = atan2(-acc_y_raw,-acc_z_raw)*180/Pi;
+					Theta_acc = atan2(acc_x_raw,-acc_z_raw)*180/PI;
+					Phi_acc = atan2(-acc_y_raw,-acc_z_raw)*180/PI;
 					//write_string("acc: "); write_var_ln(acc_reading());
 					
 				}
@@ -501,18 +520,12 @@ int main(void)
 				//******************************************
 				// Detecting current position and current heading from GPS reading
 				
-				
 				//GPS_POS_CURRENT_Y = "123456";
-
-								
+							
 				GPS_POS_CURRENT_X = atol_new(GPS_RMC[GPS_RMC_LONGITUDE]);
 				GPS_POS_CURRENT_Y = atol_new(GPS_RMC[GPS_RMC_LATITUDE]);
 				
 				heading_GPS = atol_new(GPS_RMC[GPS_RMC_PATH])/100;
-				
-				
-				
-				
 				// Distance to goal location:
 				// calculate the latitude difference. one degree latitude is 111km distance (wiki). divide by cos(angle).
 				// 1 deg = 111km
@@ -547,6 +560,21 @@ int main(void)
 					GPS_POS_HOME_Y = atol_new(GPS_RMC[GPS_RMC_LATITUDE]);
 					write_string("Home Set Lat ");write_var(GPS_POS_HOME_Y);write_string(" Long ");write_var_ln(GPS_POS_HOME_X);
 				}
+				//*******************************************
+				
+				//*******************************************
+				/* Control of Navigation Lights
+				   - Enabling of Lights
+				   - Flash Lights
+				   - Position Lights
+				   - Landing Light
+				*/
+				
+				// Enabling of lights
+				
+				
+				//*******************************************
+				
 				
 				//*******************************************
 				// Control of Modes
