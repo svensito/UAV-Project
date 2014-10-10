@@ -1127,7 +1127,7 @@ int main(void)
 				
 				// Navigation Lights
 				flash_count++;
-				uint8_t flash_value = 33;
+				uint8_t flash_value = 110;
 				
 				// Flash Lights:
 				// Must flash once about 0.6 Hz and 1.6 Hz
@@ -1138,18 +1138,19 @@ int main(void)
 					PORTD &= ~(1<<PD7);
 					PORTD |= (1<<PD6);				
 					PORTD |= (1<<PD5);
-					PORTD |= (1<<PD4);		
+					PORTD |= (1<<PD4);
+					
 				}
-				if (flash_count == (flash_value+33))
+				if (flash_count == (flash_value+2))
 				{
 					//LED off
 					PORTA &= ~(1<<PA6);
 					PORTD |= (1<<PD7);
 					PORTD &= ~ (1<<PD6);
 					PORTD |= (1<<PD5);
-					PORTD |= (1<<PD4);
+					PORTD &= ~(1<<PD4);		
 				}
-				if (flash_count == flash_value+66)
+				if (flash_count == flash_value+7)
 				{
 					//LED on
 					PORTA |= (1<<PA6);
@@ -1158,14 +1159,14 @@ int main(void)
 					PORTD &= ~(1<<PD5);
 					PORTD |= (1<<PD4);
 				}
-				if (flash_count == (flash_value+99))
+				if (flash_count == (flash_value+9))
 				{
 					//LED off
 					PORTA &= ~(1<<PA6);
 					PORTD |= (1<<PD7);
 					PORTD |= (1<<PD6);
 					PORTD |= (1<<PD5);
-					PORTD &= ~(1<<PD4);				
+					PORTD &= ~(1<<PD4);					
 					flash_count = 0;
 				}
 				//ctrl_in_prev[9] = ctrl_in;

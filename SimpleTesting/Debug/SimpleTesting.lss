@@ -6421,12 +6421,12 @@ int main(void)
     2b32:	1f a1       	ldd	r17, Y+39	; 0x27
     2b34:	1f 5f       	subi	r17, 0xFF	; 255
     2b36:	1f a3       	std	Y+39, r17	; 0x27
-				uint8_t flash_value = 33;
+				uint8_t flash_value = 110;
 				
 				// Flash Lights:
 				// Must flash once about 0.6 Hz and 1.6 Hz
 				if (flash_count == flash_value)
-    2b38:	11 32       	cpi	r17, 0x21	; 33
+    2b38:	1e 36       	cpi	r17, 0x6E	; 110
     2b3a:	31 f4       	brne	.+12     	; 0x2b48 <main+0x1b1e>
 				{
 					//LED on
@@ -6438,13 +6438,14 @@ int main(void)
     2b40:	96 9a       	sbi	0x12, 6	; 18
 					PORTD |= (1<<PD5);
     2b42:	95 9a       	sbi	0x12, 5	; 18
-					PORTD |= (1<<PD4);		
+					PORTD |= (1<<PD4);
     2b44:	94 9a       	sbi	0x12, 4	; 18
     2b46:	12 c0       	rjmp	.+36     	; 0x2b6c <main+0x1b42>
+					
 				}
-				if (flash_count == (flash_value+33))
+				if (flash_count == (flash_value+2))
     2b48:	0f a1       	ldd	r16, Y+39	; 0x27
-    2b4a:	02 34       	cpi	r16, 0x42	; 66
+    2b4a:	00 37       	cpi	r16, 0x70	; 112
     2b4c:	31 f4       	brne	.+12     	; 0x2b5a <main+0x1b30>
 				{
 					//LED off
@@ -6456,13 +6457,13 @@ int main(void)
     2b52:	96 98       	cbi	0x12, 6	; 18
 					PORTD |= (1<<PD5);
     2b54:	95 9a       	sbi	0x12, 5	; 18
-					PORTD |= (1<<PD4);
-    2b56:	94 9a       	sbi	0x12, 4	; 18
+					PORTD &= ~(1<<PD4);		
+    2b56:	94 98       	cbi	0x12, 4	; 18
     2b58:	12 c0       	rjmp	.+36     	; 0x2b7e <main+0x1b54>
 				}
-				if (flash_count == flash_value+66)
+				if (flash_count == flash_value+7)
     2b5a:	1f a1       	ldd	r17, Y+39	; 0x27
-    2b5c:	13 36       	cpi	r17, 0x63	; 99
+    2b5c:	15 37       	cpi	r17, 0x75	; 117
     2b5e:	31 f4       	brne	.+12     	; 0x2b6c <main+0x1b42>
 				{
 					//LED on
@@ -6478,9 +6479,9 @@ int main(void)
     2b68:	94 9a       	sbi	0x12, 4	; 18
     2b6a:	09 c0       	rjmp	.+18     	; 0x2b7e <main+0x1b54>
 				}
-				if (flash_count == (flash_value+99))
+				if (flash_count == (flash_value+9))
     2b6c:	0f a1       	ldd	r16, Y+39	; 0x27
-    2b6e:	04 38       	cpi	r16, 0x84	; 132
+    2b6e:	07 37       	cpi	r16, 0x77	; 119
     2b70:	31 f4       	brne	.+12     	; 0x2b7e <main+0x1b54>
 				{
 					//LED off
@@ -6492,7 +6493,7 @@ int main(void)
     2b76:	96 9a       	sbi	0x12, 6	; 18
 					PORTD |= (1<<PD5);
     2b78:	95 9a       	sbi	0x12, 5	; 18
-					PORTD &= ~(1<<PD4);				
+					PORTD &= ~(1<<PD4);					
     2b7a:	94 98       	cbi	0x12, 4	; 18
 					flash_count = 0;
     2b7c:	1f a2       	std	Y+39, r1	; 0x27
