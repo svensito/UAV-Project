@@ -189,3 +189,12 @@ volatile void OLED_write_char(char char_in)
 		OLED_write_val_to_reg(Font_Lookup[temp][i],OLED_val_registry);	// send integer
 	}
 }
+
+volatile void OLED_write_string(char *string)
+{
+	while(*string)
+	{
+		OLED_write_char(*string)
+		string++;
+	}
+}

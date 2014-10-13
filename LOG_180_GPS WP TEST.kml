@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://earth.google.com/kml/2.1">
+<Style id="POI_STYLE">
+    <IconStyle>
+    <color>ff00ff00</color>
+    <scale>1.1</scale>
+    <Icon><href>http://maps.google.com/mapfiles/kml/pal3/icon21.png</href></Icon>
+    </IconStyle>
+</Style>
+<Folder id="Data logger">
+    <name>Data logger</name>
+<Placemark id="logger">
+  <styleUrl>#lineStyle</styleUrl>
+   <description>Plot Your Traveling Path</description>
+  <name>Trajectory</name>
+    <visibility>1</visibility>
+  <open>0</open>
+    <Style>
+    <LineStyle>
+      <color>ff0000ff</color>
+    </LineStyle>
+    </Style>
+    <LineString>
+    <extrude>1</extrude>
+    <tessellate>1</tessellate>
+	<altitudeMode>relativeToGround</altitudeMode>
+    <coordinates>
+13.52342833,52.57935617,0
+13.52481722,52.57935617,0
+13.52342833,52.58074506,0
+13.52203944,52.57935617,0
+13.52342833,52.57796728,0
+    </coordinates>
+  </LineString>
+</Placemark>
+</Folder>
+</kml>

@@ -40,9 +40,9 @@ int task_gyro	= TRUE;		// reading gyro data enabled (TRUE) /disabled (FALSE)
 int task_acc	= TRUE;		// reading acc data enabled (TRUE) /disabled (FALSE)
 int task_mag	= FALSE;	// reading mag data enabled (TRUE) /disabled (FALSE) -> too unreliable for navigation
 int task_temp	= FALSE;	// reading temp data enabled (TRUE) /disabled (FALSE)
-int task_baro	= TRUE;		// reading baro data enabled (TRUE) /disabled (FALSE)
-int task_speed	= TRUE;		// reading ADC speed data enabled (TRUE) /disabled (FALSE)
-int serial_log	= FALSE;		// serial output enabled (TRUE) /disabled (FALSE)
+int task_baro	= FALSE;		// reading baro data enabled (TRUE) /disabled (FALSE)
+int task_speed	= FALSE;		// reading ADC speed data enabled (TRUE) /disabled (FALSE)
+int serial_log	= TRUE;		// serial output enabled (TRUE) /disabled (FALSE)
 //******************************************************************
 
 /********************
@@ -177,6 +177,19 @@ int8_t Ki_head = 0;		// simulation showed that PD is convenient for Heading Trac
  GPS Data
  ********************/
 int32_t GPS_POS_CURRENT_X, GPS_POS_CURRENT_Y, GPS_POS_GOAL_X, GPS_POS_GOAL_Y,GPS_POS_HOME_X, GPS_POS_HOME_Y, GPS_POS_DIF_X, GPS_POS_DIF_Y = 0;
+int32_t GPS_POS_GOAL_WP[5][3] = {{0,0,0},		// Waypoint 1: POSX, POSY, ALT
+								 {0,0,0},		// Waypoint 2: POSX, POSY, ALT
+								 {0,0,0},		// Waypoint 3: POSX, POSY, ALT
+								 {0,0,0},		// Waypoint 4: POSX, POSY, ALT
+								 {0,0,0}};		// Waypoint 5: POSX, POSY, ALT
+#define WP1	0
+#define WP2	1
+#define WP3	2
+#define WP4	3
+#define WP5	4
+#define WPX 0
+#define WPY 1
+
 int8_t GPS_POS_LAT_DEG, GPS_POS_LAT_MIN = 0;
 int32_t GPS_POS_LAT_SEC = 0;
 int32_t GPS_DIS_TO_GOAL = 0;
@@ -344,6 +357,9 @@ int main(void)
 	DDRD |= (1<<PD4)|(1<<PD5)|(1<<PD6)|(1<<PD7);
 	// Turn off LEDs at instance
 	PORTD &= ~((1<<PD4)|(1<<PD5)|(1<<PD6)|(1<<PD7));
+	
+	// Turn on Light for check
+	PORTD |= (1<<PD4);
 	
 	while(1)
     {
@@ -565,6 +581,24 @@ int main(void)
 					GPS_POS_HOME_X = atol_new(GPS_RMC[GPS_RMC_LONGITUDE]);
 					GPS_POS_HOME_Y = atol_new(GPS_RMC[GPS_RMC_LATITUDE]);
 					write_string("Home Set Lat ");write_var(GPS_POS_HOME_Y);write_string(" Long ");write_var_ln(GPS_POS_HOME_X);
+					
+					// Determination of Waypoints
+					// 1 second = 1/60 min = 0,01667 mins
+					// 1 second = 1/60 min = 1/60 * 1850m = 30,8m
+					// offset: 5 seconds = 150 meters = 5*0,01667 = 0,08335 minutes
+					// Within the GPS sentence: add 8335 to get an offset of 5 seconds = 150 around the Home Position
+					// GPS_POS Format: DDMMSSSSS -> 0.SSSSS * 60
+					GPS_POS_GOAL_WP[WP1][WPX] = GPS_POS_HOME_X + 8335;			// WP1 -> X (LONG) Position |
+					GPS_POS_GOAL_WP[WP1][WPY] = GPS_POS_HOME_Y;					// WP1 -> Y (LAT) Position	|	WP1 = EAST of HOME Pos
+					GPS_POS_GOAL_WP[WP2][WPX] = GPS_POS_HOME_X;					// WP2 -> X Position		|
+					GPS_POS_GOAL_WP[WP2][WPY] = GPS_POS_HOME_Y + 8335;			// WP2 -> Y Position		|	WP2 = NORTH of HOME Pos
+					GPS_POS_GOAL_WP[WP3][WPX] = GPS_POS_HOME_X - 8335;			// WP3 -> X Position		|
+					GPS_POS_GOAL_WP[WP3][WPY] = GPS_POS_HOME_Y;					// WP3 -> Y Position		|	WP2 = WEST of HOME Pos
+					GPS_POS_GOAL_WP[WP4][WPX] = GPS_POS_HOME_X;					// WP4 -> X Position		|
+					GPS_POS_GOAL_WP[WP4][WPY] = GPS_POS_HOME_Y-8335;			// WP4 -> Y Position		|	WP4 = SOUTH of HOME Pos
+					GPS_POS_GOAL_WP[WP5][WPX] = GPS_POS_HOME_X;	// SPARE
+					GPS_POS_GOAL_WP[WP5][WPY] = GPS_POS_HOME_Y;	// SPARE
+					
 				}
 				//*******************************************
 				
@@ -607,6 +641,7 @@ int main(void)
 					}
 					else lights_commanded = FALSE;
 				
+				lights_enabled = TRUE;
 				if (lights_enabled == TRUE)
 				{
 					// Strobe light flash value
@@ -1069,10 +1104,11 @@ int main(void)
 						else if(ctrl_in[rotary_knob]<160 && ctrl_in[rotary_knob]>150 && knob_flag == 0) // Left One Click
 						{
 							knob_flag = 1;
-							// when knob turned -> GPS -> Return to home -> Home Position taken
+							// when knob turned -> GPS -> Return to home -> Home Position needs to be defined before (see above)
 							GPS_POS_GOAL_X = GPS_POS_HOME_X;
 							GPS_POS_GOAL_Y = GPS_POS_HOME_Y;
 							
+
 							//write_var(GPS_POS_CURRENT_X);write_string(";");write_var(GPS_POS_CURRENT_Y);write_string(";");
 							GPS_POS_DIF_X = GPS_POS_GOAL_X - GPS_POS_CURRENT_X;	// define errors in such way that the course is correct!
 							GPS_POS_DIF_Y = GPS_POS_GOAL_Y - GPS_POS_CURRENT_Y;
