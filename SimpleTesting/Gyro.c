@@ -39,16 +39,16 @@ int16_t gyro_z		= 0;
 int16_t	gyro_r		= 0;	
 
 // Gyro temperature
-int8_t	temperature	= 0;
-uint8_t temperature_0	= 50;
+//int8_t	temperature	= 0;
+//uint8_t temperature_0	= 50;
 
 // Gyro Calibration Variables
 // idea: count 100 samples (IMU needs to be steady) and calculate the offset
-int cal_count = 0;
+uint8_t cal_count = 0;
 int16_t gyro_p_offset = 0;
 int16_t gyro_q_offset = 0;
 int16_t gyro_r_offset = 0;
-int cal_complete = FALSE;	// Flag to cover if the calibration is complete
+uint8_t cal_complete = FALSE;	// Flag to cover if the calibration is complete
 
 // Gyro functions
 
@@ -89,18 +89,18 @@ void gyro_start(void)
 	write_string_ln("gyro started");
 }
 // Gyro temperature reading
-void temp_read(void)
-{
-	i2c_start();
-	i2c_send_address_write(L3GD20_ADDRESS_WRITE);
-	i2c_send_registry(L3GD20_OUT_TEMP);
-	i2c_repeated_start();
-	i2c_send_address_read(L3GD20_ADDRESS_READ);
-	temperature = i2c_read_data_nmak();
-	i2c_stop();
-	temperature = (temperature);
-	write_var_ln(temperature);
-}
+// void temp_read(void)
+// {
+// 	i2c_start();
+// 	i2c_send_address_write(L3GD20_ADDRESS_WRITE);
+// 	i2c_send_registry(L3GD20_OUT_TEMP);
+// 	i2c_repeated_start();
+// 	i2c_send_address_read(L3GD20_ADDRESS_READ);
+// 	temperature = i2c_read_data_nmak();
+// 	i2c_stop();
+// 	temperature = (temperature);
+// 	write_var_ln(temperature);
+// }
 
 // Gyro turn rate reading
 struct three_elements_obj gyro_read(void)

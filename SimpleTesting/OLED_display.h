@@ -11,13 +11,21 @@
 
 // add defines
 #define OLED_address		0x3C	// OLED address as per MiniWii data...
+#define OLED_write_address	0x78	// (OLED_address<<1)
+#define OLED_read_address	0x79	// (OLED_address<<1)
 #define OLED_cmd_registry	0x80	// for commands ?
 #define OLED_val_registry	0x40	// for values ?
 
 // add function names
-volatile void OLED_write_char(char char_in);
-volatile void OLED_write_string(char string);
-volatile void OLED_write_val_to_reg(uint8_t val, uint8_t reg);
+volatile void OLED_send_cmd(char);
+volatile void OLED_send_byte(char);
+volatile void OLED_send_char();
+volatile void OLED_send_string();
+volatile void OLED_send_num(int32_t);
+volatile void OLED_set_position(uint8_t, uint8_t);
+volatile void OLED_set_pos_mid();
+volatile void OLED_set_pos_0();
 volatile void OLED_init();
+volatile void OLED_clear();
 
 #endif /* INCFILE1_H_ */

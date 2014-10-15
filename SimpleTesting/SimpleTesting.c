@@ -35,14 +35,26 @@
 // Local declarations and variables
 
 //******************************************************************
-// These are the task flags, set them to activate / deactivate task
-int task_gyro	= TRUE;		// reading gyro data enabled (TRUE) /disabled (FALSE)
-int task_acc	= TRUE;		// reading acc data enabled (TRUE) /disabled (FALSE)
-int task_mag	= FALSE;	// reading mag data enabled (TRUE) /disabled (FALSE) -> too unreliable for navigation
-int task_temp	= FALSE;	// reading temp data enabled (TRUE) /disabled (FALSE)
-int task_baro	= FALSE;		// reading baro data enabled (TRUE) /disabled (FALSE)
-int task_speed	= FALSE;		// reading ADC speed data enabled (TRUE) /disabled (FALSE)
-int serial_log	= TRUE;		// serial output enabled (TRUE) /disabled (FALSE)
+// These are the task flags, to set them use the task array
+const enum{
+	gyro_t = 0,	// 0
+	acc_t,		// 1
+	mag_t,		// 2
+	baro_t,		// 3
+	speed_t,	// 4
+	serial_t,	// 5
+	OLED_t,		// 6
+	flag_t		// 7
+	};
+
+uint8_t task[8] = { TRUE,	// gyro_t - reading gyro data enabled (TRUE) /disabled (FALSE)
+					TRUE,	// acc_t - reading acc data enabled (TRUE) /disabled (FALSE)
+					FALSE,	// mag_t - reading mag data enabled (TRUE) /disabled (FALSE) -> too unreliable for navigation
+					FALSE,	// baro_t - reading baro data enabled (TRUE) /disabled (FALSE)
+					FALSE,	// speed_t - reading ADC speed data enabled (TRUE) /disabled (FALSE)
+					FALSE,	// serial_t - serial output enabled (TRUE) /disabled (FALSE)
+					FALSE,	// OLED_t - OLED output enabled (TRU) / disabled (FALSE)
+					FALSE};	// flag_t - This is the task flag itself! very important for proper operation
 //******************************************************************
 
 /********************
@@ -97,10 +109,10 @@ int8_t Kd_alt = 10;
 /********************
  Speed Data
  ********************/
-int16_t speed_raw,speed_filt, speed_filt_1, speed_filt_2, speed_filt_3, speed_filt_4, speed_filt_5 = 0;	// raw speed and filtered speed
-float alpha_speed_1 = 0.3; // alpha element [0;1] -> alpha 0: only raw input (noise free)
-float alpha_speed_2 = 0.3;											// -> alpha 1: only filtered input (only noise)
-float alpha_speed_3 = 0.3;
+int16_t speed_raw,speed_filt, speed_filt_1 = 0;	// raw speed and filtered speed
+//float alpha_speed_1 = 0.3; // alpha element [0;1] -> alpha 0: only raw input (noise free)
+//float alpha_speed_2 = 0.3;											// -> alpha 1: only filtered input (only noise)
+//float alpha_speed_3 = 0.3;
 float alpha_speed_raw = 0.1;
 float speed, speed_cal = 0;
 float speed_hold, speed_error, speed_error_sum, speed_error_prev = 0;
@@ -177,11 +189,11 @@ int8_t Ki_head = 0;		// simulation showed that PD is convenient for Heading Trac
  GPS Data
  ********************/
 int32_t GPS_POS_CURRENT_X, GPS_POS_CURRENT_Y, GPS_POS_GOAL_X, GPS_POS_GOAL_Y,GPS_POS_HOME_X, GPS_POS_HOME_Y, GPS_POS_DIF_X, GPS_POS_DIF_Y = 0;
-int32_t GPS_POS_GOAL_WP[5][3] = {{0,0,0},		// Waypoint 1: POSX, POSY, ALT
-								 {0,0,0},		// Waypoint 2: POSX, POSY, ALT
-								 {0,0,0},		// Waypoint 3: POSX, POSY, ALT
-								 {0,0,0},		// Waypoint 4: POSX, POSY, ALT
-								 {0,0,0}};		// Waypoint 5: POSX, POSY, ALT
+ int32_t GPS_POS_GOAL_WP[5][3] = {{0,0,0},		// Waypoint 1: POSX, POSY, ALT
+ 								 {0,0,0},		// Waypoint 2: POSX, POSY, ALT
+ 								 {0,0,0},		// Waypoint 3: POSX, POSY, ALT
+ 								 {0,0,0},		// Waypoint 4: POSX, POSY, ALT
+ 								 {0,0,0}};		// Waypoint 5: POSX, POSY, ALT
 #define WP1	0
 #define WP2	1
 #define WP3	2
@@ -198,15 +210,15 @@ uint8_t GPS_home_set = FALSE;
 /********************
  Navigation Lights
  ********************/
-uint8_t lights_enabled = FALSE;			// Lights Enable Flag
+uint8_t lights_enabled		= FALSE;			// Lights Enable Flag
 uint8_t lights_commanded	= FALSE;	// Flag to check if the lights have been commanded already
 uint8_t flash_count = 0;				// Strobe light counter
 
 /********************
  Counter
  ********************/
-int8_t send_cnt = 0;
-int8_t tune_cnt = 0;
+// int8_t send_cnt = 0;
+// int8_t tune_cnt = 0;
 int8_t test_cnt = 0;
 uint8_t cal_cnt = 0;
 
@@ -255,7 +267,7 @@ ISR(TIMER0_COMP_vect)
 	if (comp_count >= 3)	// This gives multiple of 10ms	-> Change sample time accordingly
 	{
 		// Setting the task flag
-		task_flag = 1;
+		task[flag_t] = 1;
 		comp_count = 0; // Resetting comp count
 	}
 	
@@ -325,22 +337,37 @@ int main(void)
 	// Initialize I2C communication
 	i2c_initialize();
 		
-	if(task_gyro == TRUE)	
+	if(task[gyro_t] == TRUE)	
 	{
 		gyro_start();
 		gyro_calibration();
 	}		
-	if(task_acc == TRUE)	acc_start();
-	if(task_baro == TRUE)	
+	if(task[acc_t] == TRUE)	acc_start();
+	if(task[baro_t] == TRUE)	
 	{
 		baro_start();
 		baro_calibration();
 	}		
-	if(task_mag == TRUE)	mag_start();
-	if(task_speed == TRUE)	
+	if(task[mag_t] == TRUE)	mag_start();
+	if(task[speed_t] == TRUE)	
 	{
 		ADC_start();
 	}		
+	
+	if (task[OLED_t] == TRUE)
+	{
+		write_string_ln("OLED Init");
+		OLED_init();
+		OLED_clear();
+		OLED_send_string("LAT");	// GPS LAT
+		OLED_set_position(0,1);
+		OLED_send_string("LON");	// GPS LON
+		OLED_set_position(0,2);
+		OLED_send_string("HOME");	// GPS Home set or no
+		OLED_set_position(0,3);
+		OLED_send_string("WPH");	// Waypoint Heading
+		write_string_ln("OLED Init compl");
+	}
 	
 	// Starting the Servo PWM signal setting
 	cli();	// disable interrupts
@@ -385,15 +412,21 @@ int main(void)
 				UART_READY_FLAG = FALSE;
 			}
 			
-			if(task_flag == 1)
+			if (task_flag == 2)
+			{
+				task_flag = 0;
+				write_string_ln("Test");
+			}
+			
+			if(task[flag_t] == 1)
 			{
 				// Resetting the task call:
-				task_flag = 0;
+				task[flag_t] = 0;
 				//bla_cnt++;
 				
 				// Defining struct to read the gyro channels
 				struct three_elements_obj turn_rate;
-				if(task_gyro == TRUE)	
+				if(task[gyro_t] == TRUE)	
 				{
 					// turn rates
 					turn_rate = gyro_read();
@@ -414,7 +447,7 @@ int main(void)
 					
 				}
 				struct acc_readings_obj acc_val;
-				if(task_acc == TRUE)	
+				if(task[acc_t] == TRUE)	
 				{
 					acc_val = acc_reading();
 					acc_x_raw = acc_val.a_x;
@@ -425,7 +458,7 @@ int main(void)
 					//write_string("acc: "); write_var_ln(acc_reading());
 					
 				}
-				if(task_baro == TRUE)// && (bla_cnt==100))	
+				if(task[baro_t] == TRUE)// && (bla_cnt==100))	
 				{
 					altitude_raw = baro_read();
 					// low pass filter on the altitude reading
@@ -433,8 +466,8 @@ int main(void)
 					//bla_cnt = 0;
 				}
 						
-				if(task_mag == TRUE)	heading = mag_read(Phi,Theta); // heading is too unreliable for navigation
-				if(task_speed == TRUE)
+				if(task[mag_t] == TRUE)	heading = mag_read(Phi,Theta); // heading is too unreliable for navigation
+				if(task[speed_t] == TRUE)
 				{
 					
 					if (speed_cnt == 8)		// to reduce the sampling time of the speed reading...
@@ -532,10 +565,10 @@ int main(void)
 				P_11_Psi -= K_1_Psi * P_01_Psi;
 				*/
 				
-				/*
+				
 				write_var(Phi);write_string(";");
 				write_var(Theta);write_string_ln(";");
-				*/
+				
 				
 
 				
@@ -588,18 +621,19 @@ int main(void)
 					// offset: 5 seconds = 150 meters = 5*0,01667 = 0,08335 minutes
 					// Within the GPS sentence: add 8335 to get an offset of 5 seconds = 150 around the Home Position
 					// GPS_POS Format: DDMMSSSSS -> 0.SSSSS * 60
-					GPS_POS_GOAL_WP[WP1][WPX] = GPS_POS_HOME_X + 8335;			// WP1 -> X (LONG) Position |
-					GPS_POS_GOAL_WP[WP1][WPY] = GPS_POS_HOME_Y;					// WP1 -> Y (LAT) Position	|	WP1 = EAST of HOME Pos
-					GPS_POS_GOAL_WP[WP2][WPX] = GPS_POS_HOME_X;					// WP2 -> X Position		|
-					GPS_POS_GOAL_WP[WP2][WPY] = GPS_POS_HOME_Y + 8335;			// WP2 -> Y Position		|	WP2 = NORTH of HOME Pos
-					GPS_POS_GOAL_WP[WP3][WPX] = GPS_POS_HOME_X - 8335;			// WP3 -> X Position		|
-					GPS_POS_GOAL_WP[WP3][WPY] = GPS_POS_HOME_Y;					// WP3 -> Y Position		|	WP2 = WEST of HOME Pos
-					GPS_POS_GOAL_WP[WP4][WPX] = GPS_POS_HOME_X;					// WP4 -> X Position		|
-					GPS_POS_GOAL_WP[WP4][WPY] = GPS_POS_HOME_Y-8335;			// WP4 -> Y Position		|	WP4 = SOUTH of HOME Pos
-					GPS_POS_GOAL_WP[WP5][WPX] = GPS_POS_HOME_X;	// SPARE
-					GPS_POS_GOAL_WP[WP5][WPY] = GPS_POS_HOME_Y;	// SPARE
+// 					GPS_POS_GOAL_WP[WP1][WPX] = GPS_POS_HOME_X + 8335;			// WP1 -> X (LONG) Position |
+// 					GPS_POS_GOAL_WP[WP1][WPY] = GPS_POS_HOME_Y;					// WP1 -> Y (LAT) Position	|	WP1 = EAST of HOME Pos
+// 					GPS_POS_GOAL_WP[WP2][WPX] = GPS_POS_HOME_X;					// WP2 -> X Position		|
+// 					GPS_POS_GOAL_WP[WP2][WPY] = GPS_POS_HOME_Y + 8335;			// WP2 -> Y Position		|	WP2 = NORTH of HOME Pos
+// 					GPS_POS_GOAL_WP[WP3][WPX] = GPS_POS_HOME_X - 8335;			// WP3 -> X Position		|
+// 					GPS_POS_GOAL_WP[WP3][WPY] = GPS_POS_HOME_Y;					// WP3 -> Y Position		|	WP2 = WEST of HOME Pos
+// 					GPS_POS_GOAL_WP[WP4][WPX] = GPS_POS_HOME_X;					// WP4 -> X Position		|
+// 					GPS_POS_GOAL_WP[WP4][WPY] = GPS_POS_HOME_Y-8335;			// WP4 -> Y Position		|	WP4 = SOUTH of HOME Pos
+// 					GPS_POS_GOAL_WP[WP5][WPX] = GPS_POS_HOME_X;	// SPARE
+// 					GPS_POS_GOAL_WP[WP5][WPY] = GPS_POS_HOME_Y;	// SPARE
 					
 				}
+				
 				//*******************************************
 				
 				//*******************************************
@@ -747,157 +781,157 @@ int main(void)
 					
 					case TUNE_CTRL:
 						// Tuning control mode
-							
-
-						
-						//###########################################
-						// Tuning Longitudinal Mode Open Loop Tuning
-						if (mode == 1)
-						{
-							
-							// Make a step change and check the response
-							if(state_change == TRUE)
-							{
-								write_string_ln("*TUNING LONG STEP*");
-								trimmed_motor = ctrl_out[motor];
-								trimmed_aileron = ctrl_out[aileron];
-								trimmed_elevator = ctrl_out[elevator];
-								trimmed_rudder = ctrl_out[rudder];
-								ctrl_out[elevator] = trimmed_elevator;
-								ctrl_out[motor] = trimmed_motor;
-								ctrl_out[aileron] = trimmed_aileron;
-								ctrl_out[rudder] = trimmed_rudder;
-								tune_cnt = 0;
-							}
-
-							if(tune_cnt < 40) tune_cnt++;
-							if(tune_cnt == 40)	// after 2 seconds it will make a step input to the elevator
-							{
-								write_string_ln("Step Ele");
-								ctrl_out[elevator] +=  200;
-								tune_cnt += 1; // to leave the if clause
-							}
-						}
-						
-						//###########################################
-						// Tuning Lateral Mode Open Loop Tuning
-						if (mode == 2)
-						{
-							
-							// Make a step change and check the response
-							if(state_change == TRUE)
-							{
-								write_string_ln("*TUNING LAT IMPULSE*");
-								trimmed_motor = ctrl_out[motor];
-								trimmed_aileron = ctrl_out[aileron];
-								trimmed_elevator = ctrl_out[elevator];
-								trimmed_rudder = ctrl_out[rudder];
-								ctrl_out[elevator] = trimmed_elevator;
-								ctrl_out[motor] = trimmed_motor;
-								ctrl_out[aileron] = trimmed_aileron;
-								ctrl_out[rudder] = trimmed_rudder;
-								tune_cnt = 0;
-							}
-
-							if(tune_cnt < 40) tune_cnt++;
-							if(tune_cnt == 40)	// after 2 seconds it will make an impulse to the aileron
-							{
-								write_string_ln("Step Ail");
-								ctrl_out[aileron] +=  500;
-								tune_cnt += 1;
-							}
-							if(tune_cnt >= 41 && tune_cnt < 57) tune_cnt++;
-							if(tune_cnt == 57)	// after 210 mseconds it will release the aileron
-							{
-								write_string_ln("Step Ail");
-								ctrl_out[aileron] -=  500;
-								tune_cnt += 1;
-							}
-						}
-						
-						//###########################################
-						// Tuning Longitudinal Mode Closed Loop Tuning
-						if (mode == 3)
-							{
-						
-							if(state_change == TRUE)
-							{
-								write_string_ln("*Speed Control*");
-								speed_error = 0;
-								speed_error_sum = 0;
-								speed_hold = speed_filt;
-								
-							}
-							// Trying of Speed control
-						
-							ctrl_out[aileron]	=	NEUTRAL+((ctrl_in[stick_r_left_right]-SERVO_TRIM_AILERON)*SERVO_GAIN_AILERON);
-							ctrl_out[elevator] =	NEUTRAL+((ctrl_in[stick_r_up_down]-SERVO_TRIM_ELEVATOR)*SERVO_GAIN_ELEVATOR);
-							ctrl_out[rudder]	=	NEUTRAL+((ctrl_in[stick_l_left_right]-SERVO_TRIM_RUDDER)*SERVO_GAIN_RUDDER);
-							
-						//**********************************************
-						// Speed control (PI only -> noisy signal) with motor
-						speed_error = speed_hold - speed; // Positive Error (too slow) shall give positive input (motor increase)
-						speed_error_sum += speed_error;	
-						// when too slow (bracket turns positive) the motor gets increased
-						ctrl_out[motor] = trimmed_motor + (Kp_speed*speed_error + Ki_speed * speed_error_sum * sample_time);
-						if(ctrl_out[motor] > RIGHT) ctrl_out[motor] = RIGHT;
-						else if (ctrl_out[motor] < LEFT) ctrl_out[motor] = LEFT;
-						speed_error_prev = speed_error;
-						}
-				
-						//###########################################
-						// Tuning the Lateral Mode Closed loop tuning
-						if (mode == 4)
-						{
-							
-							if(state_change == TRUE)
-							{
-								write_string_ln("TUNING LAT");
-								trimmed_motor = ctrl_out[motor];
-								trimmed_aileron = ctrl_out[aileron];
-								trimmed_elevator = ctrl_out[elevator];
-								
-								Phi_hold = Phi;
-								Phi_error = 0;
-								Phi_error_prev = 0;
-								Phi_error_sum = 0;
-								Kp_Phi = 0;
-								
-								Theta_hold = Theta;
-								Theta_error = 0;
-								Theta_error_prev = 0;
-								Theta_error_sum = 0;
-								
-							}
-							// Tuning of PID Parameters
-							// Tuning the Longitudinal Mode
-							
-							ctrl_out[motor] = trimmed_motor;	// lets assume the motor setting will keep the speed more or less
-							
-							// Theta control with elevator
-													
-							Theta_error = Theta_hold - Theta; // Positive Error (theta too flat) shall give positive value control output (elevator up)
-							Theta_error_sum += Theta_error;
-							// including the speed as parameter to reduce the control Gains
-							Kp_Theta = (Kp_Theta-speed_filt > 0)?(Kp_Theta-speed_filt):1;	// if (K-speed > 0) then take (K-speed) else take (1)
-							Ki_Theta = (Ki_Theta-speed_filt > 0)?(Ki_Theta-speed_filt):1;	// if (K-speed > 0) then take (K-speed) else take (1)
-							Kd_Theta = (Kd_Theta-speed_filt > 0)?(Kd_Theta-speed_filt):1;	// if (K-speed > 0) then take (K-speed) else take (1)
-													
-							
-							// ctrl_out[elevator] = (trimmed_elevator - (Kp_Theta*-Theta_error + Ki_Theta*Theta_error_sum*sample_time + Kd_Theta*(Theta_error_prev - Theta_error)/sample_time));
-							ctrl_out[elevator] = (trimmed_elevator + (Kp_Theta*Theta_error + Ki_Theta*Theta_error_sum*sample_time + Kd_Theta*(Theta_error_prev - Theta_error)/sample_time));
-							if(ctrl_out[elevator] > RIGHT) ctrl_out[elevator] = RIGHT;
-							else if (ctrl_out[elevator] < LEFT) ctrl_out[elevator] = LEFT;
-							Theta_error_prev = Theta_error;
-							
-							// Tuning the K_p of the Aileron P closed loop
-							Kp_Phi += ctrl_in[stick_r_up_down]-SERVO_TRIM_AILERON;
-							if (Kp_Phi < 0) Kp_Phi = 0;
-							if (Kp_Phi	 > 254) Kp_Phi = 255;
-							
-							Phi_error = Phi - Phi_hold;
-							ctrl_out[aileron] = trimmed_aileron - (Kp_Phi*Phi_error_sum);
-						}
+// 							
+// 
+// 						
+// 						//###########################################
+// 						// Tuning Longitudinal Mode Open Loop Tuning
+// 						if (mode == 1)
+// 						{
+// 							
+// 							// Make a step change and check the response
+// 							if(state_change == TRUE)
+// 							{
+// 								write_string_ln("*TUNING LONG STEP*");
+// 								trimmed_motor = ctrl_out[motor];
+// 								trimmed_aileron = ctrl_out[aileron];
+// 								trimmed_elevator = ctrl_out[elevator];
+// 								trimmed_rudder = ctrl_out[rudder];
+// 								ctrl_out[elevator] = trimmed_elevator;
+// 								ctrl_out[motor] = trimmed_motor;
+// 								ctrl_out[aileron] = trimmed_aileron;
+// 								ctrl_out[rudder] = trimmed_rudder;
+// 								tune_cnt = 0;
+// 							}
+// 
+// 							if(tune_cnt < 40) tune_cnt++;
+// 							if(tune_cnt == 40)	// after 2 seconds it will make a step input to the elevator
+// 							{
+// 								write_string_ln("Step Ele");
+// 								ctrl_out[elevator] +=  200;
+// 								tune_cnt += 1; // to leave the if clause
+// 							}
+// 						}
+// 						
+// 						//###########################################
+// 						// Tuning Lateral Mode Open Loop Tuning
+// 						if (mode == 2)
+// 						{
+// 							
+// 							// Make a step change and check the response
+// 							if(state_change == TRUE)
+// 							{
+// 								write_string_ln("*TUNING LAT IMPULSE*");
+// 								trimmed_motor = ctrl_out[motor];
+// 								trimmed_aileron = ctrl_out[aileron];
+// 								trimmed_elevator = ctrl_out[elevator];
+// 								trimmed_rudder = ctrl_out[rudder];
+// 								ctrl_out[elevator] = trimmed_elevator;
+// 								ctrl_out[motor] = trimmed_motor;
+// 								ctrl_out[aileron] = trimmed_aileron;
+// 								ctrl_out[rudder] = trimmed_rudder;
+// 								tune_cnt = 0;
+// 							}
+// 
+// 							if(tune_cnt < 40) tune_cnt++;
+// 							if(tune_cnt == 40)	// after 2 seconds it will make an impulse to the aileron
+// 							{
+// 								write_string_ln("Step Ail");
+// 								ctrl_out[aileron] +=  500;
+// 								tune_cnt += 1;
+// 							}
+// 							if(tune_cnt >= 41 && tune_cnt < 57) tune_cnt++;
+// 							if(tune_cnt == 57)	// after 210 mseconds it will release the aileron
+// 							{
+// 								write_string_ln("Step Ail");
+// 								ctrl_out[aileron] -=  500;
+// 								tune_cnt += 1;
+// 							}
+// 						}
+// 						
+// 						//###########################################
+// 						// Tuning Longitudinal Mode Closed Loop Tuning
+// 						if (mode == 3)
+// 							{
+// 						
+// 							if(state_change == TRUE)
+// 							{
+// 								write_string_ln("*Speed Control*");
+// 								speed_error = 0;
+// 								speed_error_sum = 0;
+// 								speed_hold = speed_filt;
+// 								
+// 							}
+// 							// Trying of Speed control
+// 						
+// 							ctrl_out[aileron]	=	NEUTRAL+((ctrl_in[stick_r_left_right]-SERVO_TRIM_AILERON)*SERVO_GAIN_AILERON);
+// 							ctrl_out[elevator] =	NEUTRAL+((ctrl_in[stick_r_up_down]-SERVO_TRIM_ELEVATOR)*SERVO_GAIN_ELEVATOR);
+// 							ctrl_out[rudder]	=	NEUTRAL+((ctrl_in[stick_l_left_right]-SERVO_TRIM_RUDDER)*SERVO_GAIN_RUDDER);
+// 							
+// 						//**********************************************
+// 						// Speed control (PI only -> noisy signal) with motor
+// 						speed_error = speed_hold - speed; // Positive Error (too slow) shall give positive input (motor increase)
+// 						speed_error_sum += speed_error;	
+// 						// when too slow (bracket turns positive) the motor gets increased
+// 						ctrl_out[motor] = trimmed_motor + (Kp_speed*speed_error + Ki_speed * speed_error_sum * sample_time);
+// 						if(ctrl_out[motor] > RIGHT) ctrl_out[motor] = RIGHT;
+// 						else if (ctrl_out[motor] < LEFT) ctrl_out[motor] = LEFT;
+// 						speed_error_prev = speed_error;
+// 						}
+// 				
+// 						//###########################################
+// 						// Tuning the Lateral Mode Closed loop tuning
+// 						if (mode == 4)
+// 						{
+// 							
+// 							if(state_change == TRUE)
+// 							{
+// 								write_string_ln("TUNING LAT");
+// 								trimmed_motor = ctrl_out[motor];
+// 								trimmed_aileron = ctrl_out[aileron];
+// 								trimmed_elevator = ctrl_out[elevator];
+// 								
+// 								Phi_hold = Phi;
+// 								Phi_error = 0;
+// 								Phi_error_prev = 0;
+// 								Phi_error_sum = 0;
+// 								Kp_Phi = 0;
+// 								
+// 								Theta_hold = Theta;
+// 								Theta_error = 0;
+// 								Theta_error_prev = 0;
+// 								Theta_error_sum = 0;
+// 								
+// 							}
+// 							// Tuning of PID Parameters
+// 							// Tuning the Longitudinal Mode
+// 							
+// 							ctrl_out[motor] = trimmed_motor;	// lets assume the motor setting will keep the speed more or less
+// 							
+// 							// Theta control with elevator
+// 													
+// 							Theta_error = Theta_hold - Theta; // Positive Error (theta too flat) shall give positive value control output (elevator up)
+// 							Theta_error_sum += Theta_error;
+// 							// including the speed as parameter to reduce the control Gains
+// 							Kp_Theta = (Kp_Theta-speed_filt > 0)?(Kp_Theta-speed_filt):1;	// if (K-speed > 0) then take (K-speed) else take (1)
+// 							Ki_Theta = (Ki_Theta-speed_filt > 0)?(Ki_Theta-speed_filt):1;	// if (K-speed > 0) then take (K-speed) else take (1)
+// 							Kd_Theta = (Kd_Theta-speed_filt > 0)?(Kd_Theta-speed_filt):1;	// if (K-speed > 0) then take (K-speed) else take (1)
+// 													
+// 							
+// 							// ctrl_out[elevator] = (trimmed_elevator - (Kp_Theta*-Theta_error + Ki_Theta*Theta_error_sum*sample_time + Kd_Theta*(Theta_error_prev - Theta_error)/sample_time));
+// 							ctrl_out[elevator] = (trimmed_elevator + (Kp_Theta*Theta_error + Ki_Theta*Theta_error_sum*sample_time + Kd_Theta*(Theta_error_prev - Theta_error)/sample_time));
+// 							if(ctrl_out[elevator] > RIGHT) ctrl_out[elevator] = RIGHT;
+// 							else if (ctrl_out[elevator] < LEFT) ctrl_out[elevator] = LEFT;
+// 							Theta_error_prev = Theta_error;
+// 							
+// 							// Tuning the K_p of the Aileron P closed loop
+// 							Kp_Phi += ctrl_in[stick_r_up_down]-SERVO_TRIM_AILERON;
+// 							if (Kp_Phi < 0) Kp_Phi = 0;
+// 							if (Kp_Phi	 > 254) Kp_Phi = 255;
+// 							
+// 							Phi_error = Phi - Phi_hold;
+// 							ctrl_out[aileron] = trimmed_aileron - (Kp_Phi*Phi_error_sum);
+// 						}
 										
 					break;
 					
@@ -1210,7 +1244,7 @@ int main(void)
 					
 				}
 					// writing all data to serial port if enabled
-					if(serial_log == TRUE)	// set serial log variable to enable / disable output
+					if(task[serial_t] == TRUE)	// set serial log variable to enable / disable output
 					{
 						
 						write_var(ctrl_out[motor]);write_string(";");
@@ -1246,6 +1280,46 @@ int main(void)
 					
 						write_string_ln(";");
 					}
+					
+					if (task[OLED_t] == TRUE) // && Change is True -> Update the OLED)
+					{
+						
+						
+								OLED_send_string("LAT");	// GPS LAT
+								OLED_set_position(0,1);
+								OLED_send_string("LON");	// GPS LON
+								OLED_set_position(0,2);
+								OLED_send_string("HOME");	// GPS Home set or no
+								OLED_set_position(0,3);
+								OLED_send_string("WPH");	// Waypoint Heading
+						test_cnt++;
+						if (test_cnt == 33)
+						{
+							test_cnt = 0;
+							//tune_cnt++;
+							OLED_set_position(4,0);
+							OLED_send_num(GPS_RMC[GPS_RMC_LATITUDE]);
+							OLED_set_position(4,1);
+							OLED_send_num(GPS_RMC[GPS_RMC_LONGITUDE]);
+ 							OLED_set_position(4,2);
+							if (GPS_home_set == TRUE) OLED_send_string("SET");
+							else OLED_send_string("NO");
+							OLED_set_position(4,3);
+							OLED_send_num(heading_goal);
+						}
+						
+						
+						if (GPS_home_set == TRUE)
+						{
+							//OLED_send_string("HOME SET");
+						}
+						else
+						{
+							//OLED_send_string("NO HOME");
+						}
+						
+					}
+					
 				Ctrl_Mode_prev = Ctrl_Mode;		// Setting previous State
 				
 				ctrl_in_prev[9] = ctrl_in;

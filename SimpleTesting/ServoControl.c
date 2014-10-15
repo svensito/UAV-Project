@@ -29,7 +29,6 @@ int8_t ctrl = 0;	// valid are 0 to 2*servo channels (7) => 14 (count from 0 to 1
 uint8_t channel = 0;				// variable for the channels
 int first_pulse = FALSE;			// variable to tag the first pulse
 volatile int ctrl_in[9] = {0,0,0,0,0,0,0,0,0};	// array for writing the counter values
-int Timer_time = 0;
 
 void servo_init()
 {

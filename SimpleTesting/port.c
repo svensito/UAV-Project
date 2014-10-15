@@ -101,3 +101,41 @@ void i2c_stop()
 	//TWCR = 0x94;                                                  // stop bit
 	while(TWCR & (1<<TWSTO));					// From Pete Fleury I2C master
 }
+
+void i2c_write_val_to_reg_OLED(char address,char reg,char val)
+{
+	TWDR = address;                              // send device address
+	TWCR = (1<<TWINT) | (1<<TWEN);
+	i2c_wait_transmission();
+	TWDR = reg;									// send register
+	TWCR = (1<<TWINT) | (1<<TWEN);
+	i2c_wait_transmission();
+	TWDR = val;									// send value
+	TWCR = (1<<TWINT) | (1<<TWEN);
+	i2c_wait_transmission();
+}
+
+void i2c_wait_transmission()
+{
+	uint8_t transm_cnt = 255;
+	uint8_t transm_flag = 0;
+	while (!(TWCR & (1<<TWINT)))
+	{
+		if (transm_flag == 0)
+		{
+			transm_cnt--;
+			if (transm_cnt == 0)
+			{
+				transm_flag = 1;
+				write_string_ln("I2C Transm Error");
+			}
+			
+		}
+	}
+}
+
+void i2c_repeated_start_OLED()
+{
+	TWCR = (1<<TWINT) | (1<<TWSTA) | (1<<TWEN) ;	// send REPEAT START condition
+	i2c_wait_transmission();						// wait until transmission completed
+}

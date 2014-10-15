@@ -19,6 +19,7 @@
 //------------------------------------------------------
 
 // this look up is needed for 
+// modified look up for needs -> source http://www.asciitable.com/index/asciifull.gif
 const uint8_t Font_Lookup[][5] = { // Refer to "Times New Roman" Font Database... 5 x 7 font
 	{ 0x00,0x00,0x00,0x00,0x00},
 	{ 0x00,0x00,0x4F,0x00,0x00}, //   (  1)  ! - 0x0021 Exclamation Mark
@@ -111,52 +112,20 @@ const uint8_t Font_Lookup[][5] = { // Refer to "Times New Roman" Font Database..
 	{ 0x44,0x28,0x10,0x28,0x44}, //   ( 88)  x - 0x0078 Latin Small Letter X
 	{ 0x0C,0x50,0x50,0x50,0x3C}, //   ( 89)  y - 0x0079 Latin Small Letter Y
 	{ 0x44,0x64,0x54,0x4C,0x44}, //   ( 90)  z - 0x007A Latin Small Letter Z
-	{ 0x00,0x08,0x36,0x41,0x00}, //   ( 91)  { - 0x007B Left Curly Bracket
-	{ 0x00,0x00,0x7F,0x00,0x00}, //   ( 92)  | - 0x007C Vertical Line
-	{ 0x00,0x41,0x36,0x08,0x00}, //   ( 93)  } - 0x007D Right Curly Bracket
-	{ 0x02,0x01,0x02,0x04,0x02}, //   ( 94)  ~ - 0x007E Tilde
-	{ 0x3E,0x55,0x55,0x41,0x22}, //   ( 95)  C - 0x0080 <Control>
-	{ 0x00,0x00,0x00,0x00,0x00}, //   ( 96)    - 0x00A0 No-Break Space
-	{ 0x00,0x00,0x79,0x00,0x00}, //   ( 97)  ! - 0x00A1 Inverted Exclamation Mark
-	{ 0x18,0x24,0x74,0x2E,0x24}, //   ( 98)  c - 0x00A2 Cent Sign
-	{ 0x48,0x7E,0x49,0x42,0x40}, //   ( 99)  L - 0x00A3 Pound Sign
-	{ 0x5D,0x22,0x22,0x22,0x5D}, //   (100)  o - 0x00A4 Currency Sign
-	{ 0x15,0x16,0x7C,0x16,0x15}, //   (101)  Y - 0x00A5 Yen Sign
-	{ 0x00,0x00,0x77,0x00,0x00}, //   (102)  | - 0x00A6 Broken Bar
-	{ 0x0A,0x55,0x55,0x55,0x28}, //   (103)    - 0x00A7 Section Sign
-	{ 0x00,0x01,0x00,0x01,0x00}, //   (104)  " - 0x00A8 Diaeresis
-	{ 0x00,0x0A,0x0D,0x0A,0x04}, //   (105)    - 0x00AA Feminine Ordinal Indicator
-	{ 0x08,0x14,0x2A,0x14,0x22}, //   (106) << - 0x00AB Left-Pointing Double Angle Quotation Mark
-	{ 0x04,0x04,0x04,0x04,0x1C}, //   (107)    - 0x00AC Not Sign
-	{ 0x00,0x08,0x08,0x08,0x00}, //   (108)  - - 0x00AD Soft Hyphen
-	{ 0x01,0x01,0x01,0x01,0x01}, //   (109)    - 0x00AF Macron
-	{ 0x00,0x02,0x05,0x02,0x00}, //   (110)    - 0x00B0 Degree Sign
-	{ 0x44,0x44,0x5F,0x44,0x44}, //   (111) +- - 0x00B1 Plus-Minus Sign
-	{ 0x00,0x00,0x04,0x02,0x01}, //   (112)  ` - 0x00B4 Acute Accent
-	{ 0x7E,0x20,0x20,0x10,0x3E}, //   (113)  u - 0x00B5 Micro Sign
-	{ 0x06,0x0F,0x7F,0x00,0x7F}, //   (114)    - 0x00B6 Pilcrow Sign
-	{ 0x00,0x18,0x18,0x00,0x00}, //   (115)  . - 0x00B7 Middle Dot
-	{ 0x00,0x40,0x50,0x20,0x00}, //   (116)    - 0x00B8 Cedilla
-	{ 0x00,0x0A,0x0D,0x0A,0x00}, //   (117)    - 0x00BA Masculine Ordinal Indicator
-	{ 0x22,0x14,0x2A,0x14,0x08}, //   (118) >> - 0x00BB Right-Pointing Double Angle Quotation Mark
-	{ 0x17,0x08,0x34,0x2A,0x7D}, //   (119) /4 - 0x00BC Vulgar Fraction One Quarter
-	{ 0x17,0x08,0x04,0x6A,0x59}, //   (120) /2 - 0x00BD Vulgar Fraction One Half
-	{ 0x30,0x48,0x45,0x40,0x20}, //   (121)  ? - 0x00BE Inverted Question Mark
-	{ 0x42,0x00,0x42,0x00,0x42}, //   (122)    - 0x00BF Bargraph - 0
-	{ 0x7E,0x42,0x00,0x42,0x00}, //   (123)    - 0x00BF Bargraph - 1
-	{ 0x7E,0x7E,0x00,0x42,0x00}, //   (124)    - 0x00BF Bargraph - 2
-	{ 0x7E,0x7E,0x7E,0x42,0x00}, //   (125)    - 0x00BF Bargraph - 3
-	{ 0x7E,0x7E,0x7E,0x7E,0x00}, //   (126)    - 0x00BF Bargraph - 4
-	{ 0x7E,0x7E,0x7E,0x7E,0x7E}, //   (127)    - 0x00BF Bargraph - 5
 };
 
 // writing a byte to the LCD
-volatile void OLED_write_val_to_reg(uint8_t val, uint8_t reg)
+volatile void OLED_send_cmd(char val)
 {
-	i2c_start();
-	i2c_send_address_write(OLED_address);
-	i2c_send_registry(reg);
-	i2c_send_data(val);
+	i2c_repeated_start_OLED();
+	i2c_write_val_to_reg_OLED(OLED_write_address,OLED_cmd_registry,val);
+	i2c_stop();
+}
+
+volatile void OLED_send_byte(char val)
+{
+	i2c_repeated_start_OLED();
+	i2c_write_val_to_reg_OLED(OLED_write_address,OLED_val_registry,val);
 	i2c_stop();
 }
 
@@ -164,37 +133,102 @@ volatile void OLED_init()
 {
 	// as per LCD.cpp file from MiniWii
 	// not clear about the start - repeated start options
-	OLED_write_val_to_reg(0xAE,OLED_cmd_registry);	// display off
-	OLED_write_val_to_reg(0xA4,OLED_cmd_registry);	// all pixels off
-	OLED_write_val_to_reg(0x20,OLED_cmd_registry);	// set memory addressing mode
-	OLED_write_val_to_reg(0x02,OLED_cmd_registry);	// set memory addressing mode to page addressing mode
-	OLED_write_val_to_reg(0xA1,OLED_cmd_registry);	// column address 127 mapped to SEG0 (POR)
-	OLED_write_val_to_reg(0xC8,OLED_cmd_registry);	// Scan from left to right
-	OLED_write_val_to_reg(0xA6,OLED_cmd_registry);	// Set WHITE chars on BLACK background
-	OLED_write_val_to_reg(0x81,OLED_cmd_registry);	// Setup CONTRAST CONTROL, following byte is the contrast Value
-	OLED_write_val_to_reg(0xAF,OLED_cmd_registry);	// contrast value between 1 ( == dull) to 256 ( == bright)
-	OLED_write_val_to_reg(0xD6,OLED_cmd_registry);	// Zoom
-	OLED_write_val_to_reg(0x01,OLED_cmd_registry);	// Zoom on
+	
+	OLED_send_cmd(0xAE);	// display off
+	OLED_send_cmd(0xA4);	// all pixels off
+	OLED_send_cmd(0x20);	// set memory addressing mode (following message sets the value)
+	OLED_send_cmd(0x02);	// set memory addressing mode to page addressing mode
+	OLED_send_cmd(0xA1);	// column address 127 mapped to SEG0 (POR)
+	OLED_send_cmd(0xC8);	// Scan from left to right
+	OLED_send_cmd(0xA6);	// Set WHITE chars on BLACK background (Normal Display)
+	OLED_send_cmd(0x81);	// Setup CONTRAST CONTROL, following byte is the contrast Value	(Contrast needs two commands after each other)
+	OLED_send_cmd(0xAF);		// contrast value between 1 ( == dull) to 256 ( == bright)
+	OLED_send_cmd(0xD6);	// Zoom
+	OLED_send_cmd(0x01);	// Zoom on
 	_delay_ms(100);
-	OLED_write_val_to_reg(0xAF,OLED_cmd_registry);	// display on
+	OLED_send_cmd(0xAF);	// display on
 }
 
-volatile void OLED_write_char(char char_in)
+volatile void OLED_clear()
 {
-	uint8_t temp = atoi(char_in);					// convert ascii to integer
+
+	OLED_send_cmd(0xA6);	// Set WHITE chars on BLACK background (Normal Display)
+	OLED_send_cmd(0xAE);	// display off
+	OLED_send_cmd(0x20);	// set memory addressing mode
+	OLED_send_cmd(0x00);	// set memory addressing mode to horizontal addressing mode
+	OLED_send_cmd(0xB0);	// set page address to 0
+	OLED_send_cmd(0x40);	// Display start line register to 0
+	OLED_send_cmd(0x00);		// Set low col address to 0
+	OLED_send_cmd(0x10);	// Set high col address to 0
+	for (uint16_t i=0;i<1024;i++)
+	{
+		OLED_send_byte(0x00);	// Filling every pixel with blank
+	}
+	OLED_send_cmd(0x81);	// Setup CONTRAST CONTROL, following byte is the contrast Value
+	OLED_send_cmd(0xAF);	// contrast value between 1 ( == dull) to 256 ( == bright) 
+	OLED_send_cmd(0xAF);	// Turn Display On
+	OLED_send_cmd(0xB0);	// set page address to 0
+}
+
+volatile void OLED_send_char(char *c)
+{
 	uint8_t i = 0;
-	/* here we need 5 values to write one letter on the screen */
-	for (i=0;i<5;i++)
+	for (i;i<5;i++)
 	{
-		OLED_write_val_to_reg(Font_Lookup[temp][i],OLED_val_registry);	// send integer
+		OLED_send_byte(Font_Lookup[(*c)-32][i]);
 	}
+	OLED_send_byte(0);
+	OLED_send_byte(0);
 }
 
-volatile void OLED_write_string(char *string)
+// Sending String to the OLED
+volatile void OLED_send_string(char *c)
 {
-	while(*string)
+	while(*c)
 	{
-		OLED_write_char(*string)
-		string++;
+			uint8_t i = 0;
+			for (i;i<5;i++)
+			{
+				OLED_send_byte(Font_Lookup[(*c)-32][i]);
+			}
+			OLED_send_byte(0);
+			OLED_send_byte(0);
+			*c++;
 	}
+			OLED_set_pos_0();	// to reset the pointer to the upper left corner
+}
+
+// Sending a number to the OLED
+volatile void OLED_send_num(int32_t num)
+{
+	char k[31];
+	ltoa(num, k, 10);	// convert long to asci -> decimal system
+	OLED_send_string(k);
+}
+
+volatile void OLED_set_position(uint8_t x, uint8_t y)
+{
+	// Lines only from 0 to 7
+	//if (*line >= 8) *line = 7;
+	//if (*line < 0) *line = 0;
+	
+	OLED_send_cmd(0xB0+(y));	// page address
+	OLED_send_cmd(0x00+(8*(x)&0x0F));	     //set low col address	(Taking the y value (times 8 to achieve 1 CHAR shift) and Masking it for the First four bits)
+	OLED_send_cmd(0x10+((8*(x)>>4)&0x0F));  //set high col address (Taking the y value (times 8 to achieve 1 CHAR shift), shifting it to position and Masking it for the First four bits)
+}
+
+volatile void OLED_set_pos_mid()
+{
+	OLED_send_cmd(0xB0);	// page address
+	OLED_send_cmd(0x07);	     //set low col address	(Taking the y value and Masking it for the First four bits)	00 - 0F
+	OLED_send_cmd(0x17);  //set high col address (Taking the y value, shifting it to position and Masking it for the First four bits) 10 - 1F
+	
+}
+
+volatile void OLED_set_pos_0()
+{
+		// to reset the pointer to the upper left corner
+		OLED_send_cmd(0xB0);	// set page address to 0 => Reset the pointer on the screen
+		OLED_send_cmd(0x00);	// set col address low to 0
+		OLED_send_cmd(0x10);	// set col address high to 0
 }

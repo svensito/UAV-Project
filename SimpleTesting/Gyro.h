@@ -37,7 +37,7 @@
 /* Gyro reading*/
 
 void gyro_start(void);
-void temp_read(void);
+//void temp_read(void);
 void read_gyro_registry(char registry);
 void write_gyro_registry(char registry, char data);
 struct three_elements_obj gyro_read(void);
