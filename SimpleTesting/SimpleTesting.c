@@ -46,15 +46,15 @@ const enum{
 	OLED_t,		// 6
 	flag_t		// 7
 	};
-
-uint8_t task[8] = { TRUE,	// gyro_t - reading gyro data enabled (TRUE) /disabled (FALSE)
-					TRUE,	// acc_t - reading acc data enabled (TRUE) /disabled (FALSE)
-					FALSE,	// mag_t - reading mag data enabled (TRUE) /disabled (FALSE) -> too unreliable for navigation
-					FALSE,	// baro_t - reading baro data enabled (TRUE) /disabled (FALSE)
-					FALSE,	// speed_t - reading ADC speed data enabled (TRUE) /disabled (FALSE)
-					FALSE,	// serial_t - serial output enabled (TRUE) /disabled (FALSE)
-					FALSE,	// OLED_t - OLED output enabled (TRU) / disabled (FALSE)
-					FALSE};	// flag_t - This is the task flag itself! very important for proper operation
+							
+volatile uint8_t task_t =	(TRUE<<gyro_t)
+							|(TRUE<<acc_t)
+							|(FALSE<<mag_t)
+							|(TRUE<<baro_t)
+							|(FALSE<<speed_t)
+							|(TRUE<<serial_t)
+							|(TRUE<<OLED_t)
+							|(FALSE<<flag_t);
 //******************************************************************
 
 /********************
@@ -69,6 +69,10 @@ uint8_t task[8] = { TRUE,	// gyro_t - reading gyro data enabled (TRUE) /disabled
 uint8_t Ctrl_Mode = DIRECT_CTRL;		// First Test with Direct Law Only: DIRECT_LAW or NORMAL_LAW possible
 uint8_t Ctrl_Mode_prev = DIRECT_CTRL;	// Initialize as the same Mode
 uint8_t state_change = FALSE;			// Needed as a flag for state change
+
+uint8_t Ctrl_field[] = {
+		
+						};
 
 // Control Knob
 uint8_t Knob_State = 0;
@@ -267,12 +271,70 @@ ISR(TIMER0_COMP_vect)
 	if (comp_count >= 3)	// This gives multiple of 10ms	-> Change sample time accordingly
 	{
 		// Setting the task flag
-		task[flag_t] = 1;
+		task_flag_set();
 		comp_count = 0; // Resetting comp count
 	}
 	
 }
 
+//------------------------------------------------------
+//------------------------------------------------------
+// Setting Task Flag
+void task_flag_set()
+{
+	task_t |= (TRUE<<flag_t);	// Keeping all as is, and setting the flag_t bit
+}
+
+void task_flag_reset()
+{
+	task_t &= ~(TRUE<<flag_t);	// Keeping all as is, and erasing the flag_t bit
+}
+//------------------------------------------------------
+
+//------------------------------------------------------
+// Check for Task active
+uint8_t Task_active(uint8_t _task)
+ {
+ 	switch(_task)
+ 	{
+ 		case gyro_t:
+ 			if((task_t & (1<<gyro_t)) == TRUE) return TRUE;	 
+ 		break;
+		
+		case acc_t:
+			if(((task_t & (1<<acc_t))>>1) == TRUE) return TRUE;	// Respect the Bit shift, otherwise no TRUE will be set
+		break;
+
+		case mag_t:
+			if(((task_t & (1<<mag_t))>>2) == TRUE) return TRUE;
+		break;	 
+		 
+		case baro_t:
+			if(((task_t & (1<<baro_t))>>3) == TRUE) return TRUE;
+		break;
+		
+		case speed_t:
+			if(((task_t & (1<<speed_t))>>4) == TRUE) return TRUE;
+		break;
+		
+		case serial_t:
+			if(((task_t & (1<<serial_t))>>5) == TRUE) return TRUE;
+		break;
+		
+		case OLED_t:
+			if(((task_t & (1<<OLED_t))>>6) == TRUE) return TRUE;
+		break;
+		
+		case flag_t:
+			if(((task_t & (1<<flag_t))>>7) == TRUE) return TRUE;
+		break;
+		
+
+ 	}
+	 		// else
+	 		return FALSE;
+ 	
+ }
 //------------------------------------------------------
 
 //-----------------------------------
@@ -337,24 +399,24 @@ int main(void)
 	// Initialize I2C communication
 	i2c_initialize();
 		
-	if(task[gyro_t] == TRUE)	
+	if(Task_active(gyro_t) == TRUE)	
 	{
 		gyro_start();
 		gyro_calibration();
 	}		
-	if(task[acc_t] == TRUE)	acc_start();
-	if(task[baro_t] == TRUE)	
+	if(Task_active(acc_t) == TRUE)	acc_start();
+	if(Task_active(baro_t) == TRUE)	
 	{
 		baro_start();
 		baro_calibration();
 	}		
-	if(task[mag_t] == TRUE)	mag_start();
-	if(task[speed_t] == TRUE)	
+	if(Task_active(mag_t) == TRUE)	mag_start();
+	if(Task_active(speed_t) == TRUE)	
 	{
 		ADC_start();
 	}		
 	
-	if (task[OLED_t] == TRUE)
+	if (Task_active(OLED_t) == TRUE)
 	{
 		write_string_ln("OLED Init");
 		OLED_init();
@@ -388,6 +450,8 @@ int main(void)
 	// Turn on Light for check
 	PORTD |= (1<<PD4);
 	
+	write_var_ln(task_t);
+	
 	while(1)
     {
 			// Program Code (infinite loop)
@@ -418,15 +482,14 @@ int main(void)
 				write_string_ln("Test");
 			}
 			
-			if(task[flag_t] == 1)
+			if(Task_active(flag_t) == TRUE)	// check if task flag is set
 			{
 				// Resetting the task call:
-				task[flag_t] = 0;
+				task_flag_reset();
 				//bla_cnt++;
-				
 				// Defining struct to read the gyro channels
 				struct three_elements_obj turn_rate;
-				if(task[gyro_t] == TRUE)	
+				if(Task_active(gyro_t) == TRUE)	
 				{
 					// turn rates
 					turn_rate = gyro_read();
@@ -447,7 +510,7 @@ int main(void)
 					
 				}
 				struct acc_readings_obj acc_val;
-				if(task[acc_t] == TRUE)	
+				if(Task_active(acc_t) == TRUE)	
 				{
 					acc_val = acc_reading();
 					acc_x_raw = acc_val.a_x;
@@ -458,7 +521,7 @@ int main(void)
 					//write_string("acc: "); write_var_ln(acc_reading());
 					
 				}
-				if(task[baro_t] == TRUE)// && (bla_cnt==100))	
+				if(Task_active(baro_t) == TRUE)// && (bla_cnt==100))	
 				{
 					altitude_raw = baro_read();
 					// low pass filter on the altitude reading
@@ -466,8 +529,8 @@ int main(void)
 					//bla_cnt = 0;
 				}
 						
-				if(task[mag_t] == TRUE)	heading = mag_read(Phi,Theta); // heading is too unreliable for navigation
-				if(task[speed_t] == TRUE)
+				if(Task_active(mag_t) == TRUE)	heading = mag_read(Phi,Theta); // heading is too unreliable for navigation
+				if(Task_active(speed_t) == TRUE)
 				{
 					
 					if (speed_cnt == 8)		// to reduce the sampling time of the speed reading...
@@ -565,10 +628,10 @@ int main(void)
 				P_11_Psi -= K_1_Psi * P_01_Psi;
 				*/
 				
-				
+				/*
 				write_var(Phi);write_string(";");
 				write_var(Theta);write_string_ln(";");
-				
+				*/
 				
 
 				
@@ -1244,7 +1307,7 @@ int main(void)
 					
 				}
 					// writing all data to serial port if enabled
-					if(task[serial_t] == TRUE)	// set serial log variable to enable / disable output
+					if(Task_active(serial_t) == TRUE)	// set serial log variable to enable / disable output
 					{
 						
 						write_var(ctrl_out[motor]);write_string(";");
@@ -1281,17 +1344,9 @@ int main(void)
 						write_string_ln(";");
 					}
 					
-					if (task[OLED_t] == TRUE) // && Change is True -> Update the OLED)
+					
+					if (Task_active(OLED_t) == TRUE) // && Change is True -> Update the OLED)
 					{
-						
-						
-								OLED_send_string("LAT");	// GPS LAT
-								OLED_set_position(0,1);
-								OLED_send_string("LON");	// GPS LON
-								OLED_set_position(0,2);
-								OLED_send_string("HOME");	// GPS Home set or no
-								OLED_set_position(0,3);
-								OLED_send_string("WPH");	// Waypoint Heading
 						test_cnt++;
 						if (test_cnt == 33)
 						{
