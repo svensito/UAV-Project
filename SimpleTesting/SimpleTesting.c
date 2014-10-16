@@ -36,25 +36,24 @@
 
 //******************************************************************
 // These are the task flags, to set them use the task array
-const enum{
-	gyro_t = 0,	// 0
-	acc_t,		// 1
-	mag_t,		// 2
-	baro_t,		// 3
-	speed_t,	// 4
-	serial_t,	// 5
-	OLED_t,		// 6
-	flag_t		// 7
-	};
+
+#define GYRO_T		0
+#define	ACC_T		1
+#define MAG_T		2
+#define BARO_T		3
+#define	SPEED_T		4
+#define	SERIAL_T	5
+#define OLED_T		6
+#define flag_t		7
 							
-volatile uint8_t task_t =	(TRUE<<gyro_t)
-							|(TRUE<<acc_t)
-							|(FALSE<<mag_t)
-							|(TRUE<<baro_t)
-							|(FALSE<<speed_t)
-							|(TRUE<<serial_t)
-							|(TRUE<<OLED_t)
-							|(FALSE<<flag_t);
+volatile uint8_t task_t =	(FALSE<<GYRO_T)			// gyroscope task activation TRUE - enabled | FALSE - disabled
+							|(FALSE<<ACC_T)			// accelerometer task activation TRUE - enabled | FALSE - disabled
+							|(FALSE<<MAG_T)			// magnetometer task activation TRUE - enabled | FALSE - disabled
+							|(FALSE<<BARO_T)			// barometer task activation (altitude) TRUE - enabled | FALSE - disabled
+							|(FALSE<<SPEED_T)		// speed task activation TRUE - enabled | FALSE - disabled
+							|(TRUE<<SERIAL_T)		// serial output activation TRUE - enabled | FALSE - disabled
+							|(TRUE<<OLED_T)			// OLED output activation TRUE - enabled | FALSE - disabled
+							|(FALSE<<flag_t);		// This is the Task Flag itself. DO NOT CHANGE.
 //******************************************************************
 
 /********************
@@ -66,14 +65,25 @@ volatile uint8_t task_t =	(TRUE<<gyro_t)
 /********************
  Control Modes
  ********************/
-uint8_t Ctrl_Mode = DIRECT_CTRL;		// First Test with Direct Law Only: DIRECT_LAW or NORMAL_LAW possible
-uint8_t Ctrl_Mode_prev = DIRECT_CTRL;	// Initialize as the same Mode
-uint8_t state_change = FALSE;			// Needed as a flag for state change
 
-uint8_t Ctrl_field[] = {
-		
-						};
+// Bit Positions
+#define CTRL_MODE_PREV		0	// 3 Bits reserved
+#define CTRL_MODE			3	// 3 Bits reserved
+#define CTRL_STATE_CHANGE	6	// 1 Bit reserved
 
+// Control Mode Values
+#define DIRECT_C	0x00
+#define NORMAL_C	0x01
+#define DAMPED_C	0x02
+#define HOLD_C		0x03
+#define TUNE_C		0x04
+
+// Bit 0-2 Three Bits for Prev Control Mode
+// Bit 3-5 Three Bits for Control Mode
+uint8_t Ctrl_field = (DIRECT_C<<CTRL_MODE_PREV)|	// Previous Control Mode	(Bit 0-2)	3 Bits = 7 modes
+					 (DIRECT_C<<CTRL_MODE)|			// Control Mode				(Bit 3-5)	3 Bits = 7 modes
+					 (FALSE<<CTRL_STATE_CHANGE);	// State Change Bit			(Bit 6)
+	
 // Control Knob
 uint8_t Knob_State = 0;
 uint8_t prev_Knob_State = 0;
@@ -193,11 +203,11 @@ int8_t Ki_head = 0;		// simulation showed that PD is convenient for Heading Trac
  GPS Data
  ********************/
 int32_t GPS_POS_CURRENT_X, GPS_POS_CURRENT_Y, GPS_POS_GOAL_X, GPS_POS_GOAL_Y,GPS_POS_HOME_X, GPS_POS_HOME_Y, GPS_POS_DIF_X, GPS_POS_DIF_Y = 0;
- int32_t GPS_POS_GOAL_WP[5][3] = {{0,0,0},		// Waypoint 1: POSX, POSY, ALT
- 								 {0,0,0},		// Waypoint 2: POSX, POSY, ALT
- 								 {0,0,0},		// Waypoint 3: POSX, POSY, ALT
- 								 {0,0,0},		// Waypoint 4: POSX, POSY, ALT
- 								 {0,0,0}};		// Waypoint 5: POSX, POSY, ALT
+ int32_t GPS_POS_GOAL_WP[5][2] = {{0,0},		// Waypoint 1: POSX, POSY, ALT
+ 								 {0,0},		// Waypoint 2: POSX, POSY, ALT
+ 								 {0,0},		// Waypoint 3: POSX, POSY, ALT
+ 								 {0,0},		// Waypoint 4: POSX, POSY, ALT
+ 								 {0,0}};		// Waypoint 5: POSX, POSY, ALT
 #define WP1	0
 #define WP2	1
 #define WP3	2
@@ -228,7 +238,6 @@ uint8_t cal_cnt = 0;
 
 
 // Task Timer definitions
-volatile uint8_t task_flag = 0;		// this flag will be set every 20ms and reset in the application
 uint8_t comp_count = 0;
 // Timer Sample time
 float sample_time = 0;
@@ -284,7 +293,7 @@ void task_flag_set()
 {
 	task_t |= (TRUE<<flag_t);	// Keeping all as is, and setting the flag_t bit
 }
-
+// Resetting Task Flag
 void task_flag_reset()
 {
 	task_t &= ~(TRUE<<flag_t);	// Keeping all as is, and erasing the flag_t bit
@@ -297,32 +306,32 @@ uint8_t Task_active(uint8_t _task)
  {
  	switch(_task)
  	{
- 		case gyro_t:
- 			if((task_t & (1<<gyro_t)) == TRUE) return TRUE;	 
+ 		case GYRO_T:
+ 			if((task_t & (1<<GYRO_T)) == TRUE) return TRUE;	 
  		break;
 		
-		case acc_t:
-			if(((task_t & (1<<acc_t))>>1) == TRUE) return TRUE;	// Respect the Bit shift, otherwise no TRUE will be set
+		case ACC_T:
+			if(((task_t & (1<<ACC_T))>>1) == TRUE) return TRUE;	// Respect the Bit shift, otherwise no TRUE will be set
 		break;
 
-		case mag_t:
-			if(((task_t & (1<<mag_t))>>2) == TRUE) return TRUE;
+		case MAG_T:
+			if(((task_t & (1<<MAG_T))>>2) == TRUE) return TRUE;
 		break;	 
 		 
-		case baro_t:
-			if(((task_t & (1<<baro_t))>>3) == TRUE) return TRUE;
+		case BARO_T:
+			if(((task_t & (1<<BARO_T))>>3) == TRUE) return TRUE;
 		break;
 		
-		case speed_t:
-			if(((task_t & (1<<speed_t))>>4) == TRUE) return TRUE;
+		case SPEED_T:
+			if(((task_t & (1<<SPEED_T))>>4) == TRUE) return TRUE;
 		break;
 		
-		case serial_t:
-			if(((task_t & (1<<serial_t))>>5) == TRUE) return TRUE;
+		case SERIAL_T:
+			if(((task_t & (1<<SERIAL_T))>>5) == TRUE) return TRUE;
 		break;
 		
-		case OLED_t:
-			if(((task_t & (1<<OLED_t))>>6) == TRUE) return TRUE;
+		case OLED_T:
+			if(((task_t & (1<<OLED_T))>>6) == TRUE) return TRUE;
 		break;
 		
 		case flag_t:
@@ -335,6 +344,45 @@ uint8_t Task_active(uint8_t _task)
 	 		return FALSE;
  	
  }
+//------------------------------------------------------
+
+// -----------------------------------------------------
+// Control Mode Setting
+void Set_Control_Mode(uint8_t mode)
+{
+	// First Reset the three Control Mode bits
+	Ctrl_field &= ~(0x07<<CTRL_MODE);		// set all three bits to zero, beginning with Bit 3
+	Ctrl_field |= (mode<<CTRL_MODE);		// set to position of three the mode selected	
+}
+
+void Set_Control_Mode_Prev(uint8_t mode)
+{
+	// First Reset the three Control Mode bits
+	Ctrl_field &= ~(0x07<<CTRL_MODE_PREV);		// set all three bits to zero, beginning with Bit 0
+	Ctrl_field |= (mode<<CTRL_MODE_PREV);		// set to position of three the mode selected
+}
+
+uint8_t Read_Control_Mode()
+{
+	return((Ctrl_field & 0x38)>>CTRL_MODE);	// Masking the middle three bits (0x38)
+}
+
+uint8_t Read_Control_Mode_Prev()
+{
+	return((Ctrl_field & 0x07)>>CTRL_MODE_PREV); // Masking the lowest three bits (0x07)
+}
+
+void Ctrl_State_Change(uint8_t change)		// handle "TRUE" or "FALSE"
+{
+		Ctrl_field &= ~(0x01<<CTRL_STATE_CHANGE);		// set the bit to zero
+		Ctrl_field |= (change<<CTRL_STATE_CHANGE);		// set value of input
+}
+
+uint8_t Ctrl_State_Change_Read()
+{
+	return((Ctrl_field & 0x40)>>CTRL_STATE_CHANGE);		// Masking the single 6th bit (0x38) and shift to right
+}
+
 //------------------------------------------------------
 
 //-----------------------------------
@@ -399,24 +447,24 @@ int main(void)
 	// Initialize I2C communication
 	i2c_initialize();
 		
-	if(Task_active(gyro_t) == TRUE)	
+	if(Task_active(GYRO_T) == TRUE)	
 	{
 		gyro_start();
 		gyro_calibration();
 	}		
-	if(Task_active(acc_t) == TRUE)	acc_start();
-	if(Task_active(baro_t) == TRUE)	
+	if(Task_active(ACC_T) == TRUE)	acc_start();
+	if(Task_active(BARO_T) == TRUE)	
 	{
 		baro_start();
 		baro_calibration();
 	}		
-	if(Task_active(mag_t) == TRUE)	mag_start();
-	if(Task_active(speed_t) == TRUE)	
+	if(Task_active(MAG_T) == TRUE)	mag_start();
+	if(Task_active(SPEED_T) == TRUE)	
 	{
 		ADC_start();
 	}		
 	
-	if (Task_active(OLED_t) == TRUE)
+	if (Task_active(OLED_T) == TRUE)
 	{
 		write_string_ln("OLED Init");
 		OLED_init();
@@ -450,7 +498,14 @@ int main(void)
 	// Turn on Light for check
 	PORTD |= (1<<PD4);
 	
-	write_var_ln(task_t);
+	
+	OLED_set_position(4,0);
+	OLED_send_num(Ctrl_State_Change_Read());
+	
+	Ctrl_State_Change(TRUE);
+	OLED_set_position(4,1);
+	OLED_send_num(Ctrl_State_Change_Read());
+
 	
 	while(1)
     {
@@ -489,7 +544,7 @@ int main(void)
 				//bla_cnt++;
 				// Defining struct to read the gyro channels
 				struct three_elements_obj turn_rate;
-				if(Task_active(gyro_t) == TRUE)	
+				if(Task_active(GYRO_T) == TRUE)	
 				{
 					// turn rates
 					turn_rate = gyro_read();
@@ -510,7 +565,7 @@ int main(void)
 					
 				}
 				struct acc_readings_obj acc_val;
-				if(Task_active(acc_t) == TRUE)	
+				if(Task_active(ACC_T) == TRUE)	
 				{
 					acc_val = acc_reading();
 					acc_x_raw = acc_val.a_x;
@@ -521,7 +576,7 @@ int main(void)
 					//write_string("acc: "); write_var_ln(acc_reading());
 					
 				}
-				if(Task_active(baro_t) == TRUE)// && (bla_cnt==100))	
+				if(Task_active(BARO_T) == TRUE)// && (bla_cnt==100))	
 				{
 					altitude_raw = baro_read();
 					// low pass filter on the altitude reading
@@ -529,8 +584,8 @@ int main(void)
 					//bla_cnt = 0;
 				}
 						
-				if(Task_active(mag_t) == TRUE)	heading = mag_read(Phi,Theta); // heading is too unreliable for navigation
-				if(Task_active(speed_t) == TRUE)
+				if(Task_active(MAG_T) == TRUE)	heading = mag_read(Phi,Theta); // heading is too unreliable for navigation
+				if(Task_active(SPEED_T) == TRUE)
 				{
 					
 					if (speed_cnt == 8)		// to reduce the sampling time of the speed reading...
@@ -649,10 +704,10 @@ int main(void)
 				// 1 deg = 111km
 				// 1 minute = 1,85km
 				// 1 second = 0,031km
-				GPS_POS_LAT_DEG = GPS_POS_DIF_Y/10000000;
-				GPS_POS_LAT_MIN = (GPS_POS_DIF_Y/100000)-(GPS_POS_LAT_DEG*100);
-				GPS_POS_LAT_SEC = (GPS_POS_DIF_Y)-((GPS_POS_LAT_DEG*10000000)+(GPS_POS_LAT_MIN*100000));
-				GPS_DIS_TO_GOAL = GPS_POS_LAT_DEG*111000 + GPS_POS_LAT_MIN*1850 + (((GPS_POS_LAT_SEC*60*31)/100000));
+// 				GPS_POS_LAT_DEG = GPS_POS_DIF_Y/10000000;
+// 				GPS_POS_LAT_MIN = (GPS_POS_DIF_Y/100000)-(GPS_POS_LAT_DEG*100);
+// 				GPS_POS_LAT_SEC = (GPS_POS_DIF_Y)-((GPS_POS_LAT_DEG*10000000)+(GPS_POS_LAT_MIN*100000));
+// 				GPS_DIS_TO_GOAL = GPS_POS_LAT_DEG*111000 + GPS_POS_LAT_MIN*1850 + (((GPS_POS_LAT_SEC*60*31)/100000));
 				//write_var(GPS_POS_LAT_MIN);write_string(";");write_var(GPS_POS_LAT_SEC);write_string_ln(";");
 				//write_var_ln(atol_new(GPS_RMC[GPS_RMC_LATITUDE][0])*10 + atol_new(GPS_RMC[GPS_RMC_LATITUDE][1]));
 				
@@ -786,31 +841,31 @@ int main(void)
 				//*******************************************
 				// Control of Modes
 				// changing from knob to normal switch for mode control
-				if(ctrl_in[5]>144) Ctrl_Mode = HOLD_CTRL;								// Dn Position
-				else if (ctrl_in[5] > 139 && ctrl_in[5] < 144) Ctrl_Mode = DIRECT_CTRL;	// Middle Position
-				else Ctrl_Mode = DAMPED_CTRL;											// Up Position
+				if(ctrl_in[5]>144) Set_Control_Mode(HOLD_CTRL);							// Dn Position
+				else if (ctrl_in[5] > 139 && ctrl_in[5] < 144) Set_Control_Mode(DIRECT_CTRL);	// Middle Position
+				else Set_Control_Mode(DAMPED_CTRL);											// Up Position
 								
-				if(Ctrl_Mode_prev != Ctrl_Mode)
+				if(Read_Control_Mode_Prev() != Read_Control_Mode())
 				{
 					// If a state change happens
-					state_change = TRUE;
+					Ctrl_State_Change(TRUE);
 				}
 				else
 				{
 					// Otherwise no state change
-					state_change = FALSE;
+					Ctrl_State_Change(FALSE);
 				}
 				
 				//******************************************						
 				// use this flag to switch between long / lat tuning mode
 				uint8_t mode = 3;
 				
-				switch(Ctrl_Mode)
+				switch(Read_Control_Mode())
 				{
 					case DIRECT_CTRL:
 					// Direct Law is used for direct Remote Control input -> Servos
 					// + / - in front of the long bracket inverses the Control
-						if(state_change == TRUE)
+						if(Ctrl_State_Change_Read() == TRUE)
 						{
 							write_string_ln("DIRECT CTRL");
 						}
@@ -1001,7 +1056,7 @@ int main(void)
 					case DAMPED_CTRL:
 					// Heading control test
 					// entry condition
-						if(state_change == TRUE)
+						if(Ctrl_State_Change_Read() == TRUE)
 						{
 							write_string_ln("Damped CONTROL");
 							// Setting current values as control values
@@ -1078,7 +1133,7 @@ int main(void)
 					
 					case HOLD_CTRL:
 						// entry condition
-						if(state_change == TRUE)
+						if(Ctrl_State_Change_Read() == TRUE)
 						{
 							write_string_ln("HOLD CONTROL");
 							// Setting current values as control values
@@ -1307,7 +1362,7 @@ int main(void)
 					
 				}
 					// writing all data to serial port if enabled
-					if(Task_active(serial_t) == TRUE)	// set serial log variable to enable / disable output
+					if(Task_active(SERIAL_T) == TRUE)	// set serial log variable to enable / disable output
 					{
 						
 						write_var(ctrl_out[motor]);write_string(";");
@@ -1345,7 +1400,7 @@ int main(void)
 					}
 					
 					
-					if (Task_active(OLED_t) == TRUE) // && Change is True -> Update the OLED)
+					if (Task_active(OLED_T) == 2) // && Change is True -> Update the OLED)
 					{
 						test_cnt++;
 						if (test_cnt == 33)
@@ -1375,7 +1430,7 @@ int main(void)
 						
 					}
 					
-				Ctrl_Mode_prev = Ctrl_Mode;		// Setting previous State
+				Set_Control_Mode_Prev(Read_Control_Mode());		// Setting previous State
 				
 				ctrl_in_prev[9] = ctrl_in;
 				//GPS_string_prev[GPS_LONGITUDE][] = GPS_string[GPS_LONGITUDE];
