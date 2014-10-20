@@ -44,11 +44,11 @@ int16_t	gyro_r		= 0;
 
 // Gyro Calibration Variables
 // idea: count 100 samples (IMU needs to be steady) and calculate the offset
-uint8_t cal_count = 0;
+int cal_count = 0;
 int16_t gyro_p_offset = 0;
 int16_t gyro_q_offset = 0;
 int16_t gyro_r_offset = 0;
-uint8_t cal_complete = FALSE;	// Flag to cover if the calibration is complete
+int cal_complete = FALSE;	// Flag to cover if the calibration is complete
 
 // Gyro functions
 

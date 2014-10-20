@@ -46,12 +46,12 @@
 #define OLED_T		6
 #define flag_t		7
 							
-volatile uint8_t task_t =	(FALSE<<GYRO_T)			// gyroscope task activation TRUE - enabled | FALSE - disabled
-							|(FALSE<<ACC_T)			// accelerometer task activation TRUE - enabled | FALSE - disabled
+volatile uint8_t task_t =	(TRUE<<GYRO_T)			// gyroscope task activation TRUE - enabled | FALSE - disabled
+							|(TRUE<<ACC_T)			// accelerometer task activation TRUE - enabled | FALSE - disabled
 							|(FALSE<<MAG_T)			// magnetometer task activation TRUE - enabled | FALSE - disabled
 							|(FALSE<<BARO_T)			// barometer task activation (altitude) TRUE - enabled | FALSE - disabled
 							|(FALSE<<SPEED_T)		// speed task activation TRUE - enabled | FALSE - disabled
-							|(TRUE<<SERIAL_T)		// serial output activation TRUE - enabled | FALSE - disabled
+							|(FALSE<<SERIAL_T)		// serial output activation TRUE - enabled | FALSE - disabled
 							|(TRUE<<OLED_T)			// OLED output activation TRUE - enabled | FALSE - disabled
 							|(FALSE<<flag_t);		// This is the Task Flag itself. DO NOT CHANGE.
 //******************************************************************
@@ -304,44 +304,46 @@ void task_flag_reset()
 // Check for Task active
 uint8_t Task_active(uint8_t _task)
  {
- 	switch(_task)
- 	{
- 		case GYRO_T:
- 			if((task_t & (1<<GYRO_T)) == TRUE) return TRUE;	 
- 		break;
-		
-		case ACC_T:
-			if(((task_t & (1<<ACC_T))>>1) == TRUE) return TRUE;	// Respect the Bit shift, otherwise no TRUE will be set
-		break;
-
-		case MAG_T:
-			if(((task_t & (1<<MAG_T))>>2) == TRUE) return TRUE;
-		break;	 
-		 
-		case BARO_T:
-			if(((task_t & (1<<BARO_T))>>3) == TRUE) return TRUE;
-		break;
-		
-		case SPEED_T:
-			if(((task_t & (1<<SPEED_T))>>4) == TRUE) return TRUE;
-		break;
-		
-		case SERIAL_T:
-			if(((task_t & (1<<SERIAL_T))>>5) == TRUE) return TRUE;
-		break;
-		
-		case OLED_T:
-			if(((task_t & (1<<OLED_T))>>6) == TRUE) return TRUE;
-		break;
-		
-		case flag_t:
-			if(((task_t & (1<<flag_t))>>7) == TRUE) return TRUE;
-		break;
-		
-
- 	}
-	 		// else
-	 		return FALSE;
+	 if(((task_t & (1<<_task))>>_task) == TRUE) return TRUE;
+	 else return FALSE;
+//  	switch(_task)
+//  	{
+//  		case GYRO_T:
+//  			if((task_t & (1<<GYRO_T)) == TRUE) return TRUE;	 
+//  		break;
+// 		
+// 		case ACC_T:
+// 			if(((task_t & (1<<ACC_T))>>1) == TRUE) return TRUE;	// Respect the Bit shift, otherwise no TRUE will be set
+// 		break;
+// 
+// 		case MAG_T:
+// 			if(((task_t & (1<<MAG_T))>>2) == TRUE) return TRUE;
+// 		break;	 
+// 		 
+// 		case BARO_T:
+// 			if(((task_t & (1<<BARO_T))>>3) == TRUE) return TRUE;
+// 		break;
+// 		
+// 		case SPEED_T:
+// 			if(((task_t & (1<<SPEED_T))>>4) == TRUE) return TRUE;
+// 		break;
+// 		
+// 		case SERIAL_T:
+// 			if(((task_t & (1<<SERIAL_T))>>5) == TRUE) return TRUE;
+// 		break;
+// 		
+// 		case OLED_T:
+// 			if(((task_t & (1<<OLED_T))>>6) == TRUE) return TRUE;
+// 		break;
+// 		
+// 		case flag_t:
+// 			if(((task_t & (1<<flag_t))>>7) == TRUE) return TRUE;
+// 		break;
+// 		
+// 
+//  	}
+// 	 		// else
+// 	 		return FALSE;
  	
  }
 //------------------------------------------------------
@@ -530,13 +532,7 @@ int main(void)
 				*/
 				UART_READY_FLAG = FALSE;
 			}
-			
-			if (task_flag == 2)
-			{
-				task_flag = 0;
-				write_string_ln("Test");
-			}
-			
+						
 			if(Task_active(flag_t) == TRUE)	// check if task flag is set
 			{
 				// Resetting the task call:
@@ -561,7 +557,8 @@ int main(void)
 					p_filt_prev = p_filt;
 					r_filt_prev = r_filt;
 					
-					
+									write_var(p_filt);write_string(";");
+									write_var(q_filt);write_string(";");
 					
 				}
 				struct acc_readings_obj acc_val;
@@ -574,7 +571,8 @@ int main(void)
 					Theta_acc = atan2(acc_x_raw,-acc_z_raw)*180/PI;
 					Phi_acc = atan2(-acc_y_raw,-acc_z_raw)*180/PI;
 					//write_string("acc: "); write_var_ln(acc_reading());
-					
+					write_var(Theta_acc);write_string(";");
+					write_var(Phi_acc);write_string(";");
 				}
 				if(Task_active(BARO_T) == TRUE)// && (bla_cnt==100))	
 				{
@@ -683,10 +681,10 @@ int main(void)
 				P_11_Psi -= K_1_Psi * P_01_Psi;
 				*/
 				
-				/*
+				
 				write_var(Phi);write_string(";");
 				write_var(Theta);write_string_ln(";");
-				*/
+				
 				
 
 				
@@ -841,9 +839,9 @@ int main(void)
 				//*******************************************
 				// Control of Modes
 				// changing from knob to normal switch for mode control
-				if(ctrl_in[5]>144) Set_Control_Mode(HOLD_CTRL);							// Dn Position
-				else if (ctrl_in[5] > 139 && ctrl_in[5] < 144) Set_Control_Mode(DIRECT_CTRL);	// Middle Position
-				else Set_Control_Mode(DAMPED_CTRL);											// Up Position
+				if(ctrl_in[5]>144) Set_Control_Mode(DIRECT_C);							// Dn Position
+				else if (ctrl_in[5] > 139 && ctrl_in[5] < 144) Set_Control_Mode(DIRECT_C);	// Middle Position
+				else Set_Control_Mode(DIRECT_C);											// Up Position
 								
 				if(Read_Control_Mode_Prev() != Read_Control_Mode())
 				{
@@ -862,7 +860,7 @@ int main(void)
 				
 				switch(Read_Control_Mode())
 				{
-					case DIRECT_CTRL:
+					case DIRECT_C:
 					// Direct Law is used for direct Remote Control input -> Servos
 					// + / - in front of the long bracket inverses the Control
 						if(Ctrl_State_Change_Read() == TRUE)
@@ -897,7 +895,7 @@ int main(void)
 						 
 					break;
 					
-					case TUNE_CTRL:
+					case TUNE_C:
 						// Tuning control mode
 // 							
 // 
@@ -1053,7 +1051,7 @@ int main(void)
 										
 					break;
 					
-					case DAMPED_CTRL:
+					case DAMPED_C:
 					// Heading control test
 					// entry condition
 						if(Ctrl_State_Change_Read() == TRUE)
@@ -1131,7 +1129,7 @@ int main(void)
 
 					break;
 					
-					case HOLD_CTRL:
+					case HOLD_C:
 						// entry condition
 						if(Ctrl_State_Change_Read() == TRUE)
 						{
