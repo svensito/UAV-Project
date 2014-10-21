@@ -128,7 +128,6 @@ extern void write_char(char *c)
     }
     
     UDR = c;                      /* Send char */
-    	
 }
 
 // UART write string

@@ -14,15 +14,15 @@ unsigned char i2cRead(char address, char reg);
 void i2c_initialize();
 void i2c_start();
 void i2c_repeated_start();
+void i2c_repeated_start_OLED();
 void i2c_send_address_read(char);
+void i2c_write_val_to_reg_OLED(char,char,char);
+void i2c_wait_transmission();
 void i2c_send_address_write(char);
 void i2c_send_registry(char);
 void i2c_send_data(char);
 void i2c_stop();
 int i2c_read_data_nmak();
 int i2c_read_data_mak();
-// OLED i2c functions
-void i2c_repeated_start_OLED();
-void i2c_write_val_to_reg_OLED(char,char,char);
-void i2c_wait_transmission();
+
 #endif /* PORT_H_ */

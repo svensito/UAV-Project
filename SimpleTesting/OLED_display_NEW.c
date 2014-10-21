@@ -21,8 +21,8 @@
 // this look up is needed for 
 // modified look up for needs -> source http://www.asciitable.com/index/asciifull.gif
 const uint8_t Font_Lookup[][5] = { // Refer to "Times New Roman" Font Database... 5 x 7 font
-	{ 0x00,0x00,0x00,0x00,0x00},	// As "Space" is the 32nd element within the ascii table, we are subtractin 32 in the formula
-	{ 0x00,0x00,0x4F,0x00,0x00}, //   (  1)  ! - 0x0021 Exclamation Mark	
+	{ 0x00,0x00,0x00,0x00,0x00},
+	{ 0x00,0x00,0x4F,0x00,0x00}, //   (  1)  ! - 0x0021 Exclamation Mark
 	{ 0x00,0x07,0x00,0x07,0x00}, //   (  2)  " - 0x0022 Quotation Mark
 	{ 0x14,0x7F,0x14,0x7F,0x14}, //   (  3)  # - 0x0023 Number Sign
 	{ 0x24,0x2A,0x7F,0x2A,0x12}, //   (  4)  $ - 0x0024 Dollar Sign
@@ -115,14 +115,14 @@ const uint8_t Font_Lookup[][5] = { // Refer to "Times New Roman" Font Database..
 };
 
 // writing a byte to the LCD
-void OLED_send_cmd(char val)
+volatile void OLED_send_cmd(char val)
 {
 	i2c_repeated_start_OLED();
 	i2c_write_val_to_reg_OLED(OLED_write_address,OLED_cmd_registry,val);
 	i2c_stop();
 }
 
-void OLED_send_byte(char val)
+volatile void OLED_send_byte(char val)
 {
 	i2c_repeated_start_OLED();
 	i2c_write_val_to_reg_OLED(OLED_write_address,OLED_val_registry,val);
@@ -170,22 +170,13 @@ volatile void OLED_clear()
 	OLED_send_cmd(0xB0);	// set page address to 0
 }
 
-void OLED_send_char(char *c)
+volatile void OLED_send_char(char *c)
 {
-	uint8_t temp = (uint8_t)(*c);
-	temp -=32;
-	write_var_ln(temp);
-		OLED_send_byte(Font_Lookup[temp][0]);
-		OLED_send_byte(Font_Lookup[temp][1]);
-		OLED_send_byte(Font_Lookup[111-32][2]);
-		OLED_send_byte(Font_Lookup[111-32][3]);
-		OLED_send_byte(Font_Lookup[111-32][4]);
-
-	//uint8_t i = 0;
-	//for (i;i<5;i++)
-	//{
-
-	//}
+	uint8_t i = 0;
+	for (i;i<5;i++)
+	{
+		OLED_send_byte(Font_Lookup[(*c)-32][i]);
+	}
 	OLED_send_byte(0);
 	OLED_send_byte(0);
 }

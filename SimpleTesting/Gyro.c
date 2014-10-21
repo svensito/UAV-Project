@@ -44,7 +44,7 @@ uint8_t temperature_0	= 50;
 
 // Gyro Calibration Variables
 // idea: count 100 samples (IMU needs to be steady) and calculate the offset
-int cal_count = 0;
+
 int16_t gyro_p_offset = 0;
 int16_t gyro_q_offset = 0;
 int16_t gyro_r_offset = 0;
@@ -141,9 +141,10 @@ struct three_elements_obj gyro_read(void)
 // Gyro calibration routine
 void gyro_calibration(void)
 {
+	uint8_t cal_count = 0;
 	// defining the temporary stored turn rates
 	struct three_elements_obj turn_rates_temp;
-	while(cal_count < 10)
+	while(cal_count < 50)
 	{
 		cal_count ++;
 		turn_rates_temp = gyro_read();

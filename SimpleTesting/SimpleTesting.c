@@ -38,11 +38,12 @@
 // These are the task flags, set them to activate / deactivate task
 int task_gyro	= TRUE;		// reading gyro data enabled (TRUE) /disabled (FALSE)
 int task_acc	= TRUE;		// reading acc data enabled (TRUE) /disabled (FALSE)
-int task_mag	= FALSE;	// reading mag data enabled (TRUE) /disabled (FALSE) -> too unreliable for navigation
-int task_temp	= FALSE;	// reading temp data enabled (TRUE) /disabled (FALSE)
+//int task_mag	= FALSE;	// reading mag data enabled (TRUE) /disabled (FALSE) -> too unreliable for navigation
+//int task_temp	= FALSE;	// reading temp data enabled (TRUE) /disabled (FALSE)
 int task_baro	= FALSE;		// reading baro data enabled (TRUE) /disabled (FALSE)
 int task_speed	= FALSE;		// reading ADC speed data enabled (TRUE) /disabled (FALSE)
-int serial_log	= TRUE;		// serial output enabled (TRUE) /disabled (FALSE)
+int task_OLED	= TRUE;		// OLED task
+int serial_log	= FALSE;		// serial output enabled (TRUE) /disabled (FALSE)
 //******************************************************************
 
 /********************
@@ -114,7 +115,7 @@ uint8_t speed_cnt = 0;	// needed for decreasing speed reading resolution
  Euler Angles Data
  ********************/
 // Turn rates Data
-int8_t p_raw,q_raw,r_raw,p_filt,q_filt,r_filt,p_filt_prev,q_filt_prev,r_filt_prev = 0; // raw turn rates, filtered turn rates,previous turn rates
+int8_t p_raw,q_raw,r_raw,p_filt,q_filt,r_filt = 0; // raw turn rates, filtered turn rates,previous turn rates
 float alpha_turn = 0.7;
 // Pitch Angle Theta
 float Theta, Theta_hold, Theta_error, Theta_error_sum, Theta_error_prev = 0;
@@ -158,10 +159,6 @@ float Theta_temp, S_Theta, K_0_Theta, K_1_Theta = 0;
 float p_bias = 0;
 float P_00_Phi, P_01_Phi, P_10_Phi, P_11_Phi = 0;
 float Phi_temp, S_Phi, K_0_Phi, K_1_Phi = 0;
-// Estimation of Psi (Kalman)
-float r_bias = 0;
-float P_00_Psi, P_01_Psi, P_10_Psi, P_11_Psi = 0;
-float Psi_temp, S_Psi, K_0_Psi, K_1_Psi = 0;
 
 /********************
  Magnetometer Data
@@ -205,7 +202,7 @@ uint8_t flash_count = 0;				// Strobe light counter
 /********************
  Counter
  ********************/
-int8_t send_cnt = 0;
+uint8_t send_cnt = 0;
 int8_t tune_cnt = 0;
 int8_t test_cnt = 0;
 uint8_t cal_cnt = 0;
@@ -336,11 +333,25 @@ int main(void)
 		baro_start();
 		baro_calibration();
 	}		
-	if(task_mag == TRUE)	mag_start();
+	//if(task_mag == TRUE)	mag_start();
 	if(task_speed == TRUE)	
 	{
 		ADC_start();
 	}		
+	// OLED
+ 	if (task_OLED == TRUE)
+	{
+		OLED_init();
+		OLED_clear();
+// 		OLED_send_string("GPS");
+// 		OLED_set_position(0,1);
+// 		OLED_send_string("HOME");
+// 		OLED_set_position(0,2);
+// 		OLED_send_string("LAT");
+// 		OLED_set_position(0,3);
+// 		OLED_send_string("LON");
+	}
+	
 	
 	// Starting the Servo PWM signal setting
 	cli();	// disable interrupts
@@ -349,7 +360,9 @@ int main(void)
 	// setting all needed timers to Interrupt mode
 	TIMSK  = (0<<TICIE1)|(1<<OCIE1A)|(0<<OCIE1B)|(0<<TOIE1)|(1<<OCIE0)|(1<<TOIE2);
 	sei();	//enable interrupts
-		
+	
+	
+				
 	// Turn On the Watchdog
 	WDT_on();
 	
@@ -361,6 +374,8 @@ int main(void)
 	// Turn on Light for check
 	PORTD |= (1<<PD4);
 	
+
+		
 	while(1)
     {
 			// Program Code (infinite loop)
@@ -402,16 +417,10 @@ int main(void)
 					q_raw = turn_rate.q;
 					r_raw = turn_rate.r;
 					// low pass filter on the turn rates
-					p_filt = p_raw * (1-alpha_turn) + (alpha_turn*p_filt);
-					q_filt = q_raw * (1-alpha_turn) + (alpha_turn*q_filt);
-					r_filt = r_raw * (1-alpha_turn) + (alpha_turn*r_filt);
-					
-					q_filt_prev = q_filt;
-					p_filt_prev = p_filt;
-					r_filt_prev = r_filt;
-					
-					
-					
+					p_filt = p_raw;// * (1-alpha_turn) + (alpha_turn*p_filt);
+					q_filt = q_raw;// * (1-alpha_turn) + (alpha_turn*q_filt);
+					r_filt = r_raw;// * (1-alpha_turn) + (alpha_turn*r_filt);
+										
 				}
 				struct acc_readings_obj acc_val;
 				if(task_acc == TRUE)	
@@ -423,7 +432,7 @@ int main(void)
 					Theta_acc = atan2(acc_x_raw,-acc_z_raw)*180/PI;
 					Phi_acc = atan2(-acc_y_raw,-acc_z_raw)*180/PI;
 					//write_string("acc: "); write_var_ln(acc_reading());
-					
+
 				}
 				if(task_baro == TRUE)// && (bla_cnt==100))	
 				{
@@ -433,7 +442,7 @@ int main(void)
 					//bla_cnt = 0;
 				}
 						
-				if(task_mag == TRUE)	heading = mag_read(Phi,Theta); // heading is too unreliable for navigation
+				//if(task_mag == TRUE)	heading = mag_read(Phi,Theta); // heading is too unreliable for navigation
 				if(task_speed == TRUE)
 				{
 					
@@ -532,10 +541,10 @@ int main(void)
 				P_11_Psi -= K_1_Psi * P_01_Psi;
 				*/
 				
-				/*
 				write_var(Phi);write_string(";");
 				write_var(Theta);write_string_ln(";");
-				*/
+
+				
 				
 
 				
@@ -1246,6 +1255,32 @@ int main(void)
 					
 						write_string_ln(";");
 					}
+					
+					// Writing to OLED
+ 						if (task_OLED == TRUE)
+							{
+								send_cnt++;
+								
+								if (send_cnt==160)
+								{
+									OLED_send_char("C");
+									
+// 									OLED_send_byte(0x7F);
+// 									OLED_send_byte(0x09);
+// 									OLED_send_byte(0x09);
+// 									OLED_send_byte(0x09);
+// 									OLED_send_byte(0x01);
+// 									OLED_send_byte(0x00);
+									send_cnt = 0;
+								}
+								
+
+								//OLED_set_position(0,1);
+								//OLED_send_string("TEST2");
+							}
+
+					
+					
 				Ctrl_Mode_prev = Ctrl_Mode;		// Setting previous State
 				
 				ctrl_in_prev[9] = ctrl_in;
