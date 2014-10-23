@@ -21,10 +21,9 @@
 //##############################
 // variables
 int16_t v_raw = 0;		// raw voltage value, comes as 10 bit value
-volatile double speed = 0;		// speed as floating value
-int16_t speed_tx = 0;	// we will calculate a speed to have an understanding of how fast the A/C is
-double delta_p = 0;		// delta pressure
-double density = 1.185;
+//int16_t speed_tx = 0;	// we will calculate a speed to have an understanding of how fast the A/C is
+//double delta_p = 0;		// delta pressure
+//double density = 1.185;
 
 volatile uint8_t ADC_cal_flag = FALSE;
 int16_t adc_offset = 0;

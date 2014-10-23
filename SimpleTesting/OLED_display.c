@@ -18,6 +18,9 @@
 #include "OLED_display.h"
 //------------------------------------------------------
 
+// buffer
+static char buffer = 0;
+
 // this look up is needed for 
 // modified look up for needs -> source http://www.asciitable.com/index/asciifull.gif
 const uint8_t Font_Lookup[][5] = { // Refer to "Times New Roman" Font Database... 5 x 7 font
@@ -170,49 +173,43 @@ volatile void OLED_clear()
 	OLED_send_cmd(0xB0);	// set page address to 0
 }
 
-void OLED_send_char(char *c)
-{
-	uint8_t temp = (uint8_t)(*c);
-	temp -=32;
-	write_var_ln(temp);
-		OLED_send_byte(Font_Lookup[temp][0]);
-		OLED_send_byte(Font_Lookup[temp][1]);
-		OLED_send_byte(Font_Lookup[111-32][2]);
-		OLED_send_byte(Font_Lookup[111-32][3]);
-		OLED_send_byte(Font_Lookup[111-32][4]);
-
-	//uint8_t i = 0;
-	//for (i;i<5;i++)
-	//{
-
-	//}
-	OLED_send_byte(0);
-	OLED_send_byte(0);
-}
-
-// Sending String to the OLED
-volatile void OLED_send_string(char *c)
-{
-	while(*c)
-	{
-			uint8_t i = 0;
-			for (i;i<5;i++)
-			{
-				OLED_send_byte(Font_Lookup[(*c)-32][i]);
-			}
-			OLED_send_byte(0);
-			OLED_send_byte(0);
-			*c++;
-	}
-			OLED_set_pos_0();	// to reset the pointer to the upper left corner
-}
-
 // Sending a number to the OLED
 volatile void OLED_send_num(int32_t num)
 {
 	char k[31];
-	ltoa(num, k, 10);	// convert long to asci -> decimal system
-	OLED_send_string(k);
+	ltoa(num, k, 10);	// convert long to ascii -> decimal system
+	//OLED_send_string(k);
+		if (k[0]=="0")
+		{
+			OLED_send_num_0();
+		}
+}
+
+void OLED_send_char(char d)
+{
+	buffer = Font_Lookup[d-32][0];
+	OLED_send_byte(buffer);
+	buffer = Font_Lookup[d-32][1];
+	OLED_send_byte(buffer);
+	buffer = Font_Lookup[d-32][2];
+	OLED_send_byte(buffer);
+	buffer = Font_Lookup[d-32][3];
+	OLED_send_byte(buffer);
+	buffer = Font_Lookup[d-32][4];
+	OLED_send_byte(buffer);
+	OLED_send_byte(0);
+	OLED_send_byte(0);
+	buffer = 0;
+}
+
+void OLED_send_string(char *e)
+{
+	while(*e)
+	{
+		OLED_send_char(*e);
+		*e++;
+	}
+	
 }
 
 volatile void OLED_set_position(uint8_t x, uint8_t y)
@@ -241,3 +238,609 @@ volatile void OLED_set_pos_0()
 		OLED_send_cmd(0x00);	// set col address low to 0
 		OLED_send_cmd(0x10);	// set col address high to 0
 }
+
+void OLED_page(uint8_t page)
+{
+	switch(page)
+	{
+		case 0:
+		// write "GPS" on first line
+		//G is 71 as per ASCII Table
+		OLED_send_char_L();
+		OLED_send_char_I();
+		OLED_send_char_G();
+		OLED_send_char_H();
+		OLED_send_char_T();
+
+		// write "HOME" on second line
+		OLED_set_position(0,1);
+		OLED_send_char_H();
+		OLED_send_char_O();
+		OLED_send_char_M();
+		OLED_send_char_E();
+
+		// write "LON" on second line
+		OLED_set_position(0,2);
+		OLED_send_char_M();
+		OLED_send_char_O();
+		OLED_send_char_D();
+		OLED_send_char_E();
+		
+		// write "HEAD" on second line
+		OLED_set_position(0,3);
+		OLED_send_char_H();
+		OLED_send_char_E();
+		OLED_send_char_A();
+		OLED_send_char_D();
+		
+		OLED_set_pos_0();
+		break;
+		
+		
+		
+	}
+}
+
+void OLED_send_char_A()
+{
+	OLED_send_byte(0x7E);
+	OLED_send_byte(0x11);
+	OLED_send_byte(0x11);
+	OLED_send_byte(0x11);
+	OLED_send_byte(0x7E);
+	OLED_send_byte(0);
+	OLED_send_byte(0);
+}
+
+void OLED_send_char_B()
+{
+	OLED_send_byte(0x7F);
+	OLED_send_byte(0x49);
+	OLED_send_byte(0x49);
+	OLED_send_byte(0x49);
+	OLED_send_byte(0x36); //   ( 34)  B - 0x0042 Latin Capital Letter B
+	OLED_send_byte(0);
+	OLED_send_byte(0);
+}
+void OLED_send_char_C()
+{
+	OLED_send_byte(0x3E);
+	OLED_send_byte(0x41);
+	OLED_send_byte(0x41);
+	OLED_send_byte(0x41);
+	OLED_send_byte(0x22); //   ( 35)  C - 0x0043 Latin Capital Letter C
+		OLED_send_byte(0);
+		OLED_send_byte(0);
+}
+void OLED_send_char_D()
+{
+	OLED_send_byte(0x7F);
+	OLED_send_byte(0x41);
+	OLED_send_byte(0x41);
+	OLED_send_byte(0x22);
+	OLED_send_byte(0x1C); //   ( 36)  D - 0x0044 Latin Capital Letter D
+		OLED_send_byte(0);
+		OLED_send_byte(0);
+}
+void OLED_send_char_E()
+{
+	OLED_send_byte(0x7F);
+	OLED_send_byte(0x49);
+	OLED_send_byte(0x49);
+	OLED_send_byte(0x49);
+	OLED_send_byte(0x41); //   ( 37)  E - 0x0045 Latin Capital Letter E
+		OLED_send_byte(0);
+		OLED_send_byte(0);
+}
+void OLED_send_char_F()
+{
+	OLED_send_byte(0x7F);
+	OLED_send_byte(0x09);
+	OLED_send_byte(0x09);
+	OLED_send_byte(0x09);
+	OLED_send_byte(0x01); //   ( 38)  F - 0x0046 Latin Capital Letter F
+		OLED_send_byte(0);
+		OLED_send_byte(0);
+}
+void OLED_send_char_G()
+{
+	OLED_send_byte(0x3E);
+	OLED_send_byte(0x41);
+	OLED_send_byte(0x49);
+	OLED_send_byte(0x49);
+	OLED_send_byte(0x7A); //   ( 39)  G - 0x0047 Latin Capital Letter G
+		OLED_send_byte(0);
+		OLED_send_byte(0);
+}
+void OLED_send_char_H()
+{
+	OLED_send_byte(0x7F);
+	OLED_send_byte(0x08);
+	OLED_send_byte(0x08);
+	OLED_send_byte(0x08);
+	OLED_send_byte(0x7F); //   ( 40)  H - 0x0048 Latin Capital Letter H
+		OLED_send_byte(0);
+		OLED_send_byte(0);
+}
+void OLED_send_char_I()
+{
+	OLED_send_byte(0x00);
+	OLED_send_byte(0x41);
+	OLED_send_byte(0x7F);
+	OLED_send_byte(0x41);
+	OLED_send_byte(0x00); //   ( 41)  I - 0x0049 Latin Capital Letter I
+		OLED_send_byte(0);
+		OLED_send_byte(0);
+}
+void OLED_send_char_J()
+{
+	OLED_send_byte(0x20);
+	OLED_send_byte(0x40);
+	OLED_send_byte(0x41);
+	OLED_send_byte(0x3F);
+	OLED_send_byte(0x01); //   ( 42)  J - 0x004A Latin Capital Letter J
+		OLED_send_byte(0);
+		OLED_send_byte(0);
+}
+void OLED_send_char_K()
+{
+	OLED_send_byte(0x7F);
+	OLED_send_byte(0x08);
+	OLED_send_byte(0x14);
+	OLED_send_byte(0x22);
+	OLED_send_byte(0x41); //   ( 43)  K - 0x004B Latin Capital Letter K
+		OLED_send_byte(0);
+		OLED_send_byte(0);
+}
+void OLED_send_char_L()
+{
+	OLED_send_byte(0x7F);
+	OLED_send_byte(0x40);
+	OLED_send_byte(0x40);
+	OLED_send_byte(0x40);
+	OLED_send_byte(0x40); //   ( 44)  L - 0x004C Latin Capital Letter L
+		OLED_send_byte(0);
+		OLED_send_byte(0);
+}
+void OLED_send_char_M()
+{
+	OLED_send_byte(0x7F);
+	OLED_send_byte(0x02);
+	OLED_send_byte(0x0C);
+	OLED_send_byte(0x02);
+	OLED_send_byte(0x7F); //   ( 45)  M - 0x004D Latin Capital Letter M
+		OLED_send_byte(0);
+		OLED_send_byte(0);
+}
+void OLED_send_char_N()
+{
+	OLED_send_byte(0x7F);
+	OLED_send_byte(0x04);
+	OLED_send_byte(0x08);
+	OLED_send_byte(0x10);
+	OLED_send_byte(0x7F); //   ( 46)  N - 0x004E Latin Capital Letter N
+		OLED_send_byte(0);
+		OLED_send_byte(0);
+}
+void OLED_send_char_O()
+{
+	OLED_send_byte(0x3E);
+	OLED_send_byte(0x41);
+	OLED_send_byte(0x41);
+	OLED_send_byte(0x41);
+	OLED_send_byte(0x3E); //   ( 47)  O - 0x004F Latin Capital Letter O
+		OLED_send_byte(0);
+		OLED_send_byte(0);
+}
+void OLED_send_char_P()
+{
+	OLED_send_byte(0x7F);
+	OLED_send_byte(0x09);
+	OLED_send_byte(0x09);
+	OLED_send_byte(0x09);
+	OLED_send_byte(0x06); //   ( 48)  P - OLED_send_byte(0x0050 Latin Capital Letter P
+		OLED_send_byte(0);
+		OLED_send_byte(0);
+}
+void OLED_send_char_Q()
+{
+	OLED_send_byte(0x3E);
+	OLED_send_byte(0x41);
+	OLED_send_byte(0x51);
+	OLED_send_byte(0x21);
+	OLED_send_byte(0x5E); //   ( 49)  Q - 0x0051 Latin Capital Letter Q
+		OLED_send_byte(0);
+		OLED_send_byte(0);
+}
+void OLED_send_char_R()
+{
+	OLED_send_byte(0x7F);
+	OLED_send_byte(0x09);
+	OLED_send_byte(0x19);
+	OLED_send_byte(0x29);
+	OLED_send_byte(0x46); //   ( 50)  R - 0x0052 Latin Capital Letter R
+		OLED_send_byte(0);
+		OLED_send_byte(0);
+}
+void OLED_send_char_S()
+{
+	OLED_send_byte(0x46);
+	OLED_send_byte(0x49);
+	OLED_send_byte(0x49);
+	OLED_send_byte(0x49);
+	OLED_send_byte(0x31); //   ( 51)  S - 0x0053 Latin Capital Letter S
+		OLED_send_byte(0);
+		OLED_send_byte(0);
+}
+void OLED_send_char_T()
+{
+	OLED_send_byte(0x01);
+	OLED_send_byte(0x01);
+	OLED_send_byte(0x7F);
+	OLED_send_byte(0x01);
+	OLED_send_byte(0x01); //   ( 52)  T - 0x0054 Latin Capital Letter T
+		OLED_send_byte(0);
+		OLED_send_byte(0);
+}
+void OLED_send_char_U()
+{
+	OLED_send_byte(0x3F);
+	OLED_send_byte(0x40);
+	OLED_send_byte(0x40);
+	OLED_send_byte(0x40);
+	OLED_send_byte(0x3F); //   ( 53)  U - 0x0055 Latin Capital Letter U
+		OLED_send_byte(0);
+		OLED_send_byte(0);
+}
+void OLED_send_char_V()
+{
+	OLED_send_byte(0x1F);
+	OLED_send_byte(0x20);
+	OLED_send_byte(0x40);
+	OLED_send_byte(0x20);
+	OLED_send_byte(0x1F); //   ( 54)  V - 0x0056 Latin Capital Letter V
+		OLED_send_byte(0);
+		OLED_send_byte(0);
+}
+void OLED_send_char_W()
+{
+	OLED_send_byte(0x3F);
+	OLED_send_byte(0x40);
+	OLED_send_byte(0x38);
+	OLED_send_byte(0x40);
+	OLED_send_byte(0x3F); //   ( 55)  W - 0x0057 Latin Capital Letter W
+		OLED_send_byte(0);
+		OLED_send_byte(0);
+}
+void OLED_send_char_X()
+{
+	OLED_send_byte(0x63);
+	OLED_send_byte(0x14);
+	OLED_send_byte(0x08);
+	OLED_send_byte(0x14);
+	OLED_send_byte(0x63); //   ( 56)  X - 0x0058 Latin Capital Letter X
+		OLED_send_byte(0);
+		OLED_send_byte(0);
+}
+void OLED_send_char_Y()
+{
+	OLED_send_byte(0x07);
+	OLED_send_byte(0x08);
+	OLED_send_byte(0x70);
+	OLED_send_byte(0x08);
+	OLED_send_byte(0x07); //   ( 57)  Y - 0x0059 Latin Capital Letter Y
+		OLED_send_byte(0);
+		OLED_send_byte(0);
+}
+void OLED_send_char_Z()
+{
+	OLED_send_byte(0x61);
+	OLED_send_byte(0x51);
+	OLED_send_byte(0x49);
+	OLED_send_byte(0x45);
+	OLED_send_byte(0x43); //   ( 58)  Z - 0x005A Latin Capital Letter Z
+		OLED_send_byte(0);
+		OLED_send_byte(0);
+}
+
+void OLED_send_char_SP()
+{
+	OLED_send_byte(0x00);
+	OLED_send_byte(0x00);
+	OLED_send_byte(0x00);
+	OLED_send_byte(0x00);
+	OLED_send_byte(0x00); //   SPACE
+	OLED_send_byte(0);
+	OLED_send_byte(0);
+}
+
+void OLED_send_num_0()
+{
+		OLED_send_byte(0x3E);
+		OLED_send_byte(0x51);
+		OLED_send_byte(0x49);
+		OLED_send_byte(0x45);
+		OLED_send_byte(0x3E); //   Number 0
+		OLED_send_byte(0);
+		OLED_send_byte(0);
+}
+
+void OLED_battery_100(uint8_t hor,uint8_t ver)
+{
+		OLED_set_pos_0();
+		OLED_set_position(hor,ver);
+		
+		OLED_send_byte(0xF8);
+		OLED_send_byte(0xF8);
+		OLED_send_byte(0x08);
+		OLED_send_byte(0xF8);
+		OLED_send_byte(0xFC);
+		
+		OLED_send_byte(0xF4);
+		OLED_send_byte(0xF4);
+		OLED_send_byte(0xF4);
+		OLED_send_byte(0xF4);
+		OLED_send_byte(0xF4);
+		
+		OLED_send_byte(0xFC);
+		OLED_send_byte(0xF8);
+		OLED_send_byte(0x08);
+		OLED_send_byte(0xF8);
+		OLED_send_byte(0xF8);
+		
+		OLED_set_position(hor,ver+1);
+		
+		OLED_send_byte(0xFF);
+		OLED_send_byte(0xFF);
+		OLED_send_byte(0x80);
+		OLED_send_byte(0xFF);	//80
+		OLED_send_byte(0xFF);
+
+		OLED_send_byte(0xFF);
+		OLED_send_byte(0xFF);
+		OLED_send_byte(0xFF);	// All lower 3 batterie bars are set
+		OLED_send_byte(0xFF);
+		OLED_send_byte(0xFF);
+		
+		OLED_send_byte(0xFF);	
+		OLED_send_byte(0xFF);
+		OLED_send_byte(0x80);
+		OLED_send_byte(0xFF);
+		OLED_send_byte(0xFF);
+		
+}
+
+void OLED_battery_80(uint8_t hor,uint8_t ver)
+{
+	OLED_set_pos_0();
+	OLED_set_position(hor,ver);
+	
+	OLED_send_byte(0xF8);
+	OLED_send_byte(0xF8);
+	OLED_send_byte(0x08);
+	OLED_send_byte(0xC8);
+	OLED_send_byte(0xCC);
+	
+	OLED_send_byte(0xC4);
+	OLED_send_byte(0xC4);
+	OLED_send_byte(0xC4);
+	OLED_send_byte(0xC4);
+	OLED_send_byte(0xC4);
+	
+	OLED_send_byte(0xCC);
+	OLED_send_byte(0xC8);
+	OLED_send_byte(0x08);
+	OLED_send_byte(0xF8);
+	OLED_send_byte(0xF8);
+	
+	OLED_set_position(hor,ver+1);
+	
+	OLED_send_byte(0xFF);
+	OLED_send_byte(0xFF);
+	OLED_send_byte(0x80);
+	OLED_send_byte(0xFF);	
+	OLED_send_byte(0xFF);
+
+	OLED_send_byte(0xFF);
+	OLED_send_byte(0xFF);
+	OLED_send_byte(0xFF);	
+	OLED_send_byte(0xFF);
+	OLED_send_byte(0xFF);
+	
+	OLED_send_byte(0xFF);
+	OLED_send_byte(0xFF);
+	OLED_send_byte(0x80);
+	OLED_send_byte(0xFF);
+	OLED_send_byte(0xFF);
+	
+}
+
+void OLED_battery_60(uint8_t hor,uint8_t ver)
+{
+	OLED_set_pos_0();
+	OLED_set_position(hor,ver);
+	
+	OLED_send_byte(0xF8);
+	OLED_send_byte(0xF8);
+	OLED_send_byte(0x08);
+	OLED_send_byte(0x08);
+	OLED_send_byte(0x0C);
+	
+	OLED_send_byte(0x04);
+	OLED_send_byte(0x04);
+	OLED_send_byte(0x04);
+	OLED_send_byte(0x04);
+	OLED_send_byte(0x04);
+	
+	OLED_send_byte(0x0C);
+	OLED_send_byte(0x08);
+	OLED_send_byte(0x08);
+	OLED_send_byte(0xF8);
+	OLED_send_byte(0xF8);
+	
+	OLED_set_position(hor,ver+1);
+	
+	OLED_send_byte(0xFF);
+	OLED_send_byte(0xFF);
+	OLED_send_byte(0x80);
+	OLED_send_byte(0xFF);
+	OLED_send_byte(0xFF);
+
+	OLED_send_byte(0xFF);
+	OLED_send_byte(0xFF);
+	OLED_send_byte(0xFF);
+	OLED_send_byte(0xFF);
+	OLED_send_byte(0xFF);
+	
+	OLED_send_byte(0xFF);
+	OLED_send_byte(0xFF);
+	OLED_send_byte(0x80);
+	OLED_send_byte(0xFF);
+	OLED_send_byte(0xFF);
+	
+}
+
+void OLED_battery_40(uint8_t hor,uint8_t ver)
+{
+	OLED_set_pos_0();
+	OLED_set_position(hor,ver);
+	
+	OLED_send_byte(0xF8);
+	OLED_send_byte(0xF8);
+	OLED_send_byte(0x08);
+	OLED_send_byte(0x08);
+	OLED_send_byte(0x0C);
+	
+	OLED_send_byte(0x04);
+	OLED_send_byte(0x04);
+	OLED_send_byte(0x04);
+	OLED_send_byte(0x04);
+	OLED_send_byte(0x04);
+	
+	OLED_send_byte(0x0C);
+	OLED_send_byte(0x08);
+	OLED_send_byte(0x08);
+	OLED_send_byte(0xF8);
+	OLED_send_byte(0xF8);
+	
+	OLED_set_position(hor,ver+1);
+	
+	OLED_send_byte(0xFF);
+	OLED_send_byte(0xFF);
+	OLED_send_byte(0x80);
+	OLED_send_byte(0xFC);
+	OLED_send_byte(0xFC);
+
+	OLED_send_byte(0xFC);
+	OLED_send_byte(0xFC);
+	OLED_send_byte(0xFC);
+	OLED_send_byte(0xFC);
+	OLED_send_byte(0xFC);
+	
+	OLED_send_byte(0xFC);
+	OLED_send_byte(0xFC);
+	OLED_send_byte(0x80);
+	OLED_send_byte(0xFF);
+	OLED_send_byte(0xFF);
+	
+}
+
+void OLED_battery_30(uint8_t hor,uint8_t ver)
+{
+	OLED_set_pos_0();
+	OLED_set_position(hor,ver);
+	
+	OLED_send_byte(0xF8);
+	OLED_send_byte(0xF8);
+	OLED_send_byte(0x08);
+	OLED_send_byte(0x08);
+	OLED_send_byte(0x0C);
+	
+	OLED_send_byte(0x04);
+	OLED_send_byte(0x04);
+	OLED_send_byte(0x04);
+	OLED_send_byte(0x04);
+	OLED_send_byte(0x04);
+	
+	OLED_send_byte(0x0C);
+	OLED_send_byte(0x08);
+	OLED_send_byte(0x08);
+	OLED_send_byte(0xF8);
+	OLED_send_byte(0xF8);
+	
+	OLED_set_position(hor,ver+1);
+	
+	OLED_send_byte(0xFF);
+	OLED_send_byte(0xFF);
+	OLED_send_byte(0x80);
+	OLED_send_byte(0xF0);
+	OLED_send_byte(0xF0);
+
+	OLED_send_byte(0xF0);
+	OLED_send_byte(0xF0);
+	OLED_send_byte(0xF0);
+	OLED_send_byte(0xF0);
+	OLED_send_byte(0xF0);
+	
+	OLED_send_byte(0xF0);
+	OLED_send_byte(0xF0);
+	OLED_send_byte(0x80);
+	OLED_send_byte(0xFF);
+	OLED_send_byte(0xFF);
+	
+}
+
+void OLED_battery_0(uint8_t hor,uint8_t ver)
+{
+	OLED_set_pos_0();
+	OLED_set_position(hor,ver);
+	
+	OLED_send_byte(0xF8);
+	OLED_send_byte(0xF8);
+	OLED_send_byte(0x08);
+	OLED_send_byte(0x08);
+	OLED_send_byte(0x0C);
+	
+	OLED_send_byte(0x04);
+	OLED_send_byte(0x04);
+	OLED_send_byte(0x04);
+	OLED_send_byte(0x04);
+	OLED_send_byte(0x04);
+	
+	OLED_send_byte(0x0C);
+	OLED_send_byte(0x08);
+	OLED_send_byte(0x08);
+	OLED_send_byte(0xF8);
+	OLED_send_byte(0xF8);
+	
+	OLED_set_position(hor,ver+1);
+	
+	OLED_send_byte(0xFF);
+	OLED_send_byte(0xFF);
+	OLED_send_byte(0x80);
+	OLED_send_byte(0x80);
+	OLED_send_byte(0x80);
+
+	OLED_send_byte(0x80);
+	OLED_send_byte(0x80);
+	OLED_send_byte(0x80);
+	OLED_send_byte(0x80);
+	OLED_send_byte(0x80);
+	
+	OLED_send_byte(0x80);
+	OLED_send_byte(0x80);
+	OLED_send_byte(0x80);
+	OLED_send_byte(0xFF);
+	OLED_send_byte(0xFF);
+	
+}
+
+
+
+
+
+
+
+
+
+

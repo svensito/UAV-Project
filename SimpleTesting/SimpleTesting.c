@@ -36,14 +36,12 @@
 
 //******************************************************************
 // These are the task flags, set them to activate / deactivate task
-int task_gyro	= TRUE;		// reading gyro data enabled (TRUE) /disabled (FALSE)
-int task_acc	= TRUE;		// reading acc data enabled (TRUE) /disabled (FALSE)
-//int task_mag	= FALSE;	// reading mag data enabled (TRUE) /disabled (FALSE) -> too unreliable for navigation
-//int task_temp	= FALSE;	// reading temp data enabled (TRUE) /disabled (FALSE)
-int task_baro	= FALSE;		// reading baro data enabled (TRUE) /disabled (FALSE)
-int task_speed	= FALSE;		// reading ADC speed data enabled (TRUE) /disabled (FALSE)
-int task_OLED	= TRUE;		// OLED task
-int serial_log	= FALSE;		// serial output enabled (TRUE) /disabled (FALSE)
+#define TASK_GYRO	TRUE	// reading gyro data enabled (TRUE) /disabled (FALSE)
+#define TASK_ACC	TRUE	// reading acc data enabled (TRUE) /disabled (FALSE)
+#define TASK_BARO	FALSE	// reading baro data enabled (TRUE) /disabled (FALSE)
+#define TASK_SPEED	FALSE	// reading ADC speed data enabled (TRUE) /disabled (FALSE)
+#define TASK_OLED	TRUE	// OLED task	
+#define SERIAL_LOG	TRUE	// serial output enabled (TRUE) /disabled (FALSE)
 //******************************************************************
 
 /********************
@@ -60,9 +58,6 @@ uint8_t Ctrl_Mode_prev = DIRECT_CTRL;	// Initialize as the same Mode
 uint8_t state_change = FALSE;			// Needed as a flag for state change
 
 // Control Knob
-uint8_t Knob_State = 0;
-uint8_t prev_Knob_State = 0;
-uint16_t Knob_Stepwidth = 400;
 int8_t knob_flag = 0;
 
 /********************
@@ -78,7 +73,7 @@ long trimmed_rudder = 0;
  ********************/
 // Flap Delay
 uint16_t flap_setpoint = FLAP_UP;	// defining the desired setpoint flap position
-uint8_t flap_delta = 10;	// giving the speed of flap extension
+#define FLAP_DELTA	10				// giving the speed of flap extension
 // 10 will give around 2 seconds for movement in between two positions
 
 /********************
@@ -90,26 +85,22 @@ int16_t alt_error_sum = 0;
 int16_t alt_error_prev = 0;
 float alpha_alt = 0.3; // alpha element [0;1] -> alpha 0: only raw input (noise free)
 						// -> alpha 1: only filtered input (only noise)
-int8_t Kp_alt = 1;
-int8_t Ki_alt = 10;
-int8_t Kd_alt = 10;
-
+#define KP_ALT	1
+#define KI_ALT	10
+#define KD_ALT	10
 
 /********************
  Speed Data
  ********************/
-int16_t speed_raw,speed_filt, speed_filt_1, speed_filt_2, speed_filt_3, speed_filt_4, speed_filt_5 = 0;	// raw speed and filtered speed
-float alpha_speed_1 = 0.3; // alpha element [0;1] -> alpha 0: only raw input (noise free)
-float alpha_speed_2 = 0.3;											// -> alpha 1: only filtered input (only noise)
-float alpha_speed_3 = 0.3;
-float alpha_speed_raw = 0.1;
+int16_t speed_raw,speed_filt, speed_filt_prev = 0;	// raw speed and filtered speed
+											// alpha element [0;1] -> alpha 0: only raw input (noise free)
+											// -> alpha 1: only filtered input (only noise)
+
 float speed, speed_cal = 0;
 float speed_hold, speed_error, speed_error_sum, speed_error_prev = 0;
-int8_t Kp_speed = 1;
-//int8_t Kd_speed = 1;	// No differential part as signal too noisy
-int8_t Ki_speed = 1;
 uint8_t speed_cnt = 0;	// needed for decreasing speed reading resolution
-
+#define KP_SPEED	1	// proportional parameter speed
+#define KI_SPEED	1
 
 /********************
  Euler Angles Data
@@ -118,20 +109,24 @@ uint8_t speed_cnt = 0;	// needed for decreasing speed reading resolution
 int8_t p_raw,q_raw,r_raw,p_filt,q_filt,r_filt = 0; // raw turn rates, filtered turn rates,previous turn rates
 float alpha_turn = 0.7;
 // Pitch Angle Theta
-float Theta, Theta_hold, Theta_error, Theta_error_sum, Theta_error_prev = 0;
+int16_t Theta, Theta_hold, Theta_error, Theta_error_sum, Theta_error_prev = 0;
 int8_t Kp_Theta = 10;	// as per simulation in SCILAB this are very good gains for a wide range of speed...
+#define KP_THETA	10
+#define KI_THETA	10
+#define KD_THETA	1
+#define K_P_Q		9
 int8_t Kd_Theta = 1;
 int8_t Ki_Theta = 10;
 int8_t K_p_q = 9;
 // Roll Angle Phi
-float Phi = 0;
+int16_t Phi = 0;
 float Phi_hold, Phi_hold_0 = 0;
 float Phi_error = 0;
 float Phi_error_sum = 0;
 float Phi_error_prev = 0;
-int8_t Kp_Phi = 20;	// as per simulation in scilab
-int8_t Kd_Phi = 3;
-int8_t Ki_Phi = 10;
+#define KP_PHI	20
+#define KD_PHI	3
+#define KI_PHI	10
 // Yaw Angle Psi
 float Psi = 0;
 
@@ -166,19 +161,19 @@ float Phi_temp, S_Phi, K_0_Phi, K_1_Phi = 0;
 int16_t heading, heading_GPS = 0;
 int16_t heading_goal = 0;
 int16_t heading_hold, heading_error, heading_error_prev, heading_error_sum  = 0;
-int8_t Kp_head = 1;
-int8_t Kd_head = 1;
-int8_t Ki_head = 0;		// simulation showed that PD is convenient for Heading Track
+#define KP_HEAD	1
+#define KI_HEAD	0		// simulation showed that PD is convenient for Heading Track
+#define KD_HEAD	1	
 
 /********************
  GPS Data
  ********************/
 int32_t GPS_POS_CURRENT_X, GPS_POS_CURRENT_Y, GPS_POS_GOAL_X, GPS_POS_GOAL_Y,GPS_POS_HOME_X, GPS_POS_HOME_Y, GPS_POS_DIF_X, GPS_POS_DIF_Y = 0;
-int32_t GPS_POS_GOAL_WP[5][3] = {{0,0,0},		// Waypoint 1: POSX, POSY, ALT
-								 {0,0,0},		// Waypoint 2: POSX, POSY, ALT
-								 {0,0,0},		// Waypoint 3: POSX, POSY, ALT
-								 {0,0,0},		// Waypoint 4: POSX, POSY, ALT
-								 {0,0,0}};		// Waypoint 5: POSX, POSY, ALT
+int32_t GPS_POS_GOAL_WP[5][2] = {{0,0},		// Waypoint 1: POSX, POSY, ALT
+								 {0,0},		// Waypoint 2: POSX, POSY, ALT
+								 {0,0},		// Waypoint 3: POSX, POSY, ALT
+								 {0,0},		// Waypoint 4: POSX, POSY, ALT
+								 {0,0}};		// Waypoint 5: POSX, POSY, ALT
 #define WP1	0
 #define WP2	1
 #define WP3	2
@@ -190,7 +185,8 @@ int32_t GPS_POS_GOAL_WP[5][3] = {{0,0,0},		// Waypoint 1: POSX, POSY, ALT
 int8_t GPS_POS_LAT_DEG, GPS_POS_LAT_MIN = 0;
 int32_t GPS_POS_LAT_SEC = 0;
 int32_t GPS_DIS_TO_GOAL = 0;
-uint8_t GPS_home_set = FALSE;
+uint8_t GPS_home_set = FALSE;	// GPS Home position set or not set
+uint8_t GPS_home_comm = FALSE;	// GPS Home command is given
 
 /********************
  Navigation Lights
@@ -198,6 +194,11 @@ uint8_t GPS_home_set = FALSE;
 uint8_t lights_enabled = FALSE;			// Lights Enable Flag
 uint8_t lights_commanded	= FALSE;	// Flag to check if the lights have been commanded already
 uint8_t flash_count = 0;				// Strobe light counter
+
+/*********************
+ Battery Value
+***********************/
+uint8_t battery = 0;
 
 /********************
  Counter
@@ -322,27 +323,29 @@ int main(void)
 	// Initialize I2C communication
 	i2c_initialize();
 		
-	if(task_gyro == TRUE)	
+	if(TASK_GYRO == TRUE)	
 	{
 		gyro_start();
 		gyro_calibration();
 	}		
-	if(task_acc == TRUE)	acc_start();
-	if(task_baro == TRUE)	
+	if(TASK_ACC == TRUE)	acc_start();
+	if(TASK_BARO == TRUE)	
 	{
 		baro_start();
 		baro_calibration();
 	}		
 	//if(task_mag == TRUE)	mag_start();
-	if(task_speed == TRUE)	
+	if(TASK_SPEED == TRUE)	
 	{
 		ADC_start();
 	}		
 	// OLED
- 	if (task_OLED == TRUE)
+ 	if (TASK_OLED == TRUE)
 	{
 		OLED_init();
 		OLED_clear();
+		OLED_page(0);
+		//OLED_battery_0(6,1);
 // 		OLED_send_string("GPS");
 // 		OLED_set_position(0,1);
 // 		OLED_send_string("HOME");
@@ -408,7 +411,7 @@ int main(void)
 				
 				// Defining struct to read the gyro channels
 				struct three_elements_obj turn_rate;
-				if(task_gyro == TRUE)	
+				if(TASK_GYRO == TRUE)	
 				{
 					// turn rates
 					turn_rate = gyro_read();
@@ -420,10 +423,10 @@ int main(void)
 					p_filt = p_raw;// * (1-alpha_turn) + (alpha_turn*p_filt);
 					q_filt = q_raw;// * (1-alpha_turn) + (alpha_turn*q_filt);
 					r_filt = r_raw;// * (1-alpha_turn) + (alpha_turn*r_filt);
-										
+				
 				}
 				struct acc_readings_obj acc_val;
-				if(task_acc == TRUE)	
+				if(TASK_ACC == TRUE)	
 				{
 					acc_val = acc_reading();
 					acc_x_raw = acc_val.a_x;
@@ -432,9 +435,9 @@ int main(void)
 					Theta_acc = atan2(acc_x_raw,-acc_z_raw)*180/PI;
 					Phi_acc = atan2(-acc_y_raw,-acc_z_raw)*180/PI;
 					//write_string("acc: "); write_var_ln(acc_reading());
-
+		
 				}
-				if(task_baro == TRUE)// && (bla_cnt==100))	
+				if(TASK_BARO == TRUE)// && (bla_cnt==100))	
 				{
 					altitude_raw = baro_read();
 					// low pass filter on the altitude reading
@@ -443,7 +446,7 @@ int main(void)
 				}
 						
 				//if(task_mag == TRUE)	heading = mag_read(Phi,Theta); // heading is too unreliable for navigation
-				if(task_speed == TRUE)
+				if(TASK_SPEED == TRUE)
 				{
 					
 					if (speed_cnt == 8)		// to reduce the sampling time of the speed reading...
@@ -463,8 +466,8 @@ int main(void)
 						}
 						speed_cal /= 10;
 					}
-					speed_filt = (speed_raw-speed_cal)*0.1 + 0.9*speed_filt_1;
-					speed_filt_1 = speed_filt;
+					speed_filt = (speed_raw-speed_cal)*0.1 + 0.9*speed_filt_prev;	// 90% old value , 10% current value
+					speed_filt_prev = speed_filt;
 					speed_cnt = 0;
 					}
 					//write_var(speed_raw);write_string(";");write_var_ln(speed_filt);
@@ -540,9 +543,8 @@ int main(void)
 				P_10_Psi -= K_1_Psi * P_00_Psi;
 				P_11_Psi -= K_1_Psi * P_01_Psi;
 				*/
-				
-				write_var(Phi);write_string(";");
-				write_var(Theta);write_string_ln(";");
+				//OLED_set_position(4,2);
+				//OLED_send_num(Phi);
 
 				
 				
@@ -556,16 +558,16 @@ int main(void)
 				GPS_POS_CURRENT_X = atol_new(GPS_RMC[GPS_RMC_LONGITUDE]);
 				GPS_POS_CURRENT_Y = atol_new(GPS_RMC[GPS_RMC_LATITUDE]);
 				
-				heading_GPS = atol_new(GPS_RMC[GPS_RMC_PATH])/100;
+				heading_GPS = atol_new(GPS_RMC[GPS_RMC_PATH])/100;	// divided by 100 as decimals are provided by GPS
 				// Distance to goal location:
 				// calculate the latitude difference. one degree latitude is 111km distance (wiki). divide by cos(angle).
 				// 1 deg = 111km
 				// 1 minute = 1,85km
 				// 1 second = 0,031km
-				GPS_POS_LAT_DEG = GPS_POS_DIF_Y/10000000;
-				GPS_POS_LAT_MIN = (GPS_POS_DIF_Y/100000)-(GPS_POS_LAT_DEG*100);
-				GPS_POS_LAT_SEC = (GPS_POS_DIF_Y)-((GPS_POS_LAT_DEG*10000000)+(GPS_POS_LAT_MIN*100000));
-				GPS_DIS_TO_GOAL = GPS_POS_LAT_DEG*111000 + GPS_POS_LAT_MIN*1850 + (((GPS_POS_LAT_SEC*60*31)/100000));
+				//GPS_POS_LAT_DEG = GPS_POS_DIF_Y/10000000;
+				//GPS_POS_LAT_MIN = (GPS_POS_DIF_Y/100000)-(GPS_POS_LAT_DEG*100);
+				//GPS_POS_LAT_SEC = (GPS_POS_DIF_Y)-((GPS_POS_LAT_DEG*10000000)+(GPS_POS_LAT_MIN*100000));
+				//GPS_DIS_TO_GOAL = GPS_POS_LAT_DEG*111000 + GPS_POS_LAT_MIN*1850 + (((GPS_POS_LAT_SEC*60*31)/100000));
 				//write_var(GPS_POS_LAT_MIN);write_string(";");write_var(GPS_POS_LAT_SEC);write_string_ln(";");
 				//write_var_ln(atol_new(GPS_RMC[GPS_RMC_LATITUDE][0])*10 + atol_new(GPS_RMC[GPS_RMC_LATITUDE][1]));
 				
@@ -583,32 +585,46 @@ int main(void)
 				if ((ctrl_in[stick_l_up_down]    <	110) &&		// limit down left stick
 					(ctrl_in[stick_l_left_right] >	175) &&		// limit left left stick
 					(ctrl_in[stick_r_up_down]	>	170) &&		// limit down right stick
-					(ctrl_in[stick_r_left_right] >	170) &&		// limit right right stick
-					(GPS_home_set == FALSE))
+					(ctrl_in[stick_r_left_right] >	170)) 		// limit right right stick
 				{
+					if (GPS_home_set == FALSE && GPS_home_comm == FALSE)
+					{
+					GPS_home_comm = TRUE;
 					GPS_home_set = TRUE;
 					GPS_POS_HOME_X = atol_new(GPS_RMC[GPS_RMC_LONGITUDE]);
 					GPS_POS_HOME_Y = atol_new(GPS_RMC[GPS_RMC_LATITUDE]);
 					write_string("Home Set Lat ");write_var(GPS_POS_HOME_Y);write_string(" Long ");write_var_ln(GPS_POS_HOME_X);
-					
-					// Determination of Waypoints
+										// Determination of Waypoints
 					// 1 second = 1/60 min = 0,01667 mins
 					// 1 second = 1/60 min = 1/60 * 1850m = 30,8m
 					// offset: 5 seconds = 150 meters = 5*0,01667 = 0,08335 minutes
 					// Within the GPS sentence: add 8335 to get an offset of 5 seconds = 150 around the Home Position
 					// GPS_POS Format: DDMMSSSSS -> 0.SSSSS * 60
-					GPS_POS_GOAL_WP[WP1][WPX] = GPS_POS_HOME_X + 8335;			// WP1 -> X (LONG) Position |
-					GPS_POS_GOAL_WP[WP1][WPY] = GPS_POS_HOME_Y;					// WP1 -> Y (LAT) Position	|	WP1 = EAST of HOME Pos
-					GPS_POS_GOAL_WP[WP2][WPX] = GPS_POS_HOME_X;					// WP2 -> X Position		|
-					GPS_POS_GOAL_WP[WP2][WPY] = GPS_POS_HOME_Y + 8335;			// WP2 -> Y Position		|	WP2 = NORTH of HOME Pos
-					GPS_POS_GOAL_WP[WP3][WPX] = GPS_POS_HOME_X - 8335;			// WP3 -> X Position		|
-					GPS_POS_GOAL_WP[WP3][WPY] = GPS_POS_HOME_Y;					// WP3 -> Y Position		|	WP2 = WEST of HOME Pos
-					GPS_POS_GOAL_WP[WP4][WPX] = GPS_POS_HOME_X;					// WP4 -> X Position		|
-					GPS_POS_GOAL_WP[WP4][WPY] = GPS_POS_HOME_Y-8335;			// WP4 -> Y Position		|	WP4 = SOUTH of HOME Pos
-					GPS_POS_GOAL_WP[WP5][WPX] = GPS_POS_HOME_X;	// SPARE
-					GPS_POS_GOAL_WP[WP5][WPY] = GPS_POS_HOME_Y;	// SPARE
-					
+// 					GPS_POS_GOAL_WP[WP1][WPX] = GPS_POS_HOME_X + 8335;			// WP1 -> X (LONG) Position |
+// 					GPS_POS_GOAL_WP[WP1][WPY] = GPS_POS_HOME_Y;					// WP1 -> Y (LAT) Position	|	WP1 = EAST of HOME Pos
+// 					GPS_POS_GOAL_WP[WP2][WPX] = GPS_POS_HOME_X;					// WP2 -> X Position		|
+// 					GPS_POS_GOAL_WP[WP2][WPY] = GPS_POS_HOME_Y + 8335;			// WP2 -> Y Position		|	WP2 = NORTH of HOME Pos
+// 					GPS_POS_GOAL_WP[WP3][WPX] = GPS_POS_HOME_X - 8335;			// WP3 -> X Position		|
+// 					GPS_POS_GOAL_WP[WP3][WPY] = GPS_POS_HOME_Y;					// WP3 -> Y Position		|	WP2 = WEST of HOME Pos
+// 					GPS_POS_GOAL_WP[WP4][WPX] = GPS_POS_HOME_X;					// WP4 -> X Position		|
+// 					GPS_POS_GOAL_WP[WP4][WPY] = GPS_POS_HOME_Y-8335;			// WP4 -> Y Position		|	WP4 = SOUTH of HOME Pos
+// 					GPS_POS_GOAL_WP[WP5][WPX] = GPS_POS_HOME_X;	// SPARE
+// 					GPS_POS_GOAL_WP[WP5][WPY] = GPS_POS_HOME_Y;	// SPARE
+					}
+					else if(GPS_home_set == TRUE && GPS_home_comm == FALSE)
+					{
+						GPS_home_comm = TRUE;
+						GPS_home_set = FALSE;
+						GPS_POS_HOME_X = 0;
+						GPS_POS_HOME_Y = 0;
+						write_string_ln("Home Set Cleared ");
+					}
 				}
+				else GPS_home_comm = FALSE;	
+					
+
+					
+				
 				//*******************************************
 				
 				//*******************************************
@@ -634,23 +650,31 @@ int main(void)
 				   |_____________|			 |_____________|
 				
 				*/
+				/*
+				write_var(ctrl_in[stick_l_up_down]);write_string(";");
+				write_var(ctrl_in[stick_l_left_right]);write_string(";");
+				write_var(ctrl_in[stick_r_up_down]);write_string(";");
+				write_var(ctrl_in[stick_r_left_right]);write_string_ln(";");
+				*/
 				if ((ctrl_in[stick_l_up_down]    <	110) &&		// limit down left stick
 					(ctrl_in[stick_l_left_right] >	175) &&		// limit left left stick
-					(ctrl_in[stick_r_up_down]	<	90) &&		// limit up right stick
+					(ctrl_in[stick_r_up_down]	<	110) &&		// limit up right stick
 					(ctrl_in[stick_r_left_right] >	170))		// limit right right stick
 					{
 						if (lights_enabled == FALSE && lights_commanded == FALSE)
 						{
+							lights_commanded = TRUE;
 							lights_enabled = TRUE;
 						}
 						else if (lights_enabled == TRUE && lights_commanded == FALSE)
 						{
+							lights_commanded = TRUE;
 							lights_enabled = FALSE;
 						}
 					}
 					else lights_commanded = FALSE;
 				
-				lights_enabled = TRUE;
+				//lights_enabled = TRUE;
 				if (lights_enabled == TRUE)
 				{
 					// Strobe light flash value
@@ -726,11 +750,7 @@ int main(void)
 						{
 							write_string_ln("DIRECT CTRL");
 						}
-							if (ctrl_in > ctrl_in_prev)
-							{
-								
-							}
-						 
+
 						 ctrl_out[motor]	=	NEUTRAL+((ctrl_in[stick_l_up_down]-SERVO_TRIM_MOTOR)*SERVO_GAIN_MOTOR);		
 						 ctrl_out[aileron]	=	NEUTRAL+((ctrl_in[stick_r_left_right]-SERVO_TRIM_AILERON)*SERVO_GAIN_AILERON);
 						 ctrl_out[elevator] =	NEUTRAL+((ctrl_in[stick_r_up_down]-SERVO_TRIM_ELEVATOR)*SERVO_GAIN_ELEVATOR);
@@ -742,8 +762,8 @@ int main(void)
 						 else if(ctrl_in[rotary_knob]<160 && ctrl_in[rotary_knob]>150)	flap_setpoint = FLAP_FULL;
 						 
 						 // drive flap with sample_time steps delay 
-						 if(ctrl_out[flap] < flap_setpoint)		ctrl_out[flap]+= flap_delta;
-						 else if(ctrl_out[flap] > flap_setpoint)	ctrl_out[flap]-= flap_delta;
+						 if(ctrl_out[flap] < flap_setpoint)		ctrl_out[flap]+= FLAP_DELTA;
+						 else if(ctrl_out[flap] > flap_setpoint)	ctrl_out[flap]-= FLAP_DELTA;
 						 else ctrl_out[flap] = flap_setpoint;
 						 
 						 // camera gimbal servo
@@ -848,7 +868,7 @@ int main(void)
 						speed_error = speed_hold - speed; // Positive Error (too slow) shall give positive input (motor increase)
 						speed_error_sum += speed_error;	
 						// when too slow (bracket turns positive) the motor gets increased
-						ctrl_out[motor] = trimmed_motor + (Kp_speed*speed_error + Ki_speed * speed_error_sum * sample_time);
+						ctrl_out[motor] = trimmed_motor + (KP_SPEED*speed_error + KI_SPEED * speed_error_sum * sample_time);
 						if(ctrl_out[motor] > RIGHT) ctrl_out[motor] = RIGHT;
 						else if (ctrl_out[motor] < LEFT) ctrl_out[motor] = LEFT;
 						speed_error_prev = speed_error;
@@ -869,8 +889,7 @@ int main(void)
 								Phi_hold = Phi;
 								Phi_error = 0;
 								Phi_error_prev = 0;
-								Phi_error_sum = 0;
-								Kp_Phi = 0;
+								Phi_error_sum = 0;								
 								
 								Theta_hold = Theta;
 								Theta_error = 0;
@@ -900,12 +919,9 @@ int main(void)
 							Theta_error_prev = Theta_error;
 							
 							// Tuning the K_p of the Aileron P closed loop
-							Kp_Phi += ctrl_in[stick_r_up_down]-SERVO_TRIM_AILERON;
-							if (Kp_Phi < 0) Kp_Phi = 0;
-							if (Kp_Phi	 > 254) Kp_Phi = 255;
 							
 							Phi_error = Phi - Phi_hold;
-							ctrl_out[aileron] = trimmed_aileron - (Kp_Phi*Phi_error_sum);
+							ctrl_out[aileron] = trimmed_aileron - (KP_PHI*Phi_error_sum);
 						}
 										
 					break;
@@ -969,8 +985,8 @@ int main(void)
   						speed_error = speed_hold - speed_filt; // Positive Error (too slow) shall give positive input (motor increase)
   						speed_error_sum += speed_error;	
   						// when too slow (bracket turns positive) the motor gets increased
-  						ctrl_out[motor] = trimmed_motor + Kp_speed*speed_error + (Ki_speed * speed_error_sum * sample_time);
- 						//write_var(Ki_speed * speed_error_sum * sample_time);write_string(";");
+  						ctrl_out[motor] = trimmed_motor + KP_SPEED*speed_error + (KI_SPEED * speed_error_sum * sample_time);
+ 						//write_var(KI_SPEED * speed_error_sum * sample_time);write_string(";");
  						 if(ctrl_out[motor] > MOTOR_LIM_HI) 
  						 {
  							 ctrl_out[motor] = MOTOR_LIM_HI;
@@ -1030,6 +1046,12 @@ int main(void)
 							Phi_error_sum = 0;
 							Phi_error_prev = 0;
 							// *****************************
+							OLED_set_position(5,3);
+							OLED_send_char_H();
+							OLED_send_char_O();
+							OLED_send_char_L();
+							OLED_send_char_D();
+							
 							write_string("Goal Alt - Heading - Speed: ");write_var(alt_hold);write_string(" - ");write_var(heading_hold);write_string(" - ");write_var_ln(speed_hold);
 						}
 						
@@ -1055,7 +1077,7 @@ int main(void)
  						// output: Theta_com (Pitch Angle command)
  						// Controller: P control (as per SCILAB the most efficient for Altitude hold outer loop)
  						alt_error = alt_hold - altitude_filt;
- 						Theta_hold = Kp_alt*(alt_error);
+ 						Theta_hold = KP_ALT*(alt_error);
  						// Limiting Theta Angle command to +20 -10 maximum (= Saturation)
  						int8_t pitch_limit = 20;
  						if (Theta_hold < -(pitch_limit/2)) Theta_hold = -(pitch_limit/2); // only 10 deg neg due to speed gaining
@@ -1072,7 +1094,7 @@ int main(void)
  						Theta_error = Theta - Theta_hold; // as per Simulation in SCILAB this convention is best
  						Theta_error_sum += Theta_error;
  						// controller formula for the necessary control change						 
- 						ctrl_out_PID[elevator] = (Kp_Theta*Theta_error + Ki_Theta*Theta_error_sum*sample_time + Kd_Theta*(Theta_error_prev - Theta_error)/sample_time);
+ 						ctrl_out_PID[elevator] = (KP_THETA*Theta_error + KI_THETA*Theta_error_sum*sample_time + KD_THETA*(Theta_error_prev - Theta_error)/sample_time);
   						Theta_error_prev = Theta_error;
 						//******************************************************
 						
@@ -1081,7 +1103,7 @@ int main(void)
 						// Input: turn rate q
 						// Output: elevator command damping
 						// Gains: K_p_q = 9
-						ctrl_out_DAMP[elevator] = K_p_q * (q_filt);
+						ctrl_out_DAMP[elevator] = K_P_Q * (q_filt);
 						//******************************************************
 						
 						//******************************************************
@@ -1108,6 +1130,11 @@ int main(void)
 							heading_hold = heading_GPS;
 
 							write_string("Heading Hold ");write_var_ln(heading_hold);
+							OLED_set_position(5,3);
+							OLED_send_char_H();
+							OLED_send_char_O();
+							OLED_send_char_L();
+							OLED_send_char_D();
 
 						}
 						else if(ctrl_in[rotary_knob]<160 && ctrl_in[rotary_knob]>150 && knob_flag == 0) // Left One Click
@@ -1137,8 +1164,13 @@ int main(void)
 							heading_hold = heading_goal;
 
 							write_string("Return Home Head ");write_var_ln(heading_hold);
+							OLED_set_position(5,3);
+							OLED_send_char_H();
+							OLED_send_char_O();
+							OLED_send_char_M();
+							OLED_send_char_E();
 						}
-											
+
  						//**********************************************	
  						// Heading hold control	
  						// input: current heading, heading_command
@@ -1152,7 +1184,7 @@ int main(void)
  						heading_error_sum += heading_error;
  						// The Phi_hold 0 does make sense when the sensor is not properly installed. 
  						// Otherwise it does not make sense!
- 						Phi_hold = -(Kp_head*heading_error + Kd_head*(heading_error-heading_error_prev)*sample_time);
+ 						Phi_hold = -(KP_HEAD*heading_error + KD_HEAD*(heading_error-heading_error_prev)*sample_time);
  						heading_error_prev = heading_error;
  						// Limiting the Bank Angle command to +- 10 maximum (= Saturation)
  						int8_t bank_limit = 10;
@@ -1167,7 +1199,7 @@ int main(void)
 
 						Phi_error =  Phi_hold - Phi;		// as per Simulation in Scilab
 						Phi_error_sum += Phi_error;
-						ctrl_out[aileron] = (trimmed_aileron + (Kp_Phi*Phi_error + Ki_Phi*Phi_error_sum*sample_time) + Kd_Phi*(Phi_error_prev - Phi_error)/sample_time);
+						ctrl_out[aileron] = (trimmed_aileron + (KP_PHI*Phi_error + KI_PHI*Phi_error_sum*sample_time) + KD_PHI*(Phi_error_prev - Phi_error)/sample_time);
 						Phi_error_prev = Phi_error;
 						if(ctrl_out[aileron] > RIGHT) ctrl_out[aileron] = RIGHT;
 						else if (ctrl_out[aileron] < LEFT) ctrl_out[aileron] = LEFT;	
@@ -1188,8 +1220,8 @@ int main(void)
  						speed_error = speed_hold - speed_filt; // Positive Error (too slow) shall give positive input (motor increase)
  						speed_error_sum += speed_error;
  						// when too slow (bracket turns positive) the motor gets increased
- 						ctrl_out[motor] = trimmed_motor + Kp_speed*speed_error + (Ki_speed * speed_error_sum * sample_time);
- 						//write_var(Ki_speed * speed_error_sum * sample_time);write_string(";");
+ 						ctrl_out[motor] = trimmed_motor + KP_SPEED*speed_error + (KI_SPEED * speed_error_sum * sample_time);
+ 						//write_var(KI_SPEED * speed_error_sum * sample_time);write_string(";");
  						if(ctrl_out[motor] > MOTOR_LIM_HI)
  						{
 	 						ctrl_out[motor] = MOTOR_LIM_HI;
@@ -1218,8 +1250,98 @@ int main(void)
 												
 					
 				}
+				
+				// Writing to OLED
+				if (TASK_OLED == TRUE)
+				{
+					send_cnt++;
+
+					if (send_cnt==33)
+					{
+						send_cnt = 0;	// Reset the counter
+						
+						if (GPS_home_set == TRUE)
+						{
+							OLED_set_position(5,1);
+							OLED_send_char_S();
+							OLED_send_char_E();
+							OLED_send_char_T();
+						}
+						else
+						{
+							OLED_set_position(5,1);
+							OLED_send_char_N();
+							OLED_send_char_O();
+							OLED_send_char_SP();
+						}
+
+						if (lights_enabled == TRUE)
+						{
+							OLED_set_position(5,0);
+							OLED_send_char_O();
+							OLED_send_char_N();
+							OLED_send_char_SP();
+						}
+						else
+						{
+							OLED_set_position(5,0);
+							OLED_send_char_O();
+							OLED_send_char_F();
+							OLED_send_char_F();
+						}
+						
+						if (battery > 80) OLED_battery_100(14,1);
+						else if(battery > 60) OLED_battery_80(14,1);
+						else if (battery > 40) OLED_battery_60(14,1);
+						else if (battery > 30) OLED_battery_40(14,1);
+						else if (battery > 15) OLED_battery_30(14,1);
+						else OLED_battery_0(14,1);
+						
+						if (Ctrl_Mode == DIRECT_CTRL)
+						{
+							OLED_set_position(5,2);
+							OLED_send_char_D();
+							OLED_send_char_I();
+							OLED_send_char_R();
+							OLED_send_char_SP();
+							
+							OLED_set_position(5,3);	// Resetting the Display that matters only in hold mode
+							OLED_send_char_SP();
+							OLED_send_char_SP();
+							OLED_send_char_SP();
+							OLED_send_char_SP();
+													
+						}
+						else if (Ctrl_Mode == HOLD_CTRL)
+						{
+							OLED_set_position(5,2);
+							OLED_send_char_H();
+							OLED_send_char_O();
+							OLED_send_char_L();
+							OLED_send_char_D();
+						}
+						else if (Ctrl_Mode == DAMPED_CTRL)
+						{
+							OLED_set_position(5,2);
+							OLED_send_char_D();
+							OLED_send_char_A();
+							OLED_send_char_M();
+							OLED_send_char_P();
+							
+							OLED_set_position(5,3);	// Resetting the Display that matters only in hold mode
+							OLED_send_char_SP();
+							OLED_send_char_SP();
+							OLED_send_char_SP();
+							OLED_send_char_SP();
+						}
+					}
+
+				}
+
+				
+				
 					// writing all data to serial port if enabled
-					if(serial_log == TRUE)	// set serial log variable to enable / disable output
+					if(SERIAL_LOG == TRUE)	// set serial log variable to enable / disable output
 					{
 						
 						write_var(ctrl_out[motor]);write_string(";");
@@ -1256,29 +1378,6 @@ int main(void)
 						write_string_ln(";");
 					}
 					
-					// Writing to OLED
- 						if (task_OLED == TRUE)
-							{
-								send_cnt++;
-								
-								if (send_cnt==160)
-								{
-									OLED_send_char("C");
-									
-// 									OLED_send_byte(0x7F);
-// 									OLED_send_byte(0x09);
-// 									OLED_send_byte(0x09);
-// 									OLED_send_byte(0x09);
-// 									OLED_send_byte(0x01);
-// 									OLED_send_byte(0x00);
-									send_cnt = 0;
-								}
-								
-
-								//OLED_set_position(0,1);
-								//OLED_send_string("TEST2");
-							}
-
 					
 					
 				Ctrl_Mode_prev = Ctrl_Mode;		// Setting previous State
