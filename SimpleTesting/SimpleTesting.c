@@ -38,8 +38,8 @@
 // These are the task flags, set them to activate / deactivate task
 #define TASK_GYRO	TRUE	// reading gyro data enabled (TRUE) /disabled (FALSE)
 #define TASK_ACC	TRUE	// reading acc data enabled (TRUE) /disabled (FALSE)
-#define TASK_BARO	FALSE	// reading baro data enabled (TRUE) /disabled (FALSE)
-#define TASK_SPEED	FALSE	// reading ADC speed data enabled (TRUE) /disabled (FALSE)
+#define TASK_BARO	TRUE	// reading baro data enabled (TRUE) /disabled (FALSE)
+#define TASK_SPEED	TRUE	// reading ADC speed data enabled (TRUE) /disabled (FALSE)
 #define TASK_OLED	TRUE	// OLED task	
 #define SERIAL_LOG	TRUE	// serial output enabled (TRUE) /disabled (FALSE)
 //******************************************************************
@@ -99,8 +99,8 @@ int16_t speed_raw,speed_filt, speed_filt_prev = 0;	// raw speed and filtered spe
 float speed, speed_cal = 0;
 float speed_hold, speed_error, speed_error_sum, speed_error_prev = 0;
 uint8_t speed_cnt = 0;	// needed for decreasing speed reading resolution
-#define KP_SPEED	1	// proportional parameter speed
-#define KI_SPEED	1
+#define KP_SPEED	5	// proportional parameter speed
+#define KI_SPEED	3
 
 /********************
  Euler Angles Data
@@ -453,6 +453,7 @@ int main(void)
 					{
 					
 					speed_raw = ADC_read_speed();
+					
 					//write_var_ln(speed_raw);
 					// low pass filter on the speed reading
 								// current reading				// prev reading			//
@@ -469,6 +470,7 @@ int main(void)
 					speed_filt = (speed_raw-speed_cal)*0.1 + 0.9*speed_filt_prev;	// 90% old value , 10% current value
 					speed_filt_prev = speed_filt;
 					speed_cnt = 0;
+					
 					}
 					//write_var(speed_raw);write_string(";");write_var_ln(speed_filt);
 					speed_cnt++;
@@ -678,15 +680,26 @@ int main(void)
 				if (lights_enabled == TRUE)
 				{
 					// Strobe light flash value
-					uint8_t flash_value = 110;
+					uint8_t flash_value = 40;
 					// Lights output:
-					PORTD |= (1<<PD5);		// NAV LIGHTS ON
+					PORTD |= (1<<PD6);		// NAV LIGHTS ON
 					if ((flap_setpoint == FLAP_1)||(flap_setpoint == FLAP_FULL))
 					{
-						PORTD |= (1<<PD6);		// LANDING LIGHTS ON
+						PORTD |= (1<<PD5);		// LANDING LIGHTS ON
 					}
+					else PORTD &= ~(1<<PD5); // LANDING LIGHTS OFF
 					
 					flash_count++;
+					if (flash_count == (flash_value/2))
+					{
+						// Red Engine Light
+						PORTD |= (1<<PD7);	
+					}
+					if (flash_count == (flash_value/2)+2)
+					{
+						// Red Engine Light
+						PORTD &= ~(1<<PD7);
+					}
 					if (flash_count == flash_value)
 					{
 						// Strobe On
@@ -722,8 +735,8 @@ int main(void)
 				//*******************************************
 				// Control of Modes
 				// changing from knob to normal switch for mode control
-				if(ctrl_in[5]>144) Ctrl_Mode = HOLD_CTRL;								// Dn Position
-				else if (ctrl_in[5] > 139 && ctrl_in[5] < 144) Ctrl_Mode = DIRECT_CTRL;	// Middle Position
+				if(ctrl_in[three_way_switch]>144) Ctrl_Mode = TUNE_CTRL;								// Dn Position
+				else if (ctrl_in[three_way_switch] > 139 && ctrl_in[three_way_switch] < 144) Ctrl_Mode = DIRECT_CTRL;	// Middle Position
 				else Ctrl_Mode = DAMPED_CTRL;											// Up Position
 								
 				if(Ctrl_Mode_prev != Ctrl_Mode)
@@ -739,7 +752,7 @@ int main(void)
 				
 				//******************************************						
 				// use this flag to switch between long / lat tuning mode
-				uint8_t mode = 3;
+				uint8_t mode = 2;
 				
 				switch(Ctrl_Mode)
 				{
@@ -943,7 +956,8 @@ int main(void)
 							Phi_hold_0 = Phi;			// using current phi as phi_0
 							Phi_hold = Phi;				// using current phi as hold value
 							Theta_hold = Theta;			// using current theta as theta_0
-							speed_hold = speed_filt;	// current speed reading for speed control				
+							//speed_hold = speed_filt;	// current speed reading for speed control
+							speed_hold = 15;	// correlates to approx 30kmh			
 							
 							// Setting current input as "trimmed input"
 							trimmed_elevator = ctrl_out[elevator]; 
@@ -969,6 +983,9 @@ int main(void)
 							Phi_error_sum = 0;
 							Phi_error_prev = 0;
 							// *****************************
+							
+
+							
 							write_string("Goal Alt - Heading - Speed: ");write_var(alt_hold);write_string(" - ");write_var(heading_hold);write_string(" - ");write_var_ln(speed_hold);
 						}
 						
@@ -976,12 +993,28 @@ int main(void)
  						// SPEED CONTROL AUTOPILOT
  						
  						//**********************************************
- 						// speed control not yet established (keeping it as is)
+ 						// speed control as PI controller
+						// Using damped pitch control
  						//ctrl_out[motor] = trimmed_motor ;
  						ctrl_out[aileron]	=	NEUTRAL+((ctrl_in[stick_r_left_right]-SERVO_TRIM_AILERON)*SERVO_GAIN_AILERON);
- 						ctrl_out[elevator] =	NEUTRAL+((ctrl_in[stick_r_up_down]-SERVO_TRIM_ELEVATOR)*SERVO_GAIN_ELEVATOR);
+ 						
+						
  						ctrl_out[rudder]	=	NEUTRAL+((ctrl_in[stick_l_left_right]-SERVO_TRIM_RUDDER)*SERVO_GAIN_RUDDER);
- 						// Speed control (PI only -> noisy signal) with motor
+ 						
+						//******************************************************
+						// Pitch damping
+						// Input: turn rate q
+						// Output: elevator command damping
+						// Gains: K_p_q = 9
+						if(ctrl_in[poti]<160) K_p_q = 9;
+						else K_p_q = 5;
+						
+						ctrl_out_DAMP[elevator] = K_p_q * (q_filt);
+						// Here only damper on the normal commands
+						ctrl_out[elevator] = (NEUTRAL+((ctrl_in[stick_r_up_down]-SERVO_TRIM_ELEVATOR)*SERVO_GAIN_ELEVATOR))-ctrl_out_DAMP[elevator];
+						 
+						 
+						 // Speed control (PI only -> noisy signal) with motor
   						speed_error = speed_hold - speed_filt; // Positive Error (too slow) shall give positive input (motor increase)
   						speed_error_sum += speed_error;	
   						// when too slow (bracket turns positive) the motor gets increased
