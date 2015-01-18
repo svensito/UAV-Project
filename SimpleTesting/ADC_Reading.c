@@ -124,6 +124,10 @@ int16_t ADC_read_speed(void)
 	// p = rho/2 * v²
 	// v = SQRT(2*p/rho)
 	// [p] = N/m² = Pa
+	// Short table:
+	// 10 = 8 m/s = 29 km/h
+	// 11 = 8,5 m/s = 30 km/h
+	// 15 = 9,9 m/s = 35,5 km/h
 	
 	//speed = v_raw;	// we will use the ADC value to run autopilot functions...(more precise)
 	//delta_p = (v_raw - 510)*(2000/510);

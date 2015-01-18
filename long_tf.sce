@@ -5,7 +5,7 @@ Pi = 3.14159265359
 rho = 1.2682    // density [kg/m³]
 
 // speed of trimmed flight
-V_a = 20    // airspeed [m/s]
+V_a = 10    // airspeed [m/s]
 
 //airframe
 b = 1.4     // wingspan [m]

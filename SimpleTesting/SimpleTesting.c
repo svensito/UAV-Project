@@ -96,7 +96,7 @@ int16_t speed_raw,speed_filt, speed_filt_prev = 0;	// raw speed and filtered spe
 											// alpha element [0;1] -> alpha 0: only raw input (noise free)
 											// -> alpha 1: only filtered input (only noise)
 
-float speed, speed_cal = 0;
+float speed_cal = 0;
 float speed_hold, speed_error, speed_error_sum, speed_error_prev = 0;
 uint8_t speed_cnt = 0;	// needed for decreasing speed reading resolution
 #define KP_SPEED	5	// proportional parameter speed
@@ -113,20 +113,22 @@ int16_t Theta, Theta_hold, Theta_error, Theta_error_sum, Theta_error_prev = 0;
 int8_t Kp_Theta = 10;	// as per simulation in SCILAB this are very good gains for a wide range of speed...
 #define KP_THETA	10
 #define KI_THETA	10
-#define KD_THETA	1
-#define K_P_Q		9
+#define KD_THETA	0
+#define K_d_p		7	// Damping Gain for Roll Rate p
 int8_t Kd_Theta = 1;
 int8_t Ki_Theta = 10;
-int8_t K_p_q = 9;
 // Roll Angle Phi
 int16_t Phi = 0;
 float Phi_hold, Phi_hold_0 = 0;
 float Phi_error = 0;
 float Phi_error_sum = 0;
 float Phi_error_prev = 0;
-#define KP_PHI	20
+#define KP_PHI	10
 #define KD_PHI	3
 #define KI_PHI	10
+#define K_d_q	7		// Damping Gain for Pitch Rate q
+#define K_d_r	5		// Damping Gain for Yaw Rate r
+int8_t K_q_p = 9;
 // Yaw Angle Psi
 float Psi = 0;
 
@@ -735,7 +737,7 @@ int main(void)
 				//*******************************************
 				// Control of Modes
 				// changing from knob to normal switch for mode control
-				if(ctrl_in[three_way_switch]>144) Ctrl_Mode = TUNE_CTRL;								// Dn Position
+				if(ctrl_in[three_way_switch]>144) Ctrl_Mode = HOLD_CTRL;								// Dn Position
 				else if (ctrl_in[three_way_switch] > 139 && ctrl_in[three_way_switch] < 144) Ctrl_Mode = DIRECT_CTRL;	// Middle Position
 				else Ctrl_Mode = DAMPED_CTRL;											// Up Position
 								
@@ -878,7 +880,7 @@ int main(void)
 							
 						//**********************************************
 						// Speed control (PI only -> noisy signal) with motor
-						speed_error = speed_hold - speed; // Positive Error (too slow) shall give positive input (motor increase)
+						speed_error = speed_hold - speed_filt; // Positive Error (too slow) shall give positive input (motor increase)
 						speed_error_sum += speed_error;	
 						// when too slow (bracket turns positive) the motor gets increased
 						ctrl_out[motor] = trimmed_motor + (KP_SPEED*speed_error + KI_SPEED * speed_error_sum * sample_time);
@@ -996,7 +998,7 @@ int main(void)
  						// speed control as PI controller
 						// Using damped pitch control
  						//ctrl_out[motor] = trimmed_motor ;
- 						ctrl_out[aileron]	=	NEUTRAL+((ctrl_in[stick_r_left_right]-SERVO_TRIM_AILERON)*SERVO_GAIN_AILERON);
+ 						
  						
 						
  						ctrl_out[rudder]	=	NEUTRAL+((ctrl_in[stick_l_left_right]-SERVO_TRIM_RUDDER)*SERVO_GAIN_RUDDER);
@@ -1005,32 +1007,40 @@ int main(void)
 						// Pitch damping
 						// Input: turn rate q
 						// Output: elevator command damping
-						// Gains: K_p_q = 9
-						if(ctrl_in[poti]<160) K_p_q = 9;
-						else K_p_q = 5;
+						// Gains: K_d_q
 						
-						ctrl_out_DAMP[elevator] = K_p_q * (q_filt);
+						
+						ctrl_out_DAMP[elevator] = K_d_q * (q_filt);
+						ctrl_out_DAMP[aileron] = K_d_p * (p_filt);
+						ctrl_out_DAMP[rudder] = K_d_r * (r_filt);
 						// Here only damper on the normal commands
 						ctrl_out[elevator] = (NEUTRAL+((ctrl_in[stick_r_up_down]-SERVO_TRIM_ELEVATOR)*SERVO_GAIN_ELEVATOR))-ctrl_out_DAMP[elevator];
+						ctrl_out[aileron]	=	(NEUTRAL+((ctrl_in[stick_r_left_right]-SERVO_TRIM_AILERON)*SERVO_GAIN_AILERON))-ctrl_out_DAMP[aileron]; 
+						ctrl_out[rudder]	=	(NEUTRAL+((ctrl_in[stick_l_left_right]-SERVO_TRIM_RUDDER)*SERVO_GAIN_RUDDER))+ctrl_out_DAMP[rudder]; 
+						ctrl_out[motor]	=	NEUTRAL+((ctrl_in[stick_l_up_down]-SERVO_TRIM_MOTOR)*SERVO_GAIN_MOTOR); 
 						 
-						 
-						 // Speed control (PI only -> noisy signal) with motor
-  						speed_error = speed_hold - speed_filt; // Positive Error (too slow) shall give positive input (motor increase)
-  						speed_error_sum += speed_error;	
-  						// when too slow (bracket turns positive) the motor gets increased
-  						ctrl_out[motor] = trimmed_motor + KP_SPEED*speed_error + (KI_SPEED * speed_error_sum * sample_time);
- 						//write_var(KI_SPEED * speed_error_sum * sample_time);write_string(";");
- 						 if(ctrl_out[motor] > MOTOR_LIM_HI) 
- 						 {
- 							 ctrl_out[motor] = MOTOR_LIM_HI;
- 							 //speed_error_sum -= speed_error; // to stop 
- 						 }
-  						else if (ctrl_out[motor] < MOTOR_LIM_LOW) 
-						 {
- 							 ctrl_out[motor] = MOTOR_LIM_LOW;
- 							 //speed_error_sum -= speed_error;
- 						 }
-  						speed_error_prev = speed_error;
+// 						if (ctrl_in[poti] <160)
+// 						{
+// 							// Speed control (PI only -> noisy signal) with motor
+// 							speed_error = speed_hold - speed_filt; // Positive Error (too slow) shall give positive input (motor increase)
+// 							speed_error_sum += speed_error;
+// 							// when too slow (bracket turns positive) the motor gets increased
+// 							ctrl_out[motor] = trimmed_motor + KP_SPEED*speed_error + (KI_SPEED * speed_error_sum * sample_time);
+// 							//write_var(KI_SPEED * speed_error_sum * sample_time);write_string(";");
+// 							if(ctrl_out[motor] > MOTOR_LIM_HI)
+// 							{
+// 								ctrl_out[motor] = MOTOR_LIM_HI;
+// 								//speed_error_sum -= speed_error; // to stop
+// 							}
+// 							else if (ctrl_out[motor] < MOTOR_LIM_LOW)
+// 							{
+// 								ctrl_out[motor] = MOTOR_LIM_LOW;
+// 								//speed_error_sum -= speed_error;
+// 							}
+// 							speed_error_prev = speed_error;
+// 						}
+// 						else 		
+
  						
 						//***********************************************
  						
@@ -1053,7 +1063,7 @@ int main(void)
 							Phi_hold_0 = Phi;			// using current phi as phi_0
 							Phi_hold = Phi;				// using current phi as hold value
 							Theta_hold = Theta;			// using current theta as theta_0
-							speed_hold = speed;			// current speed reading for speed control				
+							speed_hold = speed_filt;			// current speed reading for speed control				
 							
 							// Setting current input as "trimmed input"
 							trimmed_elevator = ctrl_out[elevator]; 
@@ -1109,12 +1119,12 @@ int main(void)
  						// Input: Altitude reading (poor 1Hz resolution of barometer)
  						// output: Theta_com (Pitch Angle command)
  						// Controller: P control (as per SCILAB the most efficient for Altitude hold outer loop)
- 						alt_error = alt_hold - altitude_filt;
- 						Theta_hold = KP_ALT*(alt_error);
+ 						/*alt_error = alt_hold - altitude_filt;
+ 						Theta_hold = KP_ALT*(alt_error);*/
  						// Limiting Theta Angle command to +20 -10 maximum (= Saturation)
- 						int8_t pitch_limit = 20;
+ 						/*int8_t pitch_limit = 20;
  						if (Theta_hold < -(pitch_limit/2)) Theta_hold = -(pitch_limit/2); // only 10 deg neg due to speed gaining
- 						else if (Theta_hold > pitch_limit) Theta_hold = pitch_limit;
+ 						else if (Theta_hold > pitch_limit) Theta_hold = pitch_limit;*/
 						
  						//******************************************************
  						
@@ -1135,13 +1145,13 @@ int main(void)
 						// Pitch damping
 						// Input: turn rate q
 						// Output: elevator command damping
-						// Gains: K_p_q = 9
-						ctrl_out_DAMP[elevator] = K_P_Q * (q_filt);
+						// Gains: K_d_q
+						ctrl_out_DAMP[elevator] = K_d_q * (q_filt);
 						//******************************************************
 						
 						//******************************************************
 						// Combining the calculated inputs elevator and limiting elevator command
-						ctrl_out[elevator] = trimmed_elevator + ctrl_out_PID[elevator] - ctrl_out_DAMP[elevator];
+						ctrl_out[elevator] = trimmed_elevator - ctrl_out_PID[elevator] - ctrl_out_DAMP[elevator];
 						if(ctrl_out[elevator] > RIGHT) ctrl_out[elevator] = RIGHT;
 						else if (ctrl_out[elevator] < LEFT) ctrl_out[elevator] = LEFT;
 						//******************************************************
@@ -1229,20 +1239,31 @@ int main(void)
 						// Bank angle control with aileron
 						// Input: Phi_hold = Phi_command
 						// Output: Aileron Command
-
-						Phi_error =  Phi_hold - Phi;		// as per Simulation in Scilab
+						Phi_error =  Phi_hold_0 - Phi;		// as per Simulation in Scilab
 						Phi_error_sum += Phi_error;
-						ctrl_out[aileron] = (trimmed_aileron + (KP_PHI*Phi_error + KI_PHI*Phi_error_sum*sample_time) + KD_PHI*(Phi_error_prev - Phi_error)/sample_time);
+						ctrl_out_PID[aileron] = (KP_PHI*Phi_error + KI_PHI*Phi_error_sum*sample_time) + KD_PHI*((Phi_error_prev - Phi_error)/sample_time);
 						Phi_error_prev = Phi_error;
-						if(ctrl_out[aileron] > RIGHT) ctrl_out[aileron] = RIGHT;
-						else if (ctrl_out[aileron] < LEFT) ctrl_out[aileron] = LEFT;	
+							
 						//***********************************************
 						
+						//***********************************************
+						// Damping of Bank Angle
+						// Input: turn rate p
+						// Output: aileron damping
+						ctrl_out_DAMP[aileron] = K_d_p * (p_filt);					
+						//***********************************************
+						
+						//******************************************************
+						// Combining the calculated inputs elevator and limiting elevator command
+						ctrl_out[aileron] = trimmed_aileron + ctrl_out_PID[aileron] - ctrl_out_DAMP[aileron];
+						if(ctrl_out[aileron] > RIGHT) ctrl_out[aileron] = RIGHT;
+						else if (ctrl_out[aileron] < LEFT) ctrl_out[aileron] = LEFT;
 						//*********************************************
-						// Damping of yaw	-> Yaw Damping is not needed
-						//int8_t yaw_damping = 2;	// needs to be checked
-						//if(speed_filt>20) yaw_damping /= 2;
-						//ctrl_out[rudder] = trimmed_rudder + (r_filt*yaw_damping);
+						
+						//*********************************************
+						// Damping of yaw
+						ctrl_out_DAMP[rudder] = K_d_r * (r_filt);
+						ctrl_out[rudder] = trimmed_rudder + ctrl_out_DAMP[rudder];
 						//**********************************************
 						
 						
