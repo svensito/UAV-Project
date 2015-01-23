@@ -113,8 +113,8 @@ int16_t Theta, Theta_hold, Theta_error, Theta_error_sum, Theta_error_prev = 0;
 int8_t Kp_Theta = 10;	// as per simulation in SCILAB this are very good gains for a wide range of speed...
 #define KP_THETA	10
 #define KI_THETA	10
-#define KD_THETA	0
-#define K_d_p		7	// Damping Gain for Roll Rate p
+#define KD_THETA	4
+
 int8_t Kd_Theta = 1;
 int8_t Ki_Theta = 10;
 // Roll Angle Phi
@@ -126,9 +126,12 @@ float Phi_error_prev = 0;
 #define KP_PHI	10
 #define KD_PHI	3
 #define KI_PHI	10
-#define K_d_q	7		// Damping Gain for Pitch Rate q
-#define K_d_r	5		// Damping Gain for Yaw Rate r
-int8_t K_q_p = 9;
+//#define K_d_q	7		// Damping Gain for Pitch Rate q
+//#define K_d_r	5		// Damping Gain for Yaw Rate r
+//#define K_d_p	7	// Damping Gain for Roll Rate p
+int8_t K_d_q = 7;
+int8_t K_d_r = 5;
+int8_t K_d_p = 7;
 // Yaw Angle Psi
 float Psi = 0;
 
@@ -136,10 +139,12 @@ float Psi = 0;
  Acceleration Data
  ********************/
 // Acceleration data
-int16_t acc_x_raw, acc_y_raw, acc_z_raw,acc_x_filt, acc_y_filt, acc_z_filt,acc_x_filt_prev, acc_y_filt_prev, acc_z_filt_prev = 0;
+int16_t acc_x_raw, acc_y_raw, acc_z_raw,acc_x_filt, acc_y_filt, acc_z_filt,acc_x_filt_prev, acc_y_filt_prev, acc_z_filt_prev, acc_z_raw_prev = 0;
 float alpha_acc = 0.3;
 float Theta_acc = 0;	// Theta based on the Accelerometer reading
 float Phi_acc = 0;		// Phi based on the Accelerometer reading
+uint8_t DLC_en = 0;
+
 
 /********************
  Kalman Filter Data
@@ -207,7 +212,7 @@ uint8_t battery = 0;
  ********************/
 uint8_t send_cnt = 0;
 int8_t tune_cnt = 0;
-int8_t test_cnt = 0;
+int8_t test_cnt, test_cnt2 = 0;
 uint8_t cal_cnt = 0;
 
 
@@ -379,7 +384,7 @@ int main(void)
 	// Turn on Light for check
 	PORTD |= (1<<PD4);
 	
-
+	
 		
 	while(1)
     {
@@ -660,10 +665,10 @@ int main(void)
 				write_var(ctrl_in[stick_r_up_down]);write_string(";");
 				write_var(ctrl_in[stick_r_left_right]);write_string_ln(";");
 				*/
-				if ((ctrl_in[stick_l_up_down]    <	110) &&		// limit down left stick
-					(ctrl_in[stick_l_left_right] >	175) &&		// limit left left stick
-					(ctrl_in[stick_r_up_down]	<	110) &&		// limit up right stick
-					(ctrl_in[stick_r_left_right] >	170))		// limit right right stick
+				if ((ctrl_in[stick_l_up_down]    <	130) &&		// limit down left stick
+					(ctrl_in[stick_l_left_right] >	155) &&		// limit left left stick
+					(ctrl_in[stick_r_up_down]	<	130) &&		// limit up right stick
+					(ctrl_in[stick_r_left_right] >	155))		// limit right right stick
 					{
 						if (lights_enabled == FALSE && lights_commanded == FALSE)
 						{
@@ -772,9 +777,9 @@ int main(void)
 						 ctrl_out[rudder]	=	NEUTRAL+((ctrl_in[stick_l_left_right]-SERVO_TRIM_RUDDER)*SERVO_GAIN_RUDDER);
 						 
 						 // Flap Control
-						 if(ctrl_in[rotary_knob]<135 && ctrl_in[rotary_knob]>120)		flap_setpoint = FLAP_UP;
-						 else if(ctrl_in[rotary_knob]<150 && ctrl_in[rotary_knob]>135)	flap_setpoint = FLAP_1;
-						 else if(ctrl_in[rotary_knob]<160 && ctrl_in[rotary_knob]>150)	flap_setpoint = FLAP_FULL;
+						 if(ctrl_in[poti_p3]<120/* && ctrl_in[poti_p3]>120*/)		flap_setpoint = FLAP_UP;
+						 else if(ctrl_in[poti_p3]<160 && ctrl_in[poti_p3]>135)	flap_setpoint = FLAP_1;
+						 else if(/*ctrl_in[poti_p3]<160 && */ctrl_in[poti_p3]>160)	flap_setpoint = FLAP_FULL;
 						 
 						 // drive flap with sample_time steps delay 
 						 if(ctrl_out[flap] < flap_setpoint)		ctrl_out[flap]+= FLAP_DELTA;
@@ -944,6 +949,7 @@ int main(void)
 					case DAMPED_CTRL:
 					// Heading control test
 					// entry condition
+					
 						if(state_change == TRUE)
 						{
 							write_string_ln("Damped CONTROL");
@@ -986,7 +992,7 @@ int main(void)
 							Phi_error_prev = 0;
 							// *****************************
 							
-
+							acc_z_raw_prev = acc_z_raw;
 							
 							write_string("Goal Alt - Heading - Speed: ");write_var(alt_hold);write_string(" - ");write_var(heading_hold);write_string(" - ");write_var_ln(speed_hold);
 						}
@@ -1000,14 +1006,42 @@ int main(void)
  						//ctrl_out[motor] = trimmed_motor ;
  						
  						
-						
- 						ctrl_out[rudder]	=	NEUTRAL+((ctrl_in[stick_l_left_right]-SERVO_TRIM_RUDDER)*SERVO_GAIN_RUDDER);
  						
 						//******************************************************
 						// Pitch damping
 						// Input: turn rate q
 						// Output: elevator command damping
 						// Gains: K_d_q
+						
+						if (ctrl_in[poti_p2]>140)
+						{
+							// the design is for speed = 17
+							if (speed_filt<12)
+							{
+								K_d_q=9;
+								K_d_p=9;
+								K_d_r=7;
+							}
+							else if (speed_filt>20)
+							{
+								K_d_q=4;
+								K_d_p=4;
+								K_d_r=3;
+							}
+							else
+							{
+								K_d_q=7;
+								K_d_p=7;
+								K_d_r=5;
+							}
+							
+						}
+						else
+						{
+								K_d_q=7;
+								K_d_p=7;
+								K_d_r=5;
+						}
 						
 						
 						ctrl_out_DAMP[elevator] = K_d_q * (q_filt);
@@ -1018,7 +1052,18 @@ int main(void)
 						ctrl_out[aileron]	=	(NEUTRAL+((ctrl_in[stick_r_left_right]-SERVO_TRIM_AILERON)*SERVO_GAIN_AILERON))-ctrl_out_DAMP[aileron]; 
 						ctrl_out[rudder]	=	(NEUTRAL+((ctrl_in[stick_l_left_right]-SERVO_TRIM_RUDDER)*SERVO_GAIN_RUDDER))+ctrl_out_DAMP[rudder]; 
 						ctrl_out[motor]	=	NEUTRAL+((ctrl_in[stick_l_up_down]-SERVO_TRIM_MOTOR)*SERVO_GAIN_MOTOR); 
-						 
+						
+						if (ctrl_in[poti_p1] > 140)
+						{
+							ctrl_out[flap]	= FLAP_UP -  ((-1000 - acc_z_raw)/4);
+							if (ctrl_out[flap]<FLAP_UP)
+							{
+								ctrl_out[flap]=FLAP_UP;
+							}
+							DLC_en = 1;
+						}
+						else DLC_en = 0;
+						
 // 						if (ctrl_in[poti] <160)
 // 						{
 // 							// Speed control (PI only -> noisy signal) with motor
@@ -1100,7 +1145,7 @@ int main(void)
 						
 						// Using Poti to change between two altitudes
 						// direct poti value might be too noisy for altitude values
-						if ((ctrl_in[poti]-155) < 30)
+						if ((ctrl_in[poti_p1]-155) < 30)
 						{
 							alt_hold = alt_hold_0;
 						}
@@ -1137,8 +1182,14 @@ int main(void)
  						Theta_error = Theta - Theta_hold; // as per Simulation in SCILAB this convention is best
  						Theta_error_sum += Theta_error;
  						// controller formula for the necessary control change						 
- 						ctrl_out_PID[elevator] = (KP_THETA*Theta_error + KI_THETA*Theta_error_sum*sample_time + KD_THETA*(Theta_error_prev - Theta_error)/sample_time);
-  						Theta_error_prev = Theta_error;
+ 						ctrl_out_PID[elevator] = (KP_THETA*Theta_error + KI_THETA*Theta_error_sum*sample_time + KD_THETA*(-Theta_error_prev + Theta_error)/(sample_time*3));
+  						test_cnt++;
+						if (test_cnt == 3)
+  						{
+							 Theta_error_prev = Theta_error; 
+							 test_cnt = 0;
+  						}
+						  
 						//******************************************************
 						
 						//******************************************************
@@ -1166,7 +1217,7 @@ int main(void)
 						//**********************************************
 						// GPS GOAL control
 						// Using Rotary knob for GPS and hold control (testing)
-						if(ctrl_in[rotary_knob]<135 && ctrl_in[rotary_knob]>120 && knob_flag == 1)	// NEUTRAL (Up Middle
+						if(ctrl_in[poti_p3]<135 && ctrl_in[poti_p3]>120 && knob_flag == 1)	// NEUTRAL (Up Middle
 						{
 							knob_flag = 0;
 							// normal position -> normal hold control of actual course
@@ -1180,7 +1231,7 @@ int main(void)
 							OLED_send_char_D();
 
 						}
-						else if(ctrl_in[rotary_knob]<160 && ctrl_in[rotary_knob]>150 && knob_flag == 0) // Left One Click
+						else if(ctrl_in[poti_p3]<160 && ctrl_in[poti_p3]>150 && knob_flag == 0) // Left One Click
 						{
 							knob_flag = 1;
 							// when knob turned -> GPS -> Return to home -> Home Position needs to be defined before (see above)
@@ -1241,8 +1292,14 @@ int main(void)
 						// Output: Aileron Command
 						Phi_error =  Phi_hold_0 - Phi;		// as per Simulation in Scilab
 						Phi_error_sum += Phi_error;
-						ctrl_out_PID[aileron] = (KP_PHI*Phi_error + KI_PHI*Phi_error_sum*sample_time) + KD_PHI*((Phi_error_prev - Phi_error)/sample_time);
-						Phi_error_prev = Phi_error;
+						ctrl_out_PID[aileron] = (KP_PHI*Phi_error + KI_PHI*Phi_error_sum*sample_time + KD_PHI*((-Phi_error_prev + Phi_error)/(sample_time*3)));
+						test_cnt2++;
+						if (test_cnt2 == 3)
+						{
+							Phi_error_prev = Phi_error;
+							test_cnt2 = 0;
+						}
+						
 							
 						//***********************************************
 						
@@ -1408,10 +1465,10 @@ int main(void)
 						write_var(heading_GPS);	write_string(";");
 						write_var(altitude_filt);write_string(";");
 						write_var(speed_filt);write_string(";");
-						write_var(alt_hold);write_string(";");
-						write_var(Phi_hold);write_string(";");
-						write_var(Theta_hold);write_string(";");
-						write_var(speed_hold);
+						write_var(K_d_p);write_string(";");
+						write_var(K_d_q);write_string(";");
+						write_var(K_d_r);write_string(";");
+						write_var(DLC_en);
 						
 						// In case at least once a GPS Signal has been received, the GPS Info will also be printed
 					
