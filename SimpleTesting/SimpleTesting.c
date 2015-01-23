@@ -113,7 +113,7 @@ int16_t Theta, Theta_hold, Theta_error, Theta_error_sum, Theta_error_prev = 0;
 int8_t Kp_Theta = 10;	// as per simulation in SCILAB this are very good gains for a wide range of speed...
 #define KP_THETA	10
 #define KI_THETA	10
-#define KD_THETA	4
+#define KD_THETA	2
 
 int8_t Kd_Theta = 1;
 int8_t Ki_Theta = 10;
@@ -124,8 +124,8 @@ float Phi_error = 0;
 float Phi_error_sum = 0;
 float Phi_error_prev = 0;
 #define KP_PHI	10
-#define KD_PHI	3
 #define KI_PHI	10
+#define KD_PHI	2
 //#define K_d_q	7		// Damping Gain for Pitch Rate q
 //#define K_d_r	5		// Damping Gain for Yaw Rate r
 //#define K_d_p	7	// Damping Gain for Roll Rate p
