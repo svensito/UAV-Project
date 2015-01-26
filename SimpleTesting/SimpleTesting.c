@@ -1016,23 +1016,23 @@ int main(void)
 						if (ctrl_in[poti_p2]>140)
 						{
 							// the design is for speed = 17
-							if (speed_filt<12)
+							if (speed_filt>30)
 							{
-								K_d_q=9;
-								K_d_p=9;
-								K_d_r=7;
+								K_d_q=3;
+								K_d_p=3;
+								K_d_r=3;
 							}
 							else if (speed_filt>20)
 							{
-								K_d_q=4;
-								K_d_p=4;
-								K_d_r=3;
+								K_d_q=5;
+								K_d_p=5;
+								K_d_r=5;
 							}
 							else
 							{
 								K_d_q=7;
 								K_d_p=7;
-								K_d_r=5;
+								K_d_r=7;
 							}
 							
 						}
@@ -1040,7 +1040,7 @@ int main(void)
 						{
 								K_d_q=7;
 								K_d_p=7;
-								K_d_r=5;
+								K_d_r=7;
 						}
 						
 						
