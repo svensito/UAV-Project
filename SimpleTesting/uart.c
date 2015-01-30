@@ -33,7 +33,8 @@ void init_uart()
 	uint16_t baudrate = 57600; // achtung: bei geringen baudraten müsste evtl das URRH auch noch beschrieben werden...
 	int8_t baud_calc = (F_CPU/(baudrate*16))-1;
 	UBRRH = 0x00;
-	UBRRL = 0x0C;
+	//UBRRL = 0x0C;	// 57600
+	UBRRL = 0x4D;	// 9600
 	
 	sei();	//that is needed essentially (turn on interrupts globally)
 	// das UDR auslesen, falls daten drin sind und verwerfen
@@ -207,7 +208,7 @@ extern void send_sshort(int16_t num)
 	uint8_t LSB;
 	LSB = num & (0xFF);
 	MSB = num>>8;
-	send_ubyte(LSB);send_sbyte(MSB);	
+	send_ubyte(MSB);send_sbyte(LSB);	
 }
 
 extern void send_ushort(uint16_t num)
@@ -215,7 +216,7 @@ extern void send_ushort(uint16_t num)
 	uint8_t MSB,LSB;
 	LSB = num & (0xFF);
 	MSB = num>>8;
-	send_ubyte(LSB);send_ubyte(MSB);
+	send_ubyte(MSB);send_ubyte(LSB);
 }
 
 extern void send_slong(int32_t num)
@@ -239,6 +240,23 @@ extern void send_ulong(uint32_t num)
 		CSB2 = num & (0xFF0000);
 		MSB = num>>24;
 		send_ubyte(LSB);send_ubyte(CSB1);send_ubyte(CSB2);send_ubyte(MSB);
+}
+
+extern void send_sshort_tel(int16_t num)
+{
+	int8_t MSB;
+	uint8_t LSB;
+	LSB = num & (0xFF);
+	MSB = num>>8;
+	send_ubyte(LSB);send_sbyte(MSB);
+}
+
+extern void send_ushort_tel(uint16_t num)
+{
+	uint8_t MSB,LSB;
+	LSB = num & (0xFF);
+	MSB = num>>8;
+	send_ubyte(LSB);send_ubyte(MSB);
 }
 
 // END UART

@@ -36,12 +36,14 @@
 
 //******************************************************************
 // These are the task flags, set them to activate / deactivate task
-#define TASK_GYRO	TRUE	// reading gyro data enabled (TRUE) /disabled (FALSE)
-#define TASK_ACC	TRUE	// reading acc data enabled (TRUE) /disabled (FALSE)
-#define TASK_BARO	TRUE	// reading baro data enabled (TRUE) /disabled (FALSE)
-#define TASK_SPEED	TRUE	// reading ADC speed data enabled (TRUE) /disabled (FALSE)
-#define TASK_OLED	TRUE	// OLED task	
-#define SERIAL_LOG	TRUE	// serial output enabled (TRUE) /disabled (FALSE)
+#define TASK_GYRO	FALSE	// reading gyro data enabled (TRUE) /disabled (FALSE)
+#define TASK_ACC	FALSE	// reading acc data enabled (TRUE) /disabled (FALSE)
+#define TASK_BARO	FALSE	// reading baro data enabled (TRUE) /disabled (FALSE)
+#define TASK_SPEED	FALSE	// reading ADC speed data enabled (TRUE) /disabled (FALSE)
+#define TASK_OLED	FALSE	// OLED task	
+#define GPS_READING	FALSE	// GPS Reading enabled or disabled
+#define SERIAL_LOG	FALSE	// serial output enabled (TRUE) /disabled (FALSE)
+#define SERIAL_TEL	TRUE	// serial output for Telemetry Protocol enabled
 //******************************************************************
 
 /********************
@@ -210,7 +212,7 @@ uint8_t battery = 0;
 /********************
  Counter
  ********************/
-uint8_t send_cnt = 0;
+uint8_t send_cnt, telemetry_cnt = 0;
 int8_t tune_cnt = 0;
 int8_t test_cnt, test_cnt2 = 0;
 uint8_t cal_cnt = 0;
@@ -308,6 +310,7 @@ uint32_t atol_new(const char* str) {
 	return num;
 }
 
+
 //-----------------------------------
 
 
@@ -390,7 +393,7 @@ int main(void)
     {
 			// Program Code (infinite loop)
 			
-			if(UART_READY_FLAG == TRUE)
+			if(UART_READY_FLAG == TRUE && GPS_READING == TRUE)
 			{
 				if(strcmp(GPS_string[0],"GPRMC")==0)
 				{
@@ -1472,7 +1475,7 @@ int main(void)
 						
 						// In case at least once a GPS Signal has been received, the GPS Info will also be printed
 					
-						if(strcmp(GPS_RMC[GPS_RMC_LONGITUDE],"")!=0)
+						if(strcmp(GPS_RMC[GPS_RMC_LONGITUDE],"")!=0 && GPS_READING == TRUE)
 						{
 							write_string(";");
 							write_string(GPS_RMC[GPS_RMC_TIME]);
@@ -1487,6 +1490,34 @@ int main(void)
 						}
 					
 						write_string_ln(";");
+					}
+					if (SERIAL_TEL == TRUE)
+					{
+						if (telemetry_cnt >= 7)
+						{
+							
+							send_ubyte(0x5E);		// START BYTE
+							send_ubyte(0x10);		// ID 10 =  Baro Altitude
+							//int16_t alt_temp = 12;
+							send_sshort_tel(altitude_filt);	// Data
+							//send_sshort_tel(alt_temp);	// Data
+							send_ubyte(0x5E);		// END BYTE
+							
+							send_ubyte(0x5E);		// START BYTE
+							send_ubyte(0x11);		// ID 11 =  Speed
+							int16_t speed_temp = (sqrt(6.64*speed_filt))*3.6;
+							send_ushort_tel(speed_temp);	// Data
+								// 1 = 
+								// 10 = 8 m/s = 29 km/h
+								// 11 = 8,5 m/s = 30 km/h
+								// 15 = 9,9 m/s = 35,5 km/h
+								
+							send_ubyte(0x5E);		// END BYTE
+							
+							telemetry_cnt = 0;
+						}
+						telemetry_cnt++;
+
 					}
 					
 					
