@@ -41,7 +41,7 @@
 #define SERVO_GAIN_MOTOR	14	// Normal GAIN would be 31 (full resolution for Servos)
 #define SERVO_GAIN_RUDDER	14		
 #define SERVO_GAIN_ELEVATOR	15
-#define SERVO_GAIN_AILERON	15
+#define SERVO_GAIN_AILERON	14
 
 #define SERVO_TRIM_MOTOR	TRIM_NEUTRAL 
 #define SERVO_TRIM_RUDDER	TRIM_NEUTRAL	// 
@@ -88,7 +88,7 @@ typedef enum
 	stick_r_left_right,
 	stick_r_up_down,
 	stick_l_left_right,
-	poti_p3,
+	trainer,
 	three_way_switch,
 	poti_p1,
 	poti_p2	

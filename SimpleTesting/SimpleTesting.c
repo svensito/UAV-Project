@@ -36,10 +36,10 @@
 
 //******************************************************************
 // These are the task flags, set them to activate / deactivate task
-#define TASK_GYRO	FALSE	// reading gyro data enabled (TRUE) /disabled (FALSE)
-#define TASK_ACC	FALSE	// reading acc data enabled (TRUE) /disabled (FALSE)
-#define TASK_BARO	FALSE	// reading baro data enabled (TRUE) /disabled (FALSE)
-#define TASK_SPEED	FALSE	// reading ADC speed data enabled (TRUE) /disabled (FALSE)
+#define TASK_GYRO	TRUE	// reading gyro data enabled (TRUE) /disabled (FALSE)
+#define TASK_ACC	TRUE	// reading acc data enabled (TRUE) /disabled (FALSE)
+#define TASK_BARO	TRUE	// reading baro data enabled (TRUE) /disabled (FALSE)
+#define TASK_SPEED	TRUE	// reading ADC speed data enabled (TRUE) /disabled (FALSE)
 #define TASK_OLED	FALSE	// OLED task	
 #define GPS_READING	FALSE	// GPS Reading enabled or disabled
 #define SERIAL_LOG	FALSE	// serial output enabled (TRUE) /disabled (FALSE)
@@ -75,6 +75,7 @@ long trimmed_rudder = 0;
  ********************/
 // Flap Delay
 uint16_t flap_setpoint = FLAP_UP;	// defining the desired setpoint flap position
+uint8_t flap_command, flap_timer = 0;
 #define FLAP_DELTA	10				// giving the speed of flap extension
 // 10 will give around 2 seconds for movement in between two positions
 
@@ -121,7 +122,9 @@ int8_t Kd_Theta = 1;
 int8_t Ki_Theta = 10;
 // Roll Angle Phi
 int16_t Phi = 0;
-float Phi_hold, Phi_hold_0 = 0;
+uint8_t Phi_command = 0;
+float Phi_hold = 0;
+int16_t Phi_hold_0 = 0;
 float Phi_error = 0;
 float Phi_error_sum = 0;
 float Phi_error_prev = 0;
@@ -745,6 +748,7 @@ int main(void)
 				//*******************************************
 				// Control of Modes
 				// changing from knob to normal switch for mode control
+				
 				if(ctrl_in[three_way_switch]>144) Ctrl_Mode = HOLD_CTRL;								// Dn Position
 				else if (ctrl_in[three_way_switch] > 139 && ctrl_in[three_way_switch] < 144) Ctrl_Mode = DIRECT_CTRL;	// Middle Position
 				else Ctrl_Mode = DAMPED_CTRL;											// Up Position
@@ -780,10 +784,30 @@ int main(void)
 						 ctrl_out[rudder]	=	NEUTRAL+((ctrl_in[stick_l_left_right]-SERVO_TRIM_RUDDER)*SERVO_GAIN_RUDDER);
 						 
 						 // Flap Control
-						 if(ctrl_in[poti_p3]<120/* && ctrl_in[poti_p3]>120*/)		flap_setpoint = FLAP_UP;
-						 else if(ctrl_in[poti_p3]<160 && ctrl_in[poti_p3]>135)	flap_setpoint = FLAP_1;
-						 else if(/*ctrl_in[poti_p3]<160 && */ctrl_in[poti_p3]>160)	flap_setpoint = FLAP_FULL;
-						 
+						 // New approach: Trainer Switch for Flap Control
+						 // Toggle the trainer switch will increase flap position
+						 if (ctrl_in[trainer]>130 && flap_command == 0)
+						 {
+							 	if (flap_setpoint == FLAP_UP)
+							 	{
+								 	flap_setpoint = FLAP_1;
+							 	}
+							 	else if (flap_setpoint == FLAP_1)
+							 	{
+								 	flap_setpoint = FLAP_FULL;
+							 	}
+							 	else if (flap_setpoint == FLAP_FULL)
+							 	{
+								 	flap_setpoint = FLAP_UP;
+							 	}
+							 flap_command = 1;
+						 }
+
+						 else if (ctrl_in[trainer]<130 && flap_command == 1)
+						 {
+							 flap_command = 0;
+						 }
+						  						 
 						 // drive flap with sample_time steps delay 
 						 if(ctrl_out[flap] < flap_setpoint)		ctrl_out[flap]+= FLAP_DELTA;
 						 else if(ctrl_out[flap] > flap_setpoint)	ctrl_out[flap]-= FLAP_DELTA;
@@ -957,45 +981,6 @@ int main(void)
 						{
 							write_string_ln("Damped CONTROL");
 							// Setting current values as control values
-							// High level loops
-							//alt_hold = altitude_filt;		// controlling barometric altitude
-							alt_hold = altitude_filt;
-							alt_hold_0 = alt_hold;			// used for finding previous altitude again
-							heading_hold = heading;	// controlling heading
-							
-							// middle loops (if required)
-							Phi_hold_0 = Phi;			// using current phi as phi_0
-							Phi_hold = Phi;				// using current phi as hold value
-							Theta_hold = Theta;			// using current theta as theta_0
-							//speed_hold = speed_filt;	// current speed reading for speed control
-							speed_hold = 15;	// correlates to approx 30kmh			
-							
-							// Setting current input as "trimmed input"
-							trimmed_elevator = ctrl_out[elevator]; 
-							trimmed_aileron = ctrl_out[aileron];
-							trimmed_motor = ctrl_out[motor];
-							trimmed_rudder = ctrl_out[rudder];
-							
-							//****************************
-							// Resetting the errors
-							// altitude
-							alt_error = 0;
-							alt_error_sum = 0;
-							alt_error_prev = 0;
-							// speed
-							speed_error = 0;
-							speed_error_sum = 0;
-							// Theta
-							Theta_error = 0;
-							Theta_error_sum = 0;
-							Theta_error_prev = 0;
-							// Phi
-							Phi_error = 0;
-							Phi_error_sum = 0;
-							Phi_error_prev = 0;
-							// *****************************
-							
-							acc_z_raw_prev = acc_z_raw;
 							
 							write_string("Goal Alt - Heading - Speed: ");write_var(alt_hold);write_string(" - ");write_var(heading_hold);write_string(" - ");write_var_ln(speed_hold);
 						}
@@ -1015,36 +1000,31 @@ int main(void)
 						// Input: turn rate q
 						// Output: elevator command damping
 						// Gains: K_d_q
-						
-						if (ctrl_in[poti_p2]>140)
+
+						// the design is for speed = 17
+						if (speed_filt>30)
 						{
-							// the design is for speed = 17
-							if (speed_filt>30)
-							{
-								K_d_q=3;
-								K_d_p=3;
-								K_d_r=3;
-							}
-							else if (speed_filt>20)
-							{
-								K_d_q=5;
-								K_d_p=5;
-								K_d_r=5;
-							}
-							else
-							{
-								K_d_q=7;
-								K_d_p=7;
-								K_d_r=7;
-							}
-							
+							K_d_q=3;
+							K_d_p=3;
+							K_d_r=3;
+						}
+						else if (speed_filt>20)
+						{
+							K_d_q=5;
+							K_d_p=5;
+							K_d_r=5;
 						}
 						else
 						{
-								K_d_q=7;
-								K_d_p=7;
-								K_d_r=7;
+							K_d_q=7;
+							K_d_p=7;
+							K_d_r=7;
 						}
+																	
+						//***********************************************
+						
+						//******************************************************
+						// Combining the calculated inputs elevator and limiting elevator command
 						
 						
 						ctrl_out_DAMP[elevator] = K_d_q * (q_filt);
@@ -1056,16 +1036,46 @@ int main(void)
 						ctrl_out[rudder]	=	(NEUTRAL+((ctrl_in[stick_l_left_right]-SERVO_TRIM_RUDDER)*SERVO_GAIN_RUDDER))+ctrl_out_DAMP[rudder]; 
 						ctrl_out[motor]	=	NEUTRAL+((ctrl_in[stick_l_up_down]-SERVO_TRIM_MOTOR)*SERVO_GAIN_MOTOR); 
 						
-						if (ctrl_in[poti_p1] > 140)
+						// Flap Control
+						// New approach: Trainer Switch for Flap Control
+												 
+						if (ctrl_in[trainer]>130 && flap_command == 0)
 						{
-							ctrl_out[flap]	= FLAP_UP -  ((-1000 - acc_z_raw)/4);
-							if (ctrl_out[flap]<FLAP_UP)
+							if (flap_setpoint == FLAP_UP)
 							{
-								ctrl_out[flap]=FLAP_UP;
+								flap_setpoint = FLAP_1;
 							}
-							DLC_en = 1;
+							else if (flap_setpoint == FLAP_1)
+							{
+								flap_setpoint = FLAP_FULL;
+							}
+							else if (flap_setpoint == FLAP_FULL)
+							{
+								flap_setpoint = FLAP_UP;
+							}
+							flap_command = 1;
 						}
-						else DLC_en = 0;
+
+						else if (ctrl_in[trainer]<130 && flap_command == 1)
+						{
+							flap_command = 0;
+						}
+												 
+						// drive flap with sample_time steps delay
+						if(ctrl_out[flap] < flap_setpoint)		ctrl_out[flap]+= FLAP_DELTA;
+						else if(ctrl_out[flap] > flap_setpoint)	ctrl_out[flap]-= FLAP_DELTA;
+						else ctrl_out[flap] = flap_setpoint;
+						
+// 						if (ctrl_in[poti_p1] > 140)
+// 						{
+// 							ctrl_out[flap]	= FLAP_UP -  ((-1000 - acc_z_raw)/4);
+// 							if (ctrl_out[flap]<FLAP_UP)
+// 							{
+// 								ctrl_out[flap]=FLAP_UP;
+// 							}
+// 							DLC_en = 1;
+// 						}
+// 						else DLC_en = 0;
 						
 // 						if (ctrl_in[poti] <160)
 // 						{
@@ -1220,7 +1230,7 @@ int main(void)
 						//**********************************************
 						// GPS GOAL control
 						// Using Rotary knob for GPS and hold control (testing)
-						if(ctrl_in[poti_p3]<135 && ctrl_in[poti_p3]>120 && knob_flag == 1)	// NEUTRAL (Up Middle
+						if(ctrl_in[trainer]<135 && ctrl_in[trainer]>120 && knob_flag == 1)	// NEUTRAL (Up Middle
 						{
 							knob_flag = 0;
 							// normal position -> normal hold control of actual course
@@ -1234,7 +1244,7 @@ int main(void)
 							OLED_send_char_D();
 
 						}
-						else if(ctrl_in[poti_p3]<160 && ctrl_in[poti_p3]>150 && knob_flag == 0) // Left One Click
+						else if(ctrl_in[trainer]<160 && ctrl_in[trainer]>150 && knob_flag == 0) // Left One Click
 						{
 							knob_flag = 1;
 							// when knob turned -> GPS -> Return to home -> Home Position needs to be defined before (see above)
@@ -1289,6 +1299,22 @@ int main(void)
  						else if (Phi_hold > bank_limit) Phi_hold = bank_limit;
 						//**********************************************						
 						
+						// Changing the target roll angle angle by the aileron stick
+						if (ctrl_in[stick_r_left_right] >	155 && Phi_command == 0)
+						{
+							Phi_hold_0++;
+							Phi_command = 1;
+						}
+						else if (ctrl_in[stick_r_left_right] <	110 && Phi_command == 0)
+						{
+							Phi_hold_0--;
+							Phi_command = 1;
+						}
+						else if (ctrl_in[stick_r_left_right] > 110 && ctrl_in[stick_r_left_right] < 155 && Phi_command == 1)
+						{
+							Phi_command = 0;
+						}
+						
 						// *********************************************	
 						// Bank angle control with aileron
 						// Input: Phi_hold = Phi_command
@@ -1303,6 +1329,25 @@ int main(void)
 							test_cnt2 = 0;
 						}
 						
+						// Damping Parameters respecting airspeed
+						if (speed_filt>30)
+						{
+							K_d_q=3;
+							K_d_p=3;
+							K_d_r=3;
+						}
+						else if (speed_filt>20)
+						{
+							K_d_q=5;
+							K_d_p=5;
+							K_d_r=5;
+						}
+						else
+						{
+							K_d_q=7;
+							K_d_p=7;
+							K_d_r=7;
+						}
 							
 						//***********************************************
 						
@@ -1512,6 +1557,11 @@ int main(void)
 								// 11 = 8,5 m/s = 30 km/h
 								// 15 = 9,9 m/s = 35,5 km/h
 								
+							send_ubyte(0x5E);		// END BYTE
+							
+							send_ubyte(0x5E);		// START BYTE
+							send_ubyte(0x02);		// ID 2 =  Temperature
+							send_sshort_tel(Phi_hold_0);	// Data // Sending Phi to temperature ID														
 							send_ubyte(0x5E);		// END BYTE
 							
 							telemetry_cnt = 0;
