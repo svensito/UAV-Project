@@ -171,6 +171,7 @@ float Phi_temp, S_Phi, K_0_Phi, K_1_Phi = 0;
  Magnetometer Data
  ********************/
 int16_t heading, heading_GPS = 0;
+uint16_t heading_GPS_tel = 0;
 int16_t heading_goal = 0;
 int16_t heading_hold, heading_error, heading_error_prev, heading_error_sum  = 0;
 #define KP_HEAD	1
@@ -1002,13 +1003,13 @@ int main(void)
 						// Gains: K_d_q
 
 						// the design is for speed = 17
-						if (speed_filt>30)
+						if (speed_filt>25)
 						{
 							K_d_q=3;
 							K_d_p=3;
 							K_d_r=3;
 						}
-						else if (speed_filt>20)
+						else if (speed_filt>16)
 						{
 							K_d_q=5;
 							K_d_p=5;
@@ -1330,13 +1331,13 @@ int main(void)
 						}
 						
 						// Damping Parameters respecting airspeed
-						if (speed_filt>30)
+						if (speed_filt>25)
 						{
 							K_d_q=3;
 							K_d_p=3;
 							K_d_r=3;
 						}
-						else if (speed_filt>20)
+						else if (speed_filt>16)
 						{
 							K_d_q=5;
 							K_d_p=5;
@@ -1562,6 +1563,13 @@ int main(void)
 							send_ubyte(0x5E);		// START BYTE
 							send_ubyte(0x02);		// ID 2 =  Temperature
 							send_sshort_tel(Phi_hold_0);	// Data // Sending Phi to temperature ID														
+							send_ubyte(0x5E);		// END BYTE
+							
+							// heading
+							heading_GPS_tel = (uint16_t)(heading_GPS/100);
+							send_ubyte(0x5E);		// START BYTE
+							send_ubyte(0x14);		// ID 14 =  heading
+							send_ushort_tel(heading_GPS_tel);	// Data // Sending Phi to temperature ID
 							send_ubyte(0x5E);		// END BYTE
 							
 							telemetry_cnt = 0;
